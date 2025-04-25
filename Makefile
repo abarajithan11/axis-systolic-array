@@ -21,7 +21,8 @@ FULL_WORK_DIR = $(subst \,\\,$(abspath $(WORK_DIR)))
 C_SOURCE = ../../c/sim.c
 SOURCES_FILE = sources.txt
 
-# Compiler options
+#-----------------COMPILER OPTIONS ------------------
+
 XSC_FLAGS = \
 	--gcc_compile_options -DSIM \
 	--gcc_compile_options "-DDIR=$(WORK_DIR)/" \
@@ -40,7 +41,9 @@ VERI_FLAGS = --binary -j 0 -O3 \
 	-CFLAGS -g --Mdir ../$(WORK_DIR) \
 	-CFLAGS -I$(WORK_DIR) 
 
-# Ensure the work directories exist
+
+#----------------- COMMON SETUP ------------------
+
 $(WORK_DIR):
 	"mkdir" -p $(WORK_DIR)
 
@@ -68,6 +71,7 @@ $(WORK_DIR)/config.svh $(WORK_DIR)/config.h $(WORK_DIR)/config.tcl: $(RUN_DIR)/c
 		--AXI_WIDTH $(AXI_WIDTH) \
 		--BOARD $(BOARD) \
 
+
 #----------------- Vivado XSIM ------------------
 
 # Compile C source
@@ -87,8 +91,12 @@ xsim: elab $(DATA_DIR)
 	echo log_wave -recursive *; run all; exit > $(WORK_DIR)/cfg.tcl
 	cd $(WORK_DIR) && xsim $(TB_MODULE) $(XSIM_FLAGS)
 
+
+#----------------- FPGA FLOW ------------------
+
 vivado: $(WORK_DIR) $(WORK_DIR)/config.svh $(WORK_DIR)/config.tcl
 	cd $(WORK_DIR) && vivado -mode batch -source $(subst \,\\,$(abspath $(RUN_DIR)))/vivado_flow.tcl
+
 
 #----------------- VERILATOR ------------------
 

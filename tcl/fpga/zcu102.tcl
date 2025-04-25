@@ -1,5 +1,5 @@
-create_project ${PROJECT_NAME} ${PROJECT_NAME} -part xczu7ev-ffvc1156-2-e -force
-set_property board_part xilinx.com:zcu104:part0:* [current_project]
+create_project ${PROJECT_NAME} ${PROJECT_NAME} -part xczu9eg-ffvb1156-2-e -force
+set_property board_part xilinx.com:zcu102:part0:* [current_project]
 
 create_bd_design "design_1"
 create_bd_cell -type ip -vlnv xilinx.com:ip:zynq_ultra_ps_e:* zynq_ultra_ps_e_0
