@@ -25,6 +25,31 @@ y(C,R) = k.T(C,K) @ x(K,R) + a(C,R)
 
 ## To simulate the entire system:
 
+### Windows
+
+You need `make` to run our `Makefile`. If you dont have `make` on Windows native, follow these steps
+
+1. Install `chocolatey`
+
+Open powershell as administrator and run the following command:
+
+```
+Set-ExecutionPolicy Bypass -Scope Process -Force; `
+[System.Net.ServicePointManager]::SecurityProtocol = `
+[System.Net.ServicePointManager]::SecurityProtocol -bor 3072; `
+iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+```
+
+2. Install `make` and GNU tools
+
+```
+choco install make
+choco install gnuwin32-coreutils.install
+```
+
+3. Add `C:/Program Files (x86)/GnuWin32/bin` to your `$PATH`
+
+
 ### Verilator (Linux)
 
 Add Verilator path (eg. `/tools/verilator/bin`) to `$PATH`
@@ -34,17 +59,9 @@ make veri
 
 ### Vivado Xsim (Linux)
 
-Add Vivado path (eg. `/tools/Xilinx/Vivado/2022.2/bin`) to `$PATH`
+Make sure Vivado is in your `$PATH`
 ```
 make xsim
-```
-
-### Vivado Xsim (Windows)
-
-First update `XIL_PATH` in `run/xsim.bat`, then run these in powershell
-```
-cd run
-./xsim.bat
 ```
 
 ### Test on Xilinx ZCU104

@@ -48,10 +48,10 @@ VERI_FLAGS = --binary -j 0 -O3 \
 
 # Ensure the work directories exist
 $(WORK_DIR):
-	mkdir -p $(WORK_DIR)
+	"mkdir" -p $(WORK_DIR)
 
 $(DATA_DIR): | $(WORK_DIR)
-	mkdir -p $(DATA_DIR)
+	"mkdir" -p $(DATA_DIR)
 
 # Golden model
 $(DATA_DIR)/kxa.bin: $(DATA_DIR)
@@ -98,6 +98,6 @@ veri_smoke: rtl/sa/axis_sa.sv rtl/sa/mac.sv rtl/sa/n_delay.sv rtl/sa/tri_buffer.
 
 # Clean work directory
 clean:
-	rm -rf $(WORK_DIR)*
+	"rm" -rf $(WORK_DIR)*
 
 .PHONY: sim vlog elab run clean
