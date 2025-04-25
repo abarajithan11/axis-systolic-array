@@ -1,18 +1,21 @@
 `timescale 1ns/1ps
 
+`include "config.svh"
+
 module top #(
     parameter
-        R  = 8,
-        C  = 4,
-        WK = 8,
-        WX = 8,
+        R          = `R ,
+        C          = `C ,
+        WK         = `WK,
+        WX         = `WX,
+        WY         = `WY,
+        AXI_WIDTH  = `AXI_WIDTH,
+        
         WA = 32,
-        WY = 32,
         LM = 1,
         LA = 1,
 
         // Full AXI
-        AXI_WIDTH               = 128,
         AXI_ID_WIDTH            = 6,
         AXI_STRB_WIDTH          = (AXI_WIDTH/8),
         AXI_MAX_BURST_LEN       = 32,

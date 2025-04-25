@@ -2,12 +2,6 @@ import numpy as np
 import argparse
 
 def main(R, K, C, DIR):
-    # Write R, C, K to a C header file
-    with open(f"{DIR}/params.h", "w") as f:
-        f.write(f"#define R {R}\n")
-        f.write(f"#define K {K}\n")
-        f.write(f"#define C {C}\n")
-
     # Generate random matrices
     k = np.random.randint(-128, 127, size=(K, C), dtype=np.int32)
     x = np.random.randint(-128, 127, size=(K, R), dtype=np.int32)

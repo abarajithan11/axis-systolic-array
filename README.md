@@ -15,6 +15,7 @@ y(C,R) = k.T(C,K) @ x(K,R) + a(C,R)
 
 ## Key files
 
+* `run/config.py` - Generates `run/work/config.svh`, `run/work/config.h` and `run/work/config.tcl` based on params passed
 * `run/golden.py` - Python reference that performs `y = k.T @ x + a`
 * `run/sources.txt` - List of source files needed for simulation
 * `tb/top_tb.sv` - Top testbench
@@ -57,7 +58,7 @@ Add Verilator path (eg. `/tools/verilator/bin`) to `$PATH`
 make veri
 ```
 
-### Vivado Xsim (Linux)
+### Vivado Xsim
 
 Make sure Vivado is in your `$PATH`
 ```
@@ -68,9 +69,8 @@ make xsim
 
 #### Vivado: 
 
-Open vivado, cd into `run/work` and run the following:
 ```
-source ../vivado_flow.tcl
+make vivado
 ```
 
 #### Vitis:

@@ -1,15 +1,11 @@
-// DIR are macros defined through compiler options, or outside
-
-#ifdef SIM
-  // Assume k,x,a are 8 bit, y is 32 bit
-  #include "params.h"
-#endif
+#include <stdint.h>
+#include "config.h"
 
 typedef struct {
-  signed char k [K][C];
-  signed char x [K][R];
-  signed int  a [C][R];
-  signed int  y [C][R];
+  TK k [K][C];
+  TX x [K][R];
+  TY a [C][R];
+  TY y [C][R];
 } Memory_st;
 
 #define MEM_BASEADDR    0x20000000
@@ -42,7 +38,7 @@ extern EXT_C u8 run(Memory_st *restrict mp, void *p_config) {
 
     WAIT_INIT(DMA_WAIT);
 
-    sprintf(f_path, "%skxa.bin", TO_STRING(DIR));
+    sprintf(f_path, "%s/kxa.bin", DIR);
     fp = fopen(f_path, "rb");
     debug_printf("DEBUG: Reading from file %s \n", f_path);
     if(!fp) debug_printf("ERROR! File not found: %s \n", f_path);
@@ -65,7 +61,7 @@ extern EXT_C u8 run(Memory_st *restrict mp, void *p_config) {
   WAIT(!(get_config(p_config, A_S2MM_DONE)), DMA_WAIT);
 
   #ifdef SIM
-    sprintf(f_path, "%sy.bin", TO_STRING(DIR));
+    sprintf(f_path, "%s/y.bin", DIR);
     fp = fopen(f_path, "wb");
     debug_printf("DEBUG: Writing to file %s \n", f_path);
     if(!fp) debug_printf("ERROR! File not found: %s \n", f_path);
@@ -94,7 +90,7 @@ void randomize_inputs(Memory_st *restrict mp, int seed){
 
 void check_output(Memory_st *restrict mp){
 
-  signed int y_exp [C][R];
+  TY y_exp [C][R];
 
   for (int c=0; c<C; c++)
     for (int r=0; r<R; r++){

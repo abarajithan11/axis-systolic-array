@@ -1,35 +1,32 @@
 `timescale 1ns/1ps
-`define STRINGIFY(x) `"x`"
-`define TO_STRING(x) `STRINGIFY(x)
-
 `include "config.svh"
 
 module top_tb;
   localparam
-    // Defined in makefile
-    R                   = `R         ,
-    C                   = `C         ,
-    VALID_PROB          = `VALID_PROB,
-    READY_PROB          = `READY_PROB,
     // Defined in config.svh
-    WK                  = `WK,
-    WX                  = `WX,
-    WA                  = `WA,
-    WY                  = `WY,
-    LM                  = `LM,
-    LA                  = `LA,
-    AXI_WIDTH           = `AXI_WIDTH	       ,
-    AXI_ID_WIDTH        = `AXI_ID_WIDTH      ,
-    AXI_STRB_WIDTH      = `AXI_STRB_WIDTH    ,
-    AXI_MAX_BURST_LEN   = `AXI_MAX_BURST_LEN ,
-    AXI_ADDR_WIDTH      = `AXI_ADDR_WIDTH	   ,
-    AXIL_WIDTH          = `AXIL_WIDTH        ,
-    AXIL_ADDR_WIDTH     = `AXIL_ADDR_WIDTH   ,
-    STRB_WIDTH          = `STRB_WIDTH        ,
-    DATA_WR_WIDTH       = `AXIL_WIDTH        ,
-    DATA_RD_WIDTH       = `AXIL_WIDTH        ,
+    R                   = `R                 ,
+    C                   = `C                 ,
+    WK                  = `WK                ,
+    WX                  = `WX                ,
+    WY                  = `WY                ,
     AXIL_BASE_ADDR      = `AXIL_BASE_ADDR    ,
-    CLK_PERIOD          = 10,
+    VALID_PROB          = `VALID_PROB        ,
+    READY_PROB          = `READY_PROB        ,
+    CLK_PERIOD          = `CLK_PERIOD        ,
+    AXI_WIDTH           = `AXI_WIDTH         ,
+    DIR                 = `DIR               ,
+    WA                  = 32                 ,
+    LM                  = 1                  ,
+    LA                  = 1                  ,
+    AXI_ID_WIDTH        = 6                  ,
+    AXI_STRB_WIDTH      = AXI_WIDTH/8        ,
+    AXI_MAX_BURST_LEN   = 32                 ,
+    AXI_ADDR_WIDTH      = 32                 ,
+    AXIL_WIDTH          = 32                 ,
+    AXIL_ADDR_WIDTH     = 40                 ,
+    STRB_WIDTH          = 4                  ,
+    DATA_WR_WIDTH       = AXIL_WIDTH         ,
+    DATA_RD_WIDTH       = AXIL_WIDTH         ,
     LSB                 = $clog2(AXI_WIDTH)-3;
 
 
@@ -155,8 +152,8 @@ module top_tb;
 
 
     // Read from output & expected and compare
-    file_out = $fopen({`TO_STRING(`DIR), "y.bin"}, "rb");
-    file_exp = $fopen({`TO_STRING(`DIR), "y_exp.bin" }, "rb");
+    file_out = $fopen({DIR, "/y.bin"}, "rb");
+    file_exp = $fopen({DIR, "/y_exp.bin" }, "rb");
     if (file_out==0 || file_exp==0) $fatal(0, "Error: Failed to open output/expected file(s).");
 
     while($feof(file_exp) == 0) begin

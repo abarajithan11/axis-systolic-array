@@ -2,29 +2,32 @@
 R = 8
 C = 4
 K = 16
+WK = 8
+WX = 8
+WY = 32
+CONFIG_BASEADDR = B0000000
 VALID_PROB = 1
 READY_PROB = 50
+FREQ_MHZ = 100
+AXI_WIDTH = 128
+BOARD = zcu104
 
 TB_MODULE = top_tb
 RUN_DIR = run
 WORK_DIR = run/work
 DATA_DIR = $(WORK_DIR)/data
 FULL_DATA_DIR = $(subst \,\\,$(abspath $(DATA_DIR)))
+FULL_WORK_DIR = $(subst \,\\,$(abspath $(WORK_DIR)))
 C_SOURCE = ../../c/sim.c
 SOURCES_FILE = sources.txt
 
 # Compiler options
 XSC_FLAGS = \
 	--gcc_compile_options -DSIM \
-	--gcc_compile_options "-DDIR=$(FULL_DATA_DIR)/" \
-	--gcc_compile_options "-I$(FULL_DATA_DIR)"
+	--gcc_compile_options "-DDIR=$(WORK_DIR)/" \
+	--gcc_compile_options "-I$(FULL_WORK_DIR)"
 
-XVLOG_FLAGS = -sv \
-	-d "DIR=$(FULL_DATA_DIR)/" \
-	-d "R=$(R)" -d "C=$(C)" \
-	-d "VALID_PROB=$(VALID_PROB)" \
-	-d "READY_PROB=$(READY_PROB)" \
-	-i $(abspath $(RUN_DIR))
+XVLOG_FLAGS = -sv -i $(abspath $(RUN_DIR))
 
 XELAB_FLAGS = --snapshot $(TB_MODULE) -log elaborate.log --debug typical -sv_lib dpi
 
@@ -32,19 +35,10 @@ XSIM_FLAGS = --tclbatch cfg.tcl
 
 VERI_FLAGS = --binary -j 0 -O3 \
 	--Wno-BLKANDNBLK --Wno-INITIALDLY \
-	-DDIR=$(FULL_DATA_DIR)/ \
-	-DR=$(R) \
-	-DC=$(C) \
-	-DVALID_PROB=$(VALID_PROB) \
-	-DREADY_PROB=$(READY_PROB) \
 	-I$(RUN_DIR) \
 	-CFLAGS -DSIM \
-	-CFLAGS -DDIR=$(FULL_DATA_DIR)/ \
-	-CFLAGS -DR=$(R) \
-	-CFLAGS -DC=$(C) \
-	-CFLAGS -DK=$(K) \
 	-CFLAGS -g --Mdir ../$(WORK_DIR) \
-	-CFLAGS -I$(FULL_DATA_DIR) 
+	-CFLAGS -I$(WORK_DIR) 
 
 # Ensure the work directories exist
 $(WORK_DIR):
@@ -57,14 +51,31 @@ $(DATA_DIR): | $(WORK_DIR)
 $(DATA_DIR)/kxa.bin: $(DATA_DIR)
 	python run/golden.py --R $(R) --K $(K) --C $(C) --DIR $(FULL_DATA_DIR)
 
+$(WORK_DIR)/config.svh $(WORK_DIR)/config.h $(WORK_DIR)/config.tcl: $(RUN_DIR)/config.py $(WORK_DIR)
+	cd $(RUN_DIR) && python config.py \
+		--R $(R) \
+		--C $(C) \
+		--K $(K) \
+		--WK $(WK) \
+		--WX $(WX) \
+		--WY $(WY) \
+		--CONFIG_BASEADDR $(CONFIG_BASEADDR) \
+		--VALID_PROB $(VALID_PROB) \
+		--READY_PROB $(READY_PROB) \
+		--DATA_DIR $(FULL_DATA_DIR) \
+		--WORK_DIR $(FULL_WORK_DIR) \
+		--FREQ_MHZ $(FREQ_MHZ) \
+		--AXI_WIDTH $(AXI_WIDTH) \
+		--BOARD $(BOARD) \
+
 #----------------- Vivado XSIM ------------------
 
 # Compile C source
-c: $(WORK_DIR) $(DATA_DIR)/kxa.bin
+c: $(WORK_DIR) $(DATA_DIR)/kxa.bin $(WORK_DIR)/config.h
 	cd $(WORK_DIR) && xsc $(C_SOURCE) $(XSC_FLAGS)
 
 # Run Verilog compilation
-vlog: c
+vlog: c $(WORK_DIR)/config.svh
 	cd $(WORK_DIR) && xvlog -f ../$(SOURCES_FILE)  $(XVLOG_FLAGS)
 
 # Elaborate design
@@ -76,10 +87,12 @@ xsim: elab $(DATA_DIR)
 	echo log_wave -recursive *; run all; exit > $(WORK_DIR)/cfg.tcl
 	cd $(WORK_DIR) && xsim $(TB_MODULE) $(XSIM_FLAGS)
 
+vivado: $(WORK_DIR) $(WORK_DIR)/config.svh $(WORK_DIR)/config.tcl
+	cd $(WORK_DIR) && vivado -mode batch -source $(subst \,\\,$(abspath $(RUN_DIR)))/vivado_flow.tcl
 
 #----------------- VERILATOR ------------------
 
-work_verilator: $(WORK_DIR) $(DATA_DIR)/kxa.bin
+work_verilator: $(WORK_DIR) $(DATA_DIR)/kxa.bin $(WORK_DIR)/config.svh $(WORK_DIR)/config.h
 	cd run && verilator --top $(TB_MODULE) -F $(SOURCES_FILE) $(C_SOURCE) $(VERI_FLAGS)
 
 veri: work_verilator $(DATA_DIR)
@@ -100,4 +113,4 @@ veri_smoke: rtl/sa/axis_sa.sv rtl/sa/mac.sv rtl/sa/n_delay.sv rtl/sa/tri_buffer.
 clean:
 	"rm" -rf $(WORK_DIR)*
 
-.PHONY: sim vlog elab run clean
+.PHONY: sim vlog elab run clean vivado
