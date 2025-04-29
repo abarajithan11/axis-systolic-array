@@ -41,6 +41,7 @@ VERI_FLAGS = --binary -j 0 -O3 \
 	-CFLAGS -g --Mdir ../$(WORK_DIR) \
 	-CFLAGS -I$(WORK_DIR) 
 
+XCELIUM_FLAGS = -64bit -sv -dpi -CFLAGS -DSIM -CFLAGS -I.
 
 #----------------- COMMON SETUP ------------------
 
@@ -52,10 +53,10 @@ $(DATA_DIR): | $(WORK_DIR)
 
 # Golden model
 $(DATA_DIR)/kxa.bin: $(DATA_DIR)
-	python run/golden.py --R $(R) --K $(K) --C $(C) --DIR $(FULL_DATA_DIR)
+	python3 run/golden.py --R $(R) --K $(K) --C $(C) --DIR $(FULL_DATA_DIR)
 
 $(WORK_DIR)/config.svh $(WORK_DIR)/config.h $(WORK_DIR)/config.tcl: $(RUN_DIR)/config.py $(WORK_DIR)
-	cd $(RUN_DIR) && python config.py \
+	cd $(RUN_DIR) && python3 config.py \
 		--R $(R) \
 		--C $(C) \
 		--K $(K) \
@@ -96,6 +97,11 @@ xsim: elab $(DATA_DIR)
 
 vivado: $(WORK_DIR) $(WORK_DIR)/config.svh $(WORK_DIR)/config.tcl
 	cd $(WORK_DIR) && vivado -mode batch -source $(subst \,\\,$(abspath $(RUN_DIR)))/vivado_flow.tcl
+
+#----------------- XCELIUM --------------------
+
+xrun: $(WORK_DIR) $(DATA_DIR)/kxa.bin $(WORK_DIR)/config.svh $(WORK_DIR)/config.h
+	cd $(WORK_DIR) && xrun $(XCELIUM_FLAGS) -f ../$(SOURCES_FILE) $(C_SOURCE)
 
 
 #----------------- VERILATOR ------------------

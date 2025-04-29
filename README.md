@@ -51,26 +51,31 @@ choco install gnuwin32-coreutils.install
 3. Add `C:/Program Files (x86)/GnuWin32/bin` to your `$PATH`
 
 
-### Verilator (Linux)
+#### Verilator (Linux)
 
-Add Verilator path (eg. `/tools/verilator/bin`) to `$PATH`
 ```
 make veri
 ```
 
-### Vivado Xsim
+#### Vivado Xsim
 
-Make sure Vivado is in your `$PATH`
 ```
 make xsim
 ```
 
-### Test on Xilinx ZCU104
+#### Cadence Xcelium
+
+```
+make xrun
+```
+
+### Test on Xilinx FPGAs
 
 #### Vivado: 
 
 ```
-make vivado
+make vivado BOARD=zcu104
+make vivado BOARD=zcu102
 ```
 
 #### Vitis:

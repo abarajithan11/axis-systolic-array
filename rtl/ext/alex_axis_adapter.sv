@@ -121,7 +121,7 @@ end else if (M_BYTE_LANES > S_BYTE_LANES) begin : upsize
     localparam SEG_DATA_WIDTH = M_DATA_WIDTH / SEG_COUNT;
     localparam SEG_KEEP_WIDTH = M_BYTE_LANES / SEG_COUNT;
     localparam BITS_SEG_REG = $clog2(SEG_COUNT);
-    reg [BITS_SEG_REG-1:0] seg_reg = 0;
+    reg [BITS_SEG_REG-1:0] seg_reg;
 
     reg [S_DATA_WIDTH-1:0] s_axis_tdata_reg;
     reg [S_KEEP_WIDTH-1:0] s_axis_tkeep_reg;
