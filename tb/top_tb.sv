@@ -99,6 +99,7 @@ module top_tb;
   import "DPI-C" context function chandle get_mp ();
   // import "DPI-C" context function void print_output (chandle mem_ptr_virtual);
   import "DPI-C" context function bit run(chandle mem_ptr_virtual, chandle p_config);
+  import "DPI-C" context function bit run_randomized(chandle mem_ptr_virtual, chandle p_config, int count);
 
 
   function automatic int get_config(chandle config_base, input int offset);
@@ -147,33 +148,35 @@ module top_tb;
     repeat(2) @(posedge clk) #10ps;
     rstn <= 1;
     mem_ptr_virtual = get_mp();
+
+    while (run_randomized(mem_ptr_virtual, cfg_ptr_virtual, 10)) @(posedge clk) #10ps;
     
-    while (run(mem_ptr_virtual, cfg_ptr_virtual)) @(posedge clk) #10ps;
+    // while (run(mem_ptr_virtual, cfg_ptr_virtual)) @(posedge clk) #10ps;
 
 
-    // Read from output & expected and compare
-    file_out = $fopen({DIR, "/y.bin"}, "rb");
-    file_exp = $fopen({DIR, "/y_exp.bin" }, "rb");
-    if (file_out==0 || file_exp==0) $fatal(0, "Error: Failed to open output/expected file(s).");
+    // // Read from output & expected and compare
+    // file_out = $fopen({DIR, "/y.bin"}, "rb");
+    // file_exp = $fopen({DIR, "/y_exp.bin" }, "rb");
+    // if (file_out==0 || file_exp==0) $fatal(0, "Error: Failed to open output/expected file(s).");
 
-    while($feof(file_exp) == 0) begin
-      if ($feof(file_out)) $fatal(0, "Error: output file is shorter than expected file.");
-      else begin
-        out_byte = $fgetc(file_out);
-        exp_byte = $fgetc(file_exp);
-        // Compare
-        if (exp_byte != out_byte) begin
-          $display("Mismatch at index %0d: Expected %h, Found %h", i, exp_byte, out_byte);
-          error += 1;
-        end 
-      end
-      i += 1;
-    end
-    $fclose(file_exp);
-    $fclose(file_out);
+    // while($feof(file_exp) == 0) begin
+    //   if ($feof(file_out)) $fatal(0, "Error: output file is shorter than expected file.");
+    //   else begin
+    //     out_byte = $fgetc(file_out);
+    //     exp_byte = $fgetc(file_exp);
+    //     // Compare
+    //     if (exp_byte != out_byte) begin
+    //       $display("Mismatch at index %0d: Expected %h, Found %h", i, exp_byte, out_byte);
+    //       error += 1;
+    //     end 
+    //   end
+    //   i += 1;
+    // end
+    // $fclose(file_exp);
+    // $fclose(file_out);
     
-    if (error==0) $display("\n\nVerification successful: Output matches Expected data. \nError count: %0d\n\n", error);
-    else          $fatal (0, "\n\nERROR: Output data does not match Expected data.\n\n");
+    // if (error==0) $display("\n\nVerification successful: Output matches Expected data. \nError count: %0d\n\n", error);
+    // else          $fatal (0, "\n\nERROR: Output data does not match Expected data.\n\n");
     $finish;
   end
 

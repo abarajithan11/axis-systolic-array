@@ -31,20 +31,21 @@ typedef struct {
 
 extern EXT_C u8 run(Memory_st *restrict mp, void *p_config) {
  
-  #ifdef SIM // only read/write files in simulation
-    FILE *fp;
-    char f_path [1000];
-    int bytes;
+  // #ifdef SIM // only read/write files in simulation
+  //   FILE *fp;
+  //   char f_path [1000];
+  //   int bytes;
 
-    WAIT_INIT(DMA_WAIT);
+  //   WAIT_INIT(DMA_WAIT);
 
-    sprintf(f_path, "%s/kxa.bin", DIR);
-    fp = fopen(f_path, "rb");
-    debug_printf("DEBUG: Reading from file %s \n", f_path);
-    if(!fp) debug_printf("ERROR! File not found: %s \n", f_path);
-    bytes = fread(mp->k, 1, sizeof(mem_phy.k) + sizeof(mem_phy.x) + sizeof(mem_phy.a), fp);
-    fclose(fp);
-  #endif
+  //   sprintf(f_path, "%s/kxa.bin", DIR);
+  //   fp = fopen(f_path, "rb");
+  //   debug_printf("DEBUG: Reading from file %s \n", f_path);
+  //   if(!fp) debug_printf("ERROR! File not found: %s \n", f_path);
+  //   bytes = fread(mp->k, 1, sizeof(mem_phy.k) + sizeof(mem_phy.x) + sizeof(mem_phy.a), fp);
+  //   fclose(fp);
+  // #endif
+  WAIT_INIT(DMA_WAIT);
   
   // Start DMA
   set_config(p_config, A_MM2S_0_ADDR , addr_64to32(mem_phy.k));
@@ -60,14 +61,14 @@ extern EXT_C u8 run(Memory_st *restrict mp, void *p_config) {
 
   WAIT(!(get_config(p_config, A_S2MM_DONE)), DMA_WAIT);
 
-  #ifdef SIM
-    sprintf(f_path, "%s/y.bin", DIR);
-    fp = fopen(f_path, "wb");
-    debug_printf("DEBUG: Writing to file %s \n", f_path);
-    if(!fp) debug_printf("ERROR! File not found: %s \n", f_path);
-    bytes = fwrite(mp->y, 1, sizeof(mem_phy.y), fp);
-    fclose(fp);
-  #endif
+  // #ifdef SIM
+  //   sprintf(f_path, "%s/y.bin", DIR);
+  //   fp = fopen(f_path, "wb");
+  //   debug_printf("DEBUG: Writing to file %s \n", f_path);
+  //   if(!fp) debug_printf("ERROR! File not found: %s \n", f_path);
+  //   bytes = fwrite(mp->y, 1, sizeof(mem_phy.y), fp);
+  //   fclose(fp);
+  // #endif
   return 0;
 }
 
@@ -113,4 +114,15 @@ void check_output(Memory_st *restrict mp){
       }
 
   printf("All outputs match. Error count: %d \n", error);
+}
+
+
+extern EXT_C u8 run_randomized(Memory_st *restrict mp, void *p_config, int count) {
+  WAIT_INIT(DMA_WAIT2);
+  for (int i=0; i<count; i++){
+    randomize_inputs(mp, i);
+    WAIT(run(mp, p_config), DMA_WAIT2);
+    check_output(mp);
+  }
+  return 0;
 }
