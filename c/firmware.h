@@ -28,7 +28,6 @@ typedef struct {
 
 #include "wrapper.h"
 
-
 extern EXT_C u8 run(Memory_st *restrict mp, void *p_config) {
  
   #ifdef SIM // only read/write files in simulation

@@ -92,38 +92,75 @@ module top_tb;
   logic clk = 0;
   initial forever #(CLK_PERIOD/2) clk = ~clk;
 
-  export "DPI-C" function get_config;
-  export "DPI-C" function set_config;
-  import "DPI-C" context function byte get_byte_a32 (int unsigned addr);
-  import "DPI-C" context function void set_byte_a32 (int unsigned addr, byte data);
+`ifdef VERILATOR
+  // export "DPI-C" function get_config;
+  // export "DPI-C" function set_config;
+  // import "DPI-C" context function byte get_byte_a32 (int unsigned addr);
+  // import "DPI-C" context function void set_byte_a32 (int unsigned addr, byte data);
+  // import "DPI-C" context function chandle get_mp ();
+  // // import "DPI-C" context function void print_output (chandle mem_ptr_virtual);
+  // import "DPI-C" context function bit run(chandle mem_ptr_virtual, chandle p_config);
+
+
+  // function automatic int get_config(chandle config_base, input int offset);
+  //   return dut.TOP.CONTROLLER.cfg [offset];
+  // endfunction
+
+
+  // function automatic set_config(chandle config_base, input int offset, input int data);
+  //   dut.TOP.CONTROLLER.cfg [offset] <= data;
+  // endfunction
+
+`else
+
+  export "DPI-C" task _get_config;
+  export "DPI-C" task set_config;
+  import "DPI-C" context task get_byte_a32 (input int unsigned addr, output byte data);
+  import "DPI-C" context task set_byte_a32 (input int unsigned addr, input byte data);
   import "DPI-C" context function chandle get_mp ();
-  // import "DPI-C" context function void print_output (chandle mem_ptr_virtual);
-  import "DPI-C" context function bit run(chandle mem_ptr_virtual, chandle p_config);
+  // import "DPI-C" context task void print_output (chandle mem_ptr_virtual);
+  import "DPI-C" context function bit run(input chandle mem_ptr_virtual, input chandle p_config);
 
 
-  function automatic int get_config(chandle config_base, input int offset);
-    return dut.TOP.CONTROLLER.cfg [offset];
-  endfunction
+  task automatic _get_config(input chandle config_base, input int offset, output int data);
+    data = dut.TOP.CONTROLLER.cfg [offset];
+  endtask
 
 
-  function automatic set_config(chandle config_base, input int offset, input int data);
+  task automatic set_config(input chandle config_base, input int offset, input int data);
     dut.TOP.CONTROLLER.cfg [offset] <= data;
-  endfunction
+  endtask
 
+`endif
+
+byte tmp_byte;
+logic [AXI_WIDTH-1:0] tmp_data;
 
   always_ff @(posedge clk) begin : Axi_rw
 
-    if (mm2s_0_ren) 
-      for (int i = 0; i < AXI_WIDTH/8; i++)
-        mm2s_0_data[i*8 +: 8] <= get_byte_a32((32'(mm2s_0_addr) << LSB) + i);
+    if (mm2s_0_ren) begin
+      for (int i = 0; i < AXI_WIDTH/8; i++) begin
+        get_byte_a32((32'(mm2s_0_addr) << LSB) + i, tmp_byte);
+        tmp_data[i*8 +: 8] = tmp_byte;
+      end
+      mm2s_0_data <= tmp_data;
+    end
 
-    if (mm2s_1_ren) 
-      for (int i = 0; i < AXI_WIDTH/8; i++)
-        mm2s_1_data[i*8 +: 8] <= get_byte_a32((32'(mm2s_1_addr) << LSB) + i);
+    if (mm2s_1_ren) begin
+      for (int i = 0; i < AXI_WIDTH/8; i++) begin
+        get_byte_a32((32'(mm2s_1_addr) << LSB) + i, tmp_byte);
+        tmp_data[i*8 +: 8] = tmp_byte;
+      end
+      mm2s_1_data <= tmp_data;
+    end
 
-    if (mm2s_2_ren) 
-      for (int i = 0; i < AXI_WIDTH/8; i++)
-        mm2s_2_data[i*8 +: 8] <= get_byte_a32((32'(mm2s_2_addr) << LSB) + i);
+    if (mm2s_2_ren) begin
+      for (int i = 0; i < AXI_WIDTH/8; i++) begin
+        get_byte_a32((32'(mm2s_2_addr) << LSB) + i, tmp_byte);
+        tmp_data[i*8 +: 8] = tmp_byte;
+      end
+      mm2s_2_data <= tmp_data;
+    end
 
     if (s2mm_wen) 
       for (int i = 0; i < AXI_WIDTH/8; i++) 

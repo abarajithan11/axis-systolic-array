@@ -30,8 +30,13 @@ typedef double   f64;
   #define TO_STRING(x) STRINGIFY(x)
 
   Memory_st mem_phy;
-	extern EXT_C u32 get_config(void*, u32);
-	extern EXT_C void set_config(void*, u32, u32);
+  extern EXT_C void set_config(void*, u32, u32);
+	extern EXT_C void _get_config(void*, u32, u32*);
+	u32 get_config(void* base, u32 offset){
+    u32 data = 0;
+    _get_config(base, offset, &data);
+    return data;
+  }
   static inline void flush_cache(void *addr, uint32_t bytes) {} // Do nothing
 
 #else
@@ -67,11 +72,11 @@ extern EXT_C u64 sim_addr_32to64(u32 addr){
   return (u64)addr - (u64)MEM_BASEADDR + (u64)&mem_phy;
 }
 
-extern EXT_C u8 get_byte_a32 (u32 addr_32){
+extern EXT_C void get_byte_a32 (u32 addr_32, u8* data){
   u64 addr = sim_addr_32to64(addr_32);
   u8 val = *(u8*restrict)addr;
   //debug_printf("get_byte_a32: addr32:0x%x, addr64:0x%lx, val:0x%x\n", addr_32, addr, val);
-  return val;
+  *data = val;
 }
 
 extern EXT_C void set_byte_a32 (u32 addr_32, u8 data){
