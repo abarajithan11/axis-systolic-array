@@ -93,25 +93,10 @@ module top_tb;
   initial forever #(CLK_PERIOD/2) clk = ~clk;
 
 `ifdef VERILATOR
-  // export "DPI-C" function get_config;
-  // export "DPI-C" function set_config;
-  // import "DPI-C" context function byte get_byte_a32 (int unsigned addr);
-  // import "DPI-C" context function void set_byte_a32 (int unsigned addr, byte data);
-  // import "DPI-C" context function chandle get_mp ();
-  // // import "DPI-C" context function void print_output (chandle mem_ptr_virtual);
-  // import "DPI-C" context function bit run(chandle mem_ptr_virtual, chandle p_config);
-
-
-  // function automatic int get_config(chandle config_base, input int offset);
-  //   return dut.TOP.CONTROLLER.cfg [offset];
-  // endfunction
-
-
-  // function automatic set_config(chandle config_base, input int offset, input int data);
-  //   dut.TOP.CONTROLLER.cfg [offset] <= data;
-  // endfunction
-
+  `define AUTOMATIC
 `else
+  `define AUTOMATIC automatic
+`endif
 
   export "DPI-C" task _get_config;
   export "DPI-C" task set_config;
@@ -119,7 +104,7 @@ module top_tb;
   import "DPI-C" context task set_byte_a32 (input int unsigned addr, input byte data);
   import "DPI-C" context function chandle get_mp ();
   // import "DPI-C" context task void print_output (chandle mem_ptr_virtual);
-  import "DPI-C" context function bit run(input chandle mem_ptr_virtual, input chandle p_config);
+  import "DPI-C" context task `AUTOMATIC run(input chandle mem_ptr_virtual, input chandle p_config, ref int done);
 
 
   task automatic _get_config(input chandle config_base, input int offset, output int data);
@@ -131,9 +116,8 @@ module top_tb;
     dut.TOP.CONTROLLER.cfg [offset] <= data;
   endtask
 
-`endif
-
 byte tmp_byte;
+int done = 0;
 logic [AXI_WIDTH-1:0] tmp_data;
 
   always_ff @(posedge clk) begin : Axi_rw
@@ -185,7 +169,11 @@ logic [AXI_WIDTH-1:0] tmp_data;
     rstn <= 1;
     mem_ptr_virtual = get_mp();
     
-    while (run(mem_ptr_virtual, cfg_ptr_virtual)) @(posedge clk) #10ps;
+    while (done == 0) begin
+      run(mem_ptr_virtual, cfg_ptr_virtual, done);
+      @(posedge clk) #10ps;
+    end
+    done = 0;
 
 
     // Read from output & expected and compare

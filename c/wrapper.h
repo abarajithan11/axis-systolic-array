@@ -104,7 +104,10 @@ u32 addr_64to32 (void* addr){
   // if sim, return. so SV can pass time, and call again, which will jump to DMA_WAIT again
   #define WAIT(cond, LABEL) do { \
       LABEL: \
-      if (cond) return 1; \
+      if (cond) {  \
+        *done = 0; \
+        return;    \
+      } \
     } while(0)
 #else
   #define WAIT_INIT(...)
