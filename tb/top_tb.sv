@@ -54,13 +54,13 @@ module top_tb;
 
   logic                          mm2s_0_ren;
   logic [AXI_ADDR_WIDTH-LSB-1:0] mm2s_0_addr;
-  logic [AXI_WIDTH    -1:0]      mm2s_0_data=0;
+  logic [AXI_WIDTH    -1:0]      mm2s_0_data;
   logic                          mm2s_1_ren;
   logic [AXI_ADDR_WIDTH-LSB-1:0] mm2s_1_addr;
-  logic [AXI_WIDTH    -1:0]      mm2s_1_data=0;
+  logic [AXI_WIDTH    -1:0]      mm2s_1_data;
   logic                          mm2s_2_ren;
   logic [AXI_ADDR_WIDTH-LSB-1:0] mm2s_2_addr;
-  logic [AXI_WIDTH    -1:0]      mm2s_2_data=0;
+  logic [AXI_WIDTH    -1:0]      mm2s_2_data;
 
   logic                          s2mm_wen;
   logic [AXI_ADDR_WIDTH-LSB-1:0] s2mm_addr;
