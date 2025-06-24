@@ -119,8 +119,8 @@ module top_tb;
 
   export "DPI-C" task _get_config;
   export "DPI-C" task set_config;
-  import "DPI-C" context task get_byte_a32 (input int unsigned addr, output byte data);
-  import "DPI-C" context task set_byte_a32 (input int unsigned addr, input byte data);
+  import "DPI-C" context function byte get_byte_a32 (input int unsigned addr);
+  import "DPI-C" context function void  set_byte_a32 (input int unsigned addr, input byte data);
   import "DPI-C" context function chandle get_mp ();
   // import "DPI-C" context task void print_output (chandle mem_ptr_virtual);
   import "DPI-C" context task `AUTOMATIC run(input chandle mem_ptr_virtual, input chandle p_config);
@@ -202,24 +202,21 @@ logic [AXI_WIDTH-1:0] tmp_data;
 
     if (mm2s_0_ren) begin
       for (int i = 0; i < AXI_WIDTH/8; i++) begin
-        get_byte_a32((32'(mm2s_0_addr) << LSB) + i, tmp_byte);
-        tmp_data[i*8 +: 8] = tmp_byte;
+        tmp_data[i*8 +: 8] = get_byte_a32((32'(mm2s_0_addr) << LSB) + i);
       end
       mm2s_0_data <= tmp_data;
     end
 
     if (mm2s_1_ren) begin
       for (int i = 0; i < AXI_WIDTH/8; i++) begin
-        get_byte_a32((32'(mm2s_1_addr) << LSB) + i, tmp_byte);
-        tmp_data[i*8 +: 8] = tmp_byte;
+        tmp_data[i*8 +: 8] = get_byte_a32((32'(mm2s_1_addr) << LSB) + i);
       end
       mm2s_1_data <= tmp_data;
     end
 
     if (mm2s_2_ren) begin
       for (int i = 0; i < AXI_WIDTH/8; i++) begin
-        get_byte_a32((32'(mm2s_2_addr) << LSB) + i, tmp_byte);
-        tmp_data[i*8 +: 8] = tmp_byte;
+        tmp_data[i*8 +: 8] = get_byte_a32((32'(mm2s_2_addr) << LSB) + i);
       end
       mm2s_2_data <= tmp_data;
     end
