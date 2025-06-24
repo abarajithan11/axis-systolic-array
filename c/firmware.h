@@ -28,14 +28,12 @@ typedef struct {
 
 #include "wrapper.h"
 
-extern EXT_C void run(Memory_st *restrict mp, void *p_config, int *done) {
+extern EXT_C void run(Memory_st *restrict mp, void *p_config) {
  
   #ifdef SIM // only read/write files in simulation
     FILE *fp;
     char f_path [1000];
     int bytes;
-
-    WAIT_INIT(DMA_WAIT);
 
     sprintf(f_path, "%s/kxa.bin", DIR);
     fp = fopen(f_path, "rb");
@@ -56,8 +54,7 @@ extern EXT_C void run(Memory_st *restrict mp, void *p_config, int *done) {
   set_config(p_config, A_S2MM_BYTES  ,      sizeof(mem_phy.y));
   set_config(p_config, A_START       , 1);  // Start
 
-
-  WAIT(!(get_config(p_config, A_S2MM_DONE)), DMA_WAIT);
+  while (!(get_config(p_config, A_S2MM_DONE))) {}
 
   #ifdef SIM
     sprintf(f_path, "%s/y.bin", DIR);
@@ -67,7 +64,6 @@ extern EXT_C void run(Memory_st *restrict mp, void *p_config, int *done) {
     bytes = fwrite(mp->y, 1, sizeof(mem_phy.y), fp);
     fclose(fp);
   #endif
-  *done = 1;
 }
 
 

@@ -24,7 +24,7 @@ module top_tb;
     AXI_ADDR_WIDTH      = 32                 ,
     AXIL_WIDTH          = 32                 ,
     AXIL_ADDR_WIDTH     = 40                 ,
-    STRB_WIDTH          = 4                  ,
+    AXIL_STRB_WIDTH     = 4                  ,
     DATA_WR_WIDTH       = AXIL_WIDTH         ,
     DATA_RD_WIDTH       = AXIL_WIDTH         ,
     LSB                 = $clog2(AXI_WIDTH)-3;
@@ -32,25 +32,44 @@ module top_tb;
 
   // SIGNALS
   logic rstn = 0;
-  logic [AXIL_ADDR_WIDTH-1:0]s_axil_awaddr =0;
-  logic [2:0]                s_axil_awprot =0;
-  logic                      s_axil_awvalid=0;
-  logic                      s_axil_awready;
-  logic [DATA_WR_WIDTH-1:0]  s_axil_wdata =0;
-  logic [STRB_WIDTH-1:0]     s_axil_wstrb =0;
-  logic                      s_axil_wvalid=0;
-  logic                      s_axil_wready;
-  logic [1:0]                s_axil_bresp;
-  logic                      s_axil_bvalid;
-  logic                      s_axil_bready =0;
-  logic [AXIL_ADDR_WIDTH-1:0]s_axil_araddr =0;
-  logic [2:0]                s_axil_arprot =0;
-  logic                      s_axil_arvalid=0;
-  logic                      s_axil_arready;
-  logic [DATA_RD_WIDTH-1:0]  s_axil_rdata;
-  logic [1:0]                s_axil_rresp;
-  logic                      s_axil_rvalid;
-  logic                      s_axil_rready=0;
+  /* 
+    AXI Slave
+  */
+  logic [AXI_ID_WIDTH-1:0]     s_axi_awid   =0;
+  logic [AXIL_ADDR_WIDTH-1:0]  s_axi_awaddr =0;
+  logic [7:0]                  s_axi_awlen  =0;
+  logic [2:0]                  s_axi_awsize =0;
+  logic [1:0]                  s_axi_awburst=0;
+  logic                        s_axi_awlock =0;
+  logic [3:0]                  s_axi_awcache=0;
+  logic [2:0]                  s_axi_awprot =0;
+  logic                        s_axi_awvalid=0;
+  logic                        s_axi_awready=0;
+  logic [AXIL_WIDTH-1:0]       s_axi_wdata  =0;
+  logic [AXIL_STRB_WIDTH-1:0]  s_axi_wstrb  =0;
+  logic                        s_axi_wlast  =0;
+  logic                        s_axi_wvalid =0;
+  logic                        s_axi_wready ;
+  logic [AXI_ID_WIDTH-1:0]     s_axi_bid    ;
+  logic [1:0]                  s_axi_bresp  ;
+  logic                        s_axi_bvalid ;
+  logic                        s_axi_bready =0;
+  logic [AXI_ID_WIDTH-1:0]     s_axi_arid   =0;
+  logic [AXIL_ADDR_WIDTH-1:0]  s_axi_araddr =0;
+  logic [7:0]                  s_axi_arlen  =0;
+  logic [2:0]                  s_axi_arsize =0;
+  logic [1:0]                  s_axi_arburst=0;
+  logic                        s_axi_arlock =0;
+  logic [3:0]                  s_axi_arcache=0;
+  logic [2:0]                  s_axi_arprot =0;
+  logic                        s_axi_arvalid=0;
+  logic                        s_axi_arready;
+  logic [AXI_ID_WIDTH-1:0]     s_axi_rid    ;
+  logic [AXIL_WIDTH-1:0]       s_axi_rdata  ;
+  logic [1:0]                  s_axi_rresp  ;
+  logic                        s_axi_rlast  ;
+  logic                        s_axi_rvalid ;
+  logic                        s_axi_rready =0;
 
   logic                          mm2s_0_ren;
   logic [AXI_ADDR_WIDTH-LSB-1:0] mm2s_0_addr;
@@ -85,7 +104,7 @@ module top_tb;
     .AXI_ADDR_WIDTH    (AXI_ADDR_WIDTH   ), 
     .AXIL_WIDTH        (AXIL_WIDTH       ), 
     .AXIL_ADDR_WIDTH   (AXIL_ADDR_WIDTH  ), 
-    .STRB_WIDTH        (STRB_WIDTH       ), 
+    .AXIL_STRB_WIDTH   (AXIL_STRB_WIDTH  ), 
     .AXIL_BASE_ADDR    (AXIL_BASE_ADDR   ) 
   ) dut(.*);
 
@@ -104,20 +123,79 @@ module top_tb;
   import "DPI-C" context task set_byte_a32 (input int unsigned addr, input byte data);
   import "DPI-C" context function chandle get_mp ();
   // import "DPI-C" context task void print_output (chandle mem_ptr_virtual);
-  import "DPI-C" context task `AUTOMATIC run(input chandle mem_ptr_virtual, input chandle p_config, ref int done);
+  import "DPI-C" context task `AUTOMATIC run(input chandle mem_ptr_virtual, input chandle p_config);
+
+  task axi_write(input logic [AXIL_ADDR_WIDTH-1:0] addr, input logic [AXIL_WIDTH-1:0] data);
+    begin
+      @(posedge clk) #10ps;
+      s_axi_awid     <= 4'h1;
+      s_axi_awaddr   <= addr;
+      s_axi_awlen    <= 8'd0;
+      s_axi_awsize   <= 3'd2; // 4 bytes
+      s_axi_awburst  <= 2'b01;
+      s_axi_awlock   <= 0;
+      s_axi_awcache  <= 0;
+      s_axi_awprot   <= 0;
+      s_axi_awvalid  <= 1;
+
+      wait (s_axi_awready);
+      @(posedge clk) #10ps;
+      s_axi_awvalid <= 0;
+
+      s_axi_wdata   <= data;
+      s_axi_wstrb   <= 4'hF;
+      s_axi_wlast   <= 1;
+      s_axi_wvalid  <= 1;
+
+      wait (s_axi_wready);
+      @(posedge clk) #10ps;
+      s_axi_wvalid <= 0;
+
+      s_axi_bready <= 1;
+      wait (s_axi_bvalid);
+      @(posedge clk) #10ps;
+      s_axi_bready <= 0;
+    end
+  endtask
+
+  task axi_read(input logic [AXIL_ADDR_WIDTH-1:0] addr, output logic [AXIL_WIDTH-1:0] rdata);
+    begin
+      @(posedge clk) #10ps;
+      s_axi_arid     <= 4'h1;
+      s_axi_araddr   <= addr;
+      s_axi_arlen    <= 8'd0;
+      s_axi_arsize   <= 3'd2;
+      s_axi_arburst  <= 2'b01;
+      s_axi_arlock   <= 0;
+      s_axi_arcache  <= 0;
+      s_axi_arprot   <= 0;
+      s_axi_arvalid  <= 1;
+
+      wait (s_axi_arready) #10ps;
+      @(posedge clk);
+      s_axi_arvalid <= 0;
+
+      s_axi_rready <= 1;
+      wait (s_axi_rvalid);
+      rdata = s_axi_rdata;
+      @(posedge clk) #10ps;
+      s_axi_rready <= 0;
+    end
+  endtask
 
 
   task automatic _get_config(input chandle config_base, input int offset, output int data);
-    data = dut.TOP.CONTROLLER.cfg [offset];
+    // data = dut.TOP.CONTROLLER.cfg [offset];
+    axi_read(AXIL_BASE_ADDR + (offset * 4), data);
   endtask
 
 
   task automatic set_config(input chandle config_base, input int offset, input int data);
-    dut.TOP.CONTROLLER.cfg [offset] <= data;
+    // dut.TOP.CONTROLLER.cfg [offset] <= data;
+    axi_write(AXIL_BASE_ADDR + (offset * 4), data);
   endtask
 
 byte tmp_byte;
-int done = 0;
 logic [AXI_WIDTH-1:0] tmp_data;
 
   always_ff @(posedge clk) begin : Axi_rw
@@ -168,12 +246,8 @@ logic [AXI_WIDTH-1:0] tmp_data;
     repeat(2) @(posedge clk) #10ps;
     rstn <= 1;
     mem_ptr_virtual = get_mp();
-    
-    while (done == 0) begin
-      run(mem_ptr_virtual, cfg_ptr_virtual, done);
-      @(posedge clk) #10ps;
-    end
-    done = 0;
+
+    run(mem_ptr_virtual, cfg_ptr_virtual);
 
 
     // Read from output & expected and compare

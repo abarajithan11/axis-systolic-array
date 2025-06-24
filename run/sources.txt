@@ -12,6 +12,9 @@ config.svh
 ../../rtl/ext/alex_axilite_wr.sv
 ../../rtl/ext/alex_axis_adapter.sv
 ../../rtl/ext/alex_axis_adapter_any.sv
+../../rtl/ext/axi_axil_adapter_rd.sv
+../../rtl/ext/axi_axil_adapter_wr.sv
+../../rtl/ext/axi_axil_adapter.sv
 ../../tb/top_ram.sv
 ../../tb/top_tb.sv
 ../../tb/ext/axi_addr.v
