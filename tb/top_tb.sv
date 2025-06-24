@@ -113,6 +113,8 @@ module top_tb;
 
 `ifdef VERILATOR
   `define AUTOMATIC
+`elsif XCELIUM
+  `define AUTOMATIC
 `else
   `define AUTOMATIC automatic
 `endif
