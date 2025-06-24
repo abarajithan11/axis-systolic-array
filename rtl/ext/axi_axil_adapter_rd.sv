@@ -175,30 +175,30 @@ assign m_axil_arprot = m_axil_arprot_reg;
 assign m_axil_arvalid = m_axil_arvalid_reg;
 assign m_axil_rready = m_axil_rready_reg;
 
-always @* begin
-    state_next = STATE_IDLE;
+if (SEGMENT_COUNT == 1) begin
+    always @* begin
+        state_next = STATE_IDLE;
 
-    id_next = id_reg;
-    addr_next = addr_reg;
-    data_next = data_reg;
-    resp_next = resp_reg;
-    burst_next = burst_reg;
-    burst_size_next = burst_size_reg;
-    master_burst_next = master_burst_reg;
-    master_burst_size_next = master_burst_size_reg;
+        id_next = id_reg;
+        addr_next = addr_reg;
+        data_next = data_reg;
+        resp_next = resp_reg;
+        burst_next = burst_reg;
+        burst_size_next = burst_size_reg;
+        master_burst_next = master_burst_reg;
+        master_burst_size_next = master_burst_size_reg;
 
-    s_axi_arready_next = 1'b0;
-    s_axi_rid_next = s_axi_rid_reg;
-    s_axi_rdata_next = s_axi_rdata_reg;
-    s_axi_rresp_next = s_axi_rresp_reg;
-    s_axi_rlast_next = s_axi_rlast_reg;
-    s_axi_rvalid_next = s_axi_rvalid_reg && !s_axi_rready;
-    m_axil_araddr_next = m_axil_araddr_reg;
-    m_axil_arprot_next = m_axil_arprot_reg;
-    m_axil_arvalid_next = m_axil_arvalid_reg && !m_axil_arready;
-    m_axil_rready_next = 1'b0;
+        s_axi_arready_next = 1'b0;
+        s_axi_rid_next = s_axi_rid_reg;
+        s_axi_rdata_next = s_axi_rdata_reg;
+        s_axi_rresp_next = s_axi_rresp_reg;
+        s_axi_rlast_next = s_axi_rlast_reg;
+        s_axi_rvalid_next = s_axi_rvalid_reg && !s_axi_rready;
+        m_axil_araddr_next = m_axil_araddr_reg;
+        m_axil_arprot_next = m_axil_arprot_reg;
+        m_axil_arvalid_next = m_axil_arvalid_reg && !m_axil_arready;
+        m_axil_rready_next = 1'b0;
 
-    if (SEGMENT_COUNT == 1) begin
         // master output is same width; direct transfer with no splitting/merging
         case (state_reg)
             STATE_IDLE: begin
@@ -250,8 +250,31 @@ always @* begin
                 end
             end
         endcase
-    end else if (EXPAND) begin
+    end
+end else if (EXPAND) begin
         // master output is wider; split reads
+    always @* begin
+        state_next = STATE_IDLE;
+
+        id_next = id_reg;
+        addr_next = addr_reg;
+        data_next = data_reg;
+        resp_next = resp_reg;
+        burst_next = burst_reg;
+        burst_size_next = burst_size_reg;
+        master_burst_next = master_burst_reg;
+        master_burst_size_next = master_burst_size_reg;
+
+        s_axi_arready_next = 1'b0;
+        s_axi_rid_next = s_axi_rid_reg;
+        s_axi_rdata_next = s_axi_rdata_reg;
+        s_axi_rresp_next = s_axi_rresp_reg;
+        s_axi_rlast_next = s_axi_rlast_reg;
+        s_axi_rvalid_next = s_axi_rvalid_reg && !s_axi_rready;
+        m_axil_araddr_next = m_axil_araddr_reg;
+        m_axil_arprot_next = m_axil_arprot_reg;
+        m_axil_arvalid_next = m_axil_arvalid_reg && !m_axil_arready;
+        m_axil_rready_next = 1'b0;
         case (state_reg)
             STATE_IDLE: begin
                 // idle state; wait for new burst
@@ -370,8 +393,31 @@ always @* begin
                 end
             end
         endcase
-    end else begin
-        // master output is narrower; merge reads and possibly split burst
+    end
+end else begin
+    // master output is narrower; merge reads and possibly split burst
+    always @* begin
+        state_next = STATE_IDLE;
+
+        id_next = id_reg;
+        addr_next = addr_reg;
+        data_next = data_reg;
+        resp_next = resp_reg;
+        burst_next = burst_reg;
+        burst_size_next = burst_size_reg;
+        master_burst_next = master_burst_reg;
+        master_burst_size_next = master_burst_size_reg;
+
+        s_axi_arready_next = 1'b0;
+        s_axi_rid_next = s_axi_rid_reg;
+        s_axi_rdata_next = s_axi_rdata_reg;
+        s_axi_rresp_next = s_axi_rresp_reg;
+        s_axi_rlast_next = s_axi_rlast_reg;
+        s_axi_rvalid_next = s_axi_rvalid_reg && !s_axi_rready;
+        m_axil_araddr_next = m_axil_araddr_reg;
+        m_axil_arprot_next = m_axil_arprot_reg;
+        m_axil_arvalid_next = m_axil_arvalid_reg && !m_axil_arready;
+        m_axil_rready_next = 1'b0;
         case (state_reg)
             STATE_IDLE: begin
                 // idle state; wait for new burst
