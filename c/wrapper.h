@@ -31,11 +31,12 @@ typedef double   f64;
 
   Memory_st mem_phy;
   extern EXT_C void set_config(void*, u32, u32);
-	extern EXT_C void _get_config(void*, u32, u32*);
+	extern EXT_C void task_get_config(void*, u32);
+	extern EXT_C u32  fn_get_config();
+
 	u32 get_config(void* base, u32 offset){
-    u32 data = 0;
-    _get_config(base, offset, &data);
-    return data;
+    task_get_config(base, offset);
+    return fn_get_config();
   }
   static inline void flush_cache(void *addr, uint32_t bytes) {} // Do nothing
 

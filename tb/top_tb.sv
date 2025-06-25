@@ -119,7 +119,8 @@ module top_tb;
   `define AUTOMATIC automatic
 `endif
 
-  export "DPI-C" task _get_config;
+  export "DPI-C" task task_get_config;
+  export "DPI-C" function fn_get_config;
   export "DPI-C" task set_config;
   import "DPI-C" context function byte get_byte_a32 (input int unsigned addr);
   import "DPI-C" context function void  set_byte_a32 (input int unsigned addr, input byte data);
@@ -185,15 +186,18 @@ module top_tb;
     end
   endtask
 
-
-  task automatic _get_config(input chandle config_base, input int offset, output int data);
-    // data = dut.TOP.CONTROLLER.cfg [offset];
-    axi_read(AXIL_BASE_ADDR + (offset * 4), data);
+  int tmp_get_data;
+  task automatic task_get_config(input chandle config_base, input int offset);
+    // @(posedge clk) tmp_get_data = dut.TOP.CONTROLLER.cfg [offset];
+    axi_read(AXIL_BASE_ADDR + (offset * 4), tmp_get_data);
   endtask
 
+  function automatic int fn_get_config();
+    return tmp_get_data;
+  endfunction
 
   task automatic set_config(input chandle config_base, input int offset, input int data);
-    // dut.TOP.CONTROLLER.cfg [offset] <= data;
+    // @(posedge clk) #10ps dut.TOP.CONTROLLER.cfg [offset] <= data;
     axi_write(AXIL_BASE_ADDR + (offset * 4), data);
   endtask
 
