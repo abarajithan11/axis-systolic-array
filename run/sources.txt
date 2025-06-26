@@ -15,14 +15,6 @@ config.svh
 ../../rtl/ext/axi_axil_adapter_rd.sv
 ../../rtl/ext/axi_axil_adapter_wr.sv
 ../../rtl/ext/axi_axil_adapter.sv
-../../rtl/ext/axi_crossbar.sv
-../../rtl/ext/axi_crossbar_rd.sv
-../../rtl/ext/axi_crossbar_wr.sv
-../../rtl/ext/axi_crossbar_addr.sv
-../../rtl/ext/arbiter.sv
-../../rtl/ext/priority_encoder.sv
-../../rtl/ext/axi_register_wr.sv
-../../rtl/ext/axi_register_rd.sv
 ../../tb/top_ram.sv
 ../../tb/top_tb.sv
 ../../tb/ext/axi_addr.v

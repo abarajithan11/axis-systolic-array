@@ -89,175 +89,6 @@ module top_ram #(
     output wire  [AXI_WIDTH/8-1:0]         s2mm_strb
 );
 
-    logic [AXI_ID_WIDTH-1:0]     m_axi_awid   ;
-    logic [AXIL_ADDR_WIDTH-1:0]  m_axi_awaddr ;
-    logic [7:0]                  m_axi_awlen  ;
-    logic [2:0]                  m_axi_awsize ;
-    logic [1:0]                  m_axi_awburst;
-    logic                        m_axi_awlock ;
-    logic [3:0]                  m_axi_awcache;
-    logic [2:0]                  m_axi_awprot ;
-    logic                        m_axi_awvalid;
-    logic                        m_axi_awready;
-    logic [AXIL_WIDTH-1:0]       m_axi_wdata  ;
-    logic [AXIL_STRB_WIDTH-1:0]  m_axi_wstrb  ;
-    logic                        m_axi_wlast  ;
-    logic                        m_axi_wvalid ;
-    logic                        m_axi_wready ;
-    logic [AXI_ID_WIDTH-1:0]     m_axi_bid    ;
-    logic [1:0]                  m_axi_bresp  ;
-    logic                        m_axi_bvalid ;
-    logic                        m_axi_bready ;
-    logic [AXI_ID_WIDTH-1:0]     m_axi_arid   ;
-    logic [AXIL_ADDR_WIDTH-1:0]  m_axi_araddr ;
-    logic [7:0]                  m_axi_arlen  ;
-    logic [2:0]                  m_axi_arsize ;
-    logic [1:0]                  m_axi_arburst;
-    logic                        m_axi_arlock ;
-    logic [3:0]                  m_axi_arcache;
-    logic [2:0]                  m_axi_arprot ;
-    logic                        m_axi_arvalid;
-    logic                        m_axi_arready;
-    logic [AXI_ID_WIDTH-1:0]     m_axi_rid    ;
-    logic [AXIL_WIDTH-1:0]       m_axi_rdata  ;
-    logic [1:0]                  m_axi_rresp  ;
-    logic                        m_axi_rlast  ;
-    logic                        m_axi_rvalid ;
-    logic                        m_axi_rready ;
-
-    axi_crossbar #(
-        .S_COUNT         (1                             ),
-        .M_COUNT         (1                             ),
-        .DATA_WIDTH      (AXIL_WIDTH                    ),
-        .ADDR_WIDTH      (AXIL_ADDR_WIDTH               ),
-        .STRB_WIDTH      (AXIL_STRB_WIDTH               ),
-        .S_ID_WIDTH      (AXI_ID_WIDTH                  ),
-        .M_ID_WIDTH      (AXI_ID_WIDTH                  ),
-        .AWUSER_ENABLE   (0                             ),
-        .AWUSER_WIDTH    (1                             ),
-        .WUSER_ENABLE    (0                             ),
-        .WUSER_WIDTH     (1                             ),
-        .BUSER_ENABLE    (0                             ),
-        .BUSER_WIDTH     (1                             ),
-        .ARUSER_ENABLE   (0                             ),
-        .ARUSER_WIDTH    (1                             ),
-        .RUSER_ENABLE    (0                             ),
-        .RUSER_WIDTH     (1                             ),
-        // .S_THREADS       ({S_COUNT{32'd2}}              ),
-        // .S_ACCEPT        ({S_COUNT{32'd16}}             ),
-        .M_REGIONS       (1                             ),
-        .M_BASE_ADDR     (0                             ),
-        .M_ADDR_WIDTH    (AXIL_ADDR_WIDTH               )
-        // .M_CONNECT_READ  ({M_COUNT{{S_COUNT{1'b1}}}}    ),
-        // .M_CONNECT_WRITE ({M_COUNT{{S_COUNT{1'b1}}}}    ),
-        // .M_ISSUE         ({M_COUNT{32'd4}}              ),
-        // .M_SECURE        ({M_COUNT{1'b0}}               ),
-        // .S_AW_REG_TYPE   ({S_COUNT{2'd0}}               ),
-        // .S_W_REG_TYPE    ({S_COUNT{2'd0}}               ),
-        // .S_B_REG_TYPE    ({S_COUNT{2'd1}}               ),
-        // .S_AR_REG_TYPE   ({S_COUNT{2'd0}}               ),
-        // .S_R_REG_TYPE    ({S_COUNT{2'd2}}               ),
-        // .M_AW_REG_TYPE   ({M_COUNT{2'd1}}               ),
-        // .M_W_REG_TYPE    ({M_COUNT{2'd2}}               ),
-        // .M_B_REG_TYPE    ({M_COUNT{2'd0}}               ),
-        // .M_AR_REG_TYPE   ({M_COUNT{2'd1}}               ),
-        // .M_R_REG_TYPE    ({M_COUNT{2'd0}}               )
-    ) AXI_INTC (
-        .clk           (clk),
-        .rstn          (rstn),
-        
-        .s_axi_awqos   ('0),
-        .s_axi_awuser  ('0),
-        .s_axi_wuser   ('0),
-        .s_axi_buser   (),
-        .s_axi_arqos   ('0),
-        .s_axi_aruser  ('0),
-        .s_axi_ruser   (),
-
-        .m_axi_awqos   (),
-        .m_axi_awuser  (),
-        .m_axi_wuser   (),
-        .m_axi_buser   (),
-        .m_axi_arqos   (),
-        .m_axi_aruser  (),
-        .m_axi_ruser   ('0),
-        .m_axi_awregion(),
-        .m_axi_arregion(),
-
-        .s_axi_awid    ({s_axi_awid   }),
-        .s_axi_awaddr  ({s_axi_awaddr }),
-        .s_axi_awlen   ({s_axi_awlen  }),
-        .s_axi_awsize  ({s_axi_awsize }),
-        .s_axi_awburst ({s_axi_awburst}),
-        .s_axi_awlock  ({s_axi_awlock }),
-        .s_axi_awcache ({s_axi_awcache}),
-        .s_axi_awprot  ({s_axi_awprot }),
-        .s_axi_awvalid ({s_axi_awvalid}),
-        .s_axi_awready ({s_axi_awready}),
-        .s_axi_wdata   ({s_axi_wdata  }),
-        .s_axi_wstrb   ({s_axi_wstrb  }),
-        .s_axi_wlast   ({s_axi_wlast  }),
-        .s_axi_wvalid  ({s_axi_wvalid }),
-        .s_axi_wready  ({s_axi_wready }),
-        .s_axi_bid     ({s_axi_bid    }),
-        .s_axi_bresp   ({s_axi_bresp  }),
-        .s_axi_bvalid  ({s_axi_bvalid }),
-        .s_axi_bready  ({s_axi_bready }),
-        .s_axi_arid    ({s_axi_arid   }),
-        .s_axi_araddr  ({s_axi_araddr }),
-        .s_axi_arlen   ({s_axi_arlen  }),
-        .s_axi_arsize  ({s_axi_arsize }),
-        .s_axi_arburst ({s_axi_arburst}),
-        .s_axi_arlock  ({s_axi_arlock }),
-        .s_axi_arcache ({s_axi_arcache}),
-        .s_axi_arprot  ({s_axi_arprot }),
-        .s_axi_arvalid ({s_axi_arvalid}),
-        .s_axi_arready ({s_axi_arready}),
-        .s_axi_rid     ({s_axi_rid    }),
-        .s_axi_rdata   ({s_axi_rdata  }),
-        .s_axi_rresp   ({s_axi_rresp  }),
-        .s_axi_rlast   ({s_axi_rlast  }),
-        .s_axi_rvalid  ({s_axi_rvalid }),
-        .s_axi_rready  ({s_axi_rready }),
-
-
-        .m_axi_awid    ({m_axi_awid   }),
-        .m_axi_awaddr  ({m_axi_awaddr }),
-        .m_axi_awlen   ({m_axi_awlen  }),
-        .m_axi_awsize  ({m_axi_awsize }),
-        .m_axi_awburst ({m_axi_awburst}),
-        .m_axi_awlock  ({m_axi_awlock }),
-        .m_axi_awcache ({m_axi_awcache}),
-        .m_axi_awprot  ({m_axi_awprot }),
-        .m_axi_awvalid ({m_axi_awvalid}),
-        .m_axi_awready ({m_axi_awready}),
-        .m_axi_wdata   ({m_axi_wdata  }),
-        .m_axi_wstrb   ({m_axi_wstrb  }),
-        .m_axi_wlast   ({m_axi_wlast  }),
-        .m_axi_wvalid  ({m_axi_wvalid }),
-        .m_axi_wready  ({m_axi_wready }),
-        .m_axi_bid     ({m_axi_bid    }),
-        .m_axi_bresp   ({m_axi_bresp  }),
-        .m_axi_bvalid  ({m_axi_bvalid }),
-        .m_axi_bready  ({m_axi_bready }),
-        .m_axi_arid    ({m_axi_arid   }),
-        .m_axi_araddr  ({m_axi_araddr }),
-        .m_axi_arlen   ({m_axi_arlen  }),
-        .m_axi_arsize  ({m_axi_arsize }),
-        .m_axi_arburst ({m_axi_arburst}),
-        .m_axi_arlock  ({m_axi_arlock }),
-        .m_axi_arcache ({m_axi_arcache}),
-        .m_axi_arprot  ({m_axi_arprot }),
-        .m_axi_arvalid ({m_axi_arvalid}),
-        .m_axi_arready ({m_axi_arready}),
-        .m_axi_rid     ({m_axi_rid    }),
-        .m_axi_rdata   ({m_axi_rdata  }),
-        .m_axi_rresp   ({m_axi_rresp  }),
-        .m_axi_rlast   ({m_axi_rlast  }),
-        .m_axi_rvalid  ({m_axi_rvalid }),
-        .m_axi_rready  ({m_axi_rready })
-    );
-
 // AXI ports from top on-chip module
 
     wire [AXI_ID_WIDTH-1:0]    m_axi_mm2s_0_arid;
@@ -638,41 +469,41 @@ top #(
     .AXIL_STRB_WIDTH  (AXIL_STRB_WIDTH  ),
     .AXIL_BASE_ADDR   (AXIL_BASE_ADDR   )
 ) TOP (
-    .s_axi_awid   (m_axi_awid   ),
-    .s_axi_awaddr (m_axi_awaddr ),
-    .s_axi_awlen  (m_axi_awlen  ),
-    .s_axi_awsize (m_axi_awsize ),
-    .s_axi_awburst(m_axi_awburst),
-    .s_axi_awlock (m_axi_awlock ),
-    .s_axi_awcache(m_axi_awcache),
-    .s_axi_awprot (m_axi_awprot ),
-    .s_axi_awvalid(m_axi_awvalid),
-    .s_axi_awready(m_axi_awready),
-    .s_axi_wdata  (m_axi_wdata  ),
-    .s_axi_wstrb  (m_axi_wstrb  ),
-    .s_axi_wlast  (m_axi_wlast  ),
-    .s_axi_wvalid (m_axi_wvalid ),
-    .s_axi_wready (m_axi_wready ),
-    .s_axi_bid    (m_axi_bid    ),
-    .s_axi_bresp  (m_axi_bresp  ),
-    .s_axi_bvalid (m_axi_bvalid ),
-    .s_axi_bready (m_axi_bready ),
-    .s_axi_arid   (m_axi_arid   ),
-    .s_axi_araddr (m_axi_araddr ),
-    .s_axi_arlen  (m_axi_arlen  ),
-    .s_axi_arsize (m_axi_arsize ),
-    .s_axi_arburst(m_axi_arburst),
-    .s_axi_arlock (m_axi_arlock ),
-    .s_axi_arcache(m_axi_arcache),
-    .s_axi_arprot (m_axi_arprot ),
-    .s_axi_arvalid(m_axi_arvalid),
-    .s_axi_arready(m_axi_arready),
-    .s_axi_rid    (m_axi_rid    ),
-    .s_axi_rdata  (m_axi_rdata  ),
-    .s_axi_rresp  (m_axi_rresp  ),
-    .s_axi_rlast  (m_axi_rlast  ),
-    .s_axi_rvalid (m_axi_rvalid ),
-    .s_axi_rready (m_axi_rready ),
+    .s_axi_awid   (s_axi_awid   ),
+    .s_axi_awaddr (s_axi_awaddr ),
+    .s_axi_awlen  (s_axi_awlen  ),
+    .s_axi_awsize (s_axi_awsize ),
+    .s_axi_awburst(s_axi_awburst),
+    .s_axi_awlock (s_axi_awlock ),
+    .s_axi_awcache(s_axi_awcache),
+    .s_axi_awprot (s_axi_awprot ),
+    .s_axi_awvalid(s_axi_awvalid),
+    .s_axi_awready(s_axi_awready),
+    .s_axi_wdata  (s_axi_wdata  ),
+    .s_axi_wstrb  (s_axi_wstrb  ),
+    .s_axi_wlast  (s_axi_wlast  ),
+    .s_axi_wvalid (s_axi_wvalid ),
+    .s_axi_wready (s_axi_wready ),
+    .s_axi_bid    (s_axi_bid    ),
+    .s_axi_bresp  (s_axi_bresp  ),
+    .s_axi_bvalid (s_axi_bvalid ),
+    .s_axi_bready (s_axi_bready ),
+    .s_axi_arid   (s_axi_arid   ),
+    .s_axi_araddr (s_axi_araddr ),
+    .s_axi_arlen  (s_axi_arlen  ),
+    .s_axi_arsize (s_axi_arsize ),
+    .s_axi_arburst(s_axi_arburst),
+    .s_axi_arlock (s_axi_arlock ),
+    .s_axi_arcache(s_axi_arcache),
+    .s_axi_arprot (s_axi_arprot ),
+    .s_axi_arvalid(s_axi_arvalid),
+    .s_axi_arready(s_axi_arready),
+    .s_axi_rid    (s_axi_rid    ),
+    .s_axi_rdata  (s_axi_rdata  ),
+    .s_axi_rresp  (s_axi_rresp  ),
+    .s_axi_rlast  (s_axi_rlast  ),
+    .s_axi_rvalid (s_axi_rvalid ),
+    .s_axi_rready (s_axi_rready ),
     .*
 );
 
