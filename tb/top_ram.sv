@@ -29,46 +29,119 @@ module top_ram #(
         DIR               = "./",
 
     localparam  LSB = $clog2(AXI_WIDTH)-3
-)();
+)(
+    input  logic                   clk,
+    input  logic                   rstn,
+    output logic                   done,
 
-    logic clk = 0, rstn;
-    initial forever #(CLK_PERIOD/2) clk = ~clk;
-
-    logic [AXI_ID_WIDTH-1:0]     s_axi_awid   ;
-    logic [AXIL_ADDR_WIDTH-1:0]  s_axi_awaddr ;
-    logic [7:0]                  s_axi_awlen  ;
-    logic [2:0]                  s_axi_awsize ;
-    logic [1:0]                  s_axi_awburst;
-    logic                        s_axi_awlock ;
-    logic [3:0]                  s_axi_awcache;
-    logic [2:0]                  s_axi_awprot ;
-    logic                        s_axi_awvalid;
-    logic                        s_axi_awready;
-    logic [AXIL_WIDTH-1:0]       s_axi_wdata  ;
-    logic [AXIL_STRB_WIDTH-1:0]  s_axi_wstrb  ;
-    logic                        s_axi_wlast  ;
-    logic                        s_axi_wvalid ;
-    logic                        s_axi_wready ;
-    logic [AXI_ID_WIDTH-1:0]     s_axi_bid    ;
-    logic [1:0]                  s_axi_bresp  ;
-    logic                        s_axi_bvalid ;
-    logic                        s_axi_bready ;
-    logic [AXI_ID_WIDTH-1:0]     s_axi_arid   ;
-    logic [AXIL_ADDR_WIDTH-1:0]  s_axi_araddr ;
-    logic [7:0]                  s_axi_arlen  ;
-    logic [2:0]                  s_axi_arsize ;
-    logic [1:0]                  s_axi_arburst;
-    logic                        s_axi_arlock ;
-    logic [3:0]                  s_axi_arcache;
-    logic [2:0]                  s_axi_arprot ;
-    logic                        s_axi_arvalid;
-    logic                        s_axi_arready;
-    logic [AXI_ID_WIDTH-1:0]     s_axi_rid    ;
-    logic [AXIL_WIDTH-1:0]       s_axi_rdata  ;
-    logic [1:0]                  s_axi_rresp  ;
-    logic                        s_axi_rlast  ;
-    logic                        s_axi_rvalid ;
-    logic                        s_axi_rready ;
+    // AXI Slave
+    output logic [AXI_ID_WIDTH-1:0]     s_axi_awid   ,
+    output logic [AXIL_ADDR_WIDTH-1:0]  s_axi_awaddr ,
+    output logic [7:0]                  s_axi_awlen  ,
+    output logic [2:0]                  s_axi_awsize ,
+    output logic [1:0]                  s_axi_awburst,
+    output logic                        s_axi_awlock ,
+    output logic [3:0]                  s_axi_awcache,
+    output logic [2:0]                  s_axi_awprot ,
+    output logic                        s_axi_awvalid,
+    input  logic                        s_axi_awready,
+    output logic [AXIL_WIDTH-1:0]       s_axi_wdata  ,
+    output logic [AXIL_STRB_WIDTH-1:0]  s_axi_wstrb  ,
+    output logic                        s_axi_wlast  ,
+    output logic                        s_axi_wvalid ,
+    input  logic                        s_axi_wready ,
+    input  logic [AXI_ID_WIDTH-1:0]     s_axi_bid    ,
+    input  logic [1:0]                  s_axi_bresp  ,
+    input  logic                        s_axi_bvalid ,
+    output logic                        s_axi_bready ,
+    output logic [AXI_ID_WIDTH-1:0]     s_axi_arid   ,
+    output logic [AXIL_ADDR_WIDTH-1:0]  s_axi_araddr ,
+    output logic [7:0]                  s_axi_arlen  ,
+    output logic [2:0]                  s_axi_arsize ,
+    output logic [1:0]                  s_axi_arburst,
+    output logic                        s_axi_arlock ,
+    output logic [3:0]                  s_axi_arcache,
+    output logic [2:0]                  s_axi_arprot ,
+    output logic                        s_axi_arvalid,
+    input  logic                        s_axi_arready,
+    input  logic [AXI_ID_WIDTH-1:0]     s_axi_rid    ,
+    input  logic [AXIL_WIDTH-1:0]       s_axi_rdata  ,
+    input  logic [1:0]                  s_axi_rresp  ,
+    input  logic                        s_axi_rlast  ,
+    input  logic                        s_axi_rvalid ,
+    output logic                        s_axi_rready ,
+    // Weights
+    input  logic [AXI_ID_WIDTH-1:0]    m_axi_mm2s_0_arid,
+    input  logic [AXI_ADDR_WIDTH-1:0]  m_axi_mm2s_0_araddr,
+    input  logic [7:0]                 m_axi_mm2s_0_arlen,
+    input  logic [2:0]                 m_axi_mm2s_0_arsize,
+    input  logic [1:0]                 m_axi_mm2s_0_arburst,
+    input  logic                       m_axi_mm2s_0_arlock,
+    input  logic [3:0]                 m_axi_mm2s_0_arcache,
+    input  logic [2:0]                 m_axi_mm2s_0_arprot,
+    input  logic                       m_axi_mm2s_0_arvalid,
+    output logic                       m_axi_mm2s_0_arready,
+    output logic [AXI_ID_WIDTH-1:0]    m_axi_mm2s_0_rid,
+    output logic [AXI_WIDTH   -1:0]    m_axi_mm2s_0_rdata,
+    output logic [1:0]                 m_axi_mm2s_0_rresp,
+    output logic                       m_axi_mm2s_0_rlast,
+    output logic                       m_axi_mm2s_0_rvalid,
+    input  logic                       m_axi_mm2s_0_rready,
+    // Pixels
+    input  logic [AXI_ID_WIDTH-1:0]    m_axi_mm2s_1_arid,
+    input  logic [AXI_ADDR_WIDTH-1:0]  m_axi_mm2s_1_araddr,
+    input  logic [7:0]                 m_axi_mm2s_1_arlen,
+    input  logic [2:0]                 m_axi_mm2s_1_arsize,
+    input  logic [1:0]                 m_axi_mm2s_1_arburst,
+    input  logic                       m_axi_mm2s_1_arlock,
+    input  logic [3:0]                 m_axi_mm2s_1_arcache,
+    input  logic [2:0]                 m_axi_mm2s_1_arprot,
+    input  logic                       m_axi_mm2s_1_arvalid,
+    output logic                       m_axi_mm2s_1_arready,
+    output logic [AXI_ID_WIDTH-1:0]    m_axi_mm2s_1_rid,
+    output logic [AXI_WIDTH   -1:0]    m_axi_mm2s_1_rdata,
+    output logic [1:0]                 m_axi_mm2s_1_rresp,
+    output logic                       m_axi_mm2s_1_rlast,
+    output logic                       m_axi_mm2s_1_rvalid,
+    input  logic                       m_axi_mm2s_1_rready,
+    // Partial sums
+    input  logic [AXI_ID_WIDTH-1:0]    m_axi_mm2s_2_arid,
+    input  logic [AXI_ADDR_WIDTH-1:0]  m_axi_mm2s_2_araddr,
+    input  logic [7:0]                 m_axi_mm2s_2_arlen,
+    input  logic [2:0]                 m_axi_mm2s_2_arsize,
+    input  logic [1:0]                 m_axi_mm2s_2_arburst,
+    input  logic                       m_axi_mm2s_2_arlock,
+    input  logic [3:0]                 m_axi_mm2s_2_arcache,
+    input  logic [2:0]                 m_axi_mm2s_2_arprot,
+    input  logic                       m_axi_mm2s_2_arvalid,
+    output logic                       m_axi_mm2s_2_arready,
+    output logic [AXI_ID_WIDTH-1:0]    m_axi_mm2s_2_rid,
+    output logic [AXI_WIDTH   -1:0]    m_axi_mm2s_2_rdata,
+    output logic [1:0]                 m_axi_mm2s_2_rresp,
+    output logic                       m_axi_mm2s_2_rlast,
+    output logic                       m_axi_mm2s_2_rvalid,
+    input  logic                       m_axi_mm2s_2_rready,
+    // Output
+    input  logic [AXI_ID_WIDTH-1:0]    m_axi_s2mm_awid,
+    input  logic [AXI_ADDR_WIDTH-1:0]  m_axi_s2mm_awaddr,
+    input  logic [7:0]                 m_axi_s2mm_awlen,
+    input  logic [2:0]                 m_axi_s2mm_awsize,
+    input  logic [1:0]                 m_axi_s2mm_awburst,
+    input  logic                       m_axi_s2mm_awlock,
+    input  logic [3:0]                 m_axi_s2mm_awcache,
+    input  logic [2:0]                 m_axi_s2mm_awprot,
+    input  logic                       m_axi_s2mm_awvalid,
+    output logic                        m_axi_s2mm_awready,
+    input  logic [AXI_WIDTH   -1:0]    m_axi_s2mm_wdata,
+    input  logic [AXI_STRB_WIDTH-1:0]  m_axi_s2mm_wstrb,
+    input  logic                       m_axi_s2mm_wlast,
+    input  logic                       m_axi_s2mm_wvalid,
+    output logic                        m_axi_s2mm_wready,
+    output logic [AXI_ID_WIDTH-1:0]     m_axi_s2mm_bid,
+    output logic [1:0]                  m_axi_s2mm_bresp,
+    output logic                        m_axi_s2mm_bvalid,
+    input  logic                       m_axi_s2mm_bready
+);
 
     logic                            mm2s_0_ren;
     logic  [AXI_ADDR_WIDTH-LSB-1:0]  mm2s_0_addr;
@@ -213,21 +286,15 @@ logic [AXI_WIDTH-1:0] tmp_data;
   import "DPI-C" context function chandle get_mp ();
   
 
-  initial begin
-    $dumpfile("top_tb.vcd");
-    $dumpvars();
-    #1000us;
-    $fatal(1, "Error: Timeout.");
-  end
+
 
   int file_out, file_exp, status, error=0, i=0;
   byte out_byte, exp_byte;
 
   chandle mem_ptr_virtual, cfg_ptr_virtual;
   initial begin
-    rstn <= 0;
-    repeat(2) @(posedge clk) #10ps;
-    rstn <= 1;
+    done <= 0;
+    wait (rstn);
     mem_ptr_virtual = get_mp();
 
     run(mem_ptr_virtual, cfg_ptr_virtual);
@@ -256,100 +323,30 @@ logic [AXI_WIDTH-1:0] tmp_data;
     
     if (error==0) $display("\n\nVerification successful: Output matches Expected data. \nError count: %0d\n\n", error);
     else          $fatal (0, "\n\nERROR: Output data does not match Expected data.\n\n");
-    $finish;
+    done <= 1;
   end
 
 
 // AXI ports from top on-chip module
 
-    logic [AXI_ID_WIDTH-1:0]    m_axi_mm2s_0_arid;
-    logic [AXI_ADDR_WIDTH-1:0]  m_axi_mm2s_0_araddr;
-    logic [7:0]                 m_axi_mm2s_0_arlen;
-    logic [2:0]                 m_axi_mm2s_0_arsize;
-    logic [1:0]                 m_axi_mm2s_0_arburst;
-    logic                       m_axi_mm2s_0_arlock;
-    logic [3:0]                 m_axi_mm2s_0_arcache;
-    logic [2:0]                 m_axi_mm2s_0_arprot;
-    logic                       m_axi_mm2s_0_arvalid;
-    logic                       m_axi_mm2s_0_arvalid_zipcpu;
-    logic                       m_axi_mm2s_0_arready;
-    logic                       m_axi_mm2s_0_arready_zipcpu;
-    logic [AXI_ID_WIDTH-1:0]    m_axi_mm2s_0_rid;
-    logic [AXI_WIDTH-1:0]       m_axi_mm2s_0_rdata;
-    logic [1:0]                 m_axi_mm2s_0_rresp;
-    logic                       m_axi_mm2s_0_rlast;
-    logic                       m_axi_mm2s_0_rvalid;
-    logic                       m_axi_mm2s_0_rvalid_zipcpu;
-    logic                       m_axi_mm2s_0_rready;
-    logic                       m_axi_mm2s_0_rready_zipcpu;
-    
-    logic [AXI_ID_WIDTH-1:0]    m_axi_mm2s_1_arid;
-    logic [AXI_ADDR_WIDTH-1:0]  m_axi_mm2s_1_araddr;
-    logic [7:0]                 m_axi_mm2s_1_arlen;
-    logic [2:0]                 m_axi_mm2s_1_arsize;
-    logic [1:0]                 m_axi_mm2s_1_arburst;
-    logic                       m_axi_mm2s_1_arlock;
-    logic [3:0]                 m_axi_mm2s_1_arcache;
-    logic [2:0]                 m_axi_mm2s_1_arprot;
-    logic                       m_axi_mm2s_1_arvalid;
-    logic                       m_axi_mm2s_1_arvalid_zipcpu;
-    logic                       m_axi_mm2s_1_arready;
-    logic                       m_axi_mm2s_1_arready_zipcpu;
-    logic [AXI_ID_WIDTH-1:0]    m_axi_mm2s_1_rid;
-    logic [AXI_WIDTH-1:0]       m_axi_mm2s_1_rdata;
-    logic [1:0]                 m_axi_mm2s_1_rresp;
-    logic                       m_axi_mm2s_1_rlast;
-    logic                       m_axi_mm2s_1_rvalid;
-    logic                       m_axi_mm2s_1_rvalid_zipcpu;
-    logic                       m_axi_mm2s_1_rready;
-    logic                       m_axi_mm2s_1_rready_zipcpu;
-    
-    logic [AXI_ID_WIDTH-1:0]    m_axi_mm2s_2_arid;
-    logic [AXI_ADDR_WIDTH-1:0]  m_axi_mm2s_2_araddr;
-    logic [7:0]                 m_axi_mm2s_2_arlen;
-    logic [2:0]                 m_axi_mm2s_2_arsize;
-    logic [1:0]                 m_axi_mm2s_2_arburst;
-    logic                       m_axi_mm2s_2_arlock;
-    logic [3:0]                 m_axi_mm2s_2_arcache;
-    logic [2:0]                 m_axi_mm2s_2_arprot;
-    logic                       m_axi_mm2s_2_arvalid;
-    logic                       m_axi_mm2s_2_arvalid_zipcpu;
-    logic                       m_axi_mm2s_2_arready;
-    logic                       m_axi_mm2s_2_arready_zipcpu;
-    logic [AXI_ID_WIDTH-1:0]    m_axi_mm2s_2_rid;
-    logic [AXI_WIDTH-1:0]       m_axi_mm2s_2_rdata;
-    logic [1:0]                 m_axi_mm2s_2_rresp;
-    logic                       m_axi_mm2s_2_rlast;
-    logic                       m_axi_mm2s_2_rvalid;
-    logic                       m_axi_mm2s_2_rvalid_zipcpu;
-    logic                       m_axi_mm2s_2_rready;
-    logic                       m_axi_mm2s_2_rready_zipcpu;
-    
-    logic [AXI_ID_WIDTH-1:0]    m_axi_s2mm_awid;
-    logic [AXI_ADDR_WIDTH-1:0]  m_axi_s2mm_awaddr;
-    logic [7:0]                 m_axi_s2mm_awlen;
-    logic [2:0]                 m_axi_s2mm_awsize;
-    logic [1:0]                 m_axi_s2mm_awburst;
-    logic                       m_axi_s2mm_awlock;
-    logic [3:0]                 m_axi_s2mm_awcache;
-    logic [2:0]                 m_axi_s2mm_awprot;
-    logic                       m_axi_s2mm_awvalid;
-    logic                       m_axi_s2mm_awvalid_zipcpu;
-    logic                       m_axi_s2mm_awready;
-    logic                       m_axi_s2mm_awready_zipcpu;
-    logic [AXI_WIDTH-1:0]       m_axi_s2mm_wdata;
-    logic [AXI_STRB_WIDTH-1:0]  m_axi_s2mm_wstrb;
-    logic                       m_axi_s2mm_wlast;
-    logic                       m_axi_s2mm_wvalid;
-    logic                       m_axi_s2mm_wvalid_zipcpu;
-    logic                       m_axi_s2mm_wready;
-    logic                       m_axi_s2mm_wready_zipcpu;
-    logic [AXI_ID_WIDTH-1:0]    m_axi_s2mm_bid;
-    logic [1:0]                 m_axi_s2mm_bresp;
-    logic                       m_axi_s2mm_bvalid;
-    logic                       m_axi_s2mm_bvalid_zipcpu;
-    logic                       m_axi_s2mm_bready;
-    logic                       m_axi_s2mm_bready_zipcpu;
+    logic m_axi_mm2s_0_arvalid_zipcpu;
+    logic m_axi_mm2s_0_arready_zipcpu;
+    logic m_axi_mm2s_0_rvalid_zipcpu;
+    logic m_axi_mm2s_0_rready_zipcpu;
+    logic m_axi_mm2s_1_arvalid_zipcpu;
+    logic m_axi_mm2s_1_arready_zipcpu;
+    logic m_axi_mm2s_1_rvalid_zipcpu;
+    logic m_axi_mm2s_1_rready_zipcpu;
+    logic m_axi_mm2s_2_arvalid_zipcpu;
+    logic m_axi_mm2s_2_arready_zipcpu;
+    logic m_axi_mm2s_2_rvalid_zipcpu;
+    logic m_axi_mm2s_2_rready_zipcpu;
+    logic m_axi_s2mm_awvalid_zipcpu;
+    logic m_axi_s2mm_awready_zipcpu;
+    logic m_axi_s2mm_wvalid_zipcpu;
+    logic m_axi_s2mm_wready_zipcpu;
+    logic m_axi_s2mm_bvalid_zipcpu;
+    logic m_axi_s2mm_bready_zipcpu;
 
     logic rand_mm2s_0_ar;
     logic rand_mm2s_0_r;
@@ -619,63 +616,6 @@ zipcpu_axi2ram #(
     .S_AXI_RLAST(),
     .S_AXI_RVALID(),
     .S_AXI_RREADY(1'b0)
-);
-
-top #(
-    .R (R ),
-    .C (C ),
-    .WK(WK),
-    .WX(WX),
-    .WA(WA),
-    .WY(WY),
-    .LM(LM),
-    .LA(LA),
-    .AXI_WIDTH        (AXI_WIDTH        ),
-    .AXI_ID_WIDTH     (AXI_ID_WIDTH     ),
-    .AXI_STRB_WIDTH   (AXI_STRB_WIDTH   ),
-    .AXI_MAX_BURST_LEN(AXI_MAX_BURST_LEN),
-    .AXI_ADDR_WIDTH   (AXI_ADDR_WIDTH   ),
-    .AXIL_WIDTH       (AXIL_WIDTH       ),
-    .AXIL_ADDR_WIDTH  (AXIL_ADDR_WIDTH  ),
-    .AXIL_STRB_WIDTH  (AXIL_STRB_WIDTH  ),
-    .AXIL_BASE_ADDR   (AXIL_BASE_ADDR   )
-) TOP (
-    .s_axi_awid   (s_axi_awid   ),
-    .s_axi_awaddr (s_axi_awaddr ),
-    .s_axi_awlen  (s_axi_awlen  ),
-    .s_axi_awsize (s_axi_awsize ),
-    .s_axi_awburst(s_axi_awburst),
-    .s_axi_awlock (s_axi_awlock ),
-    .s_axi_awcache(s_axi_awcache),
-    .s_axi_awprot (s_axi_awprot ),
-    .s_axi_awvalid(s_axi_awvalid),
-    .s_axi_awready(s_axi_awready),
-    .s_axi_wdata  (s_axi_wdata  ),
-    .s_axi_wstrb  (s_axi_wstrb  ),
-    .s_axi_wlast  (s_axi_wlast  ),
-    .s_axi_wvalid (s_axi_wvalid ),
-    .s_axi_wready (s_axi_wready ),
-    .s_axi_bid    (s_axi_bid    ),
-    .s_axi_bresp  (s_axi_bresp  ),
-    .s_axi_bvalid (s_axi_bvalid ),
-    .s_axi_bready (s_axi_bready ),
-    .s_axi_arid   (s_axi_arid   ),
-    .s_axi_araddr (s_axi_araddr ),
-    .s_axi_arlen  (s_axi_arlen  ),
-    .s_axi_arsize (s_axi_arsize ),
-    .s_axi_arburst(s_axi_arburst),
-    .s_axi_arlock (s_axi_arlock ),
-    .s_axi_arcache(s_axi_arcache),
-    .s_axi_arprot (s_axi_arprot ),
-    .s_axi_arvalid(s_axi_arvalid),
-    .s_axi_arready(s_axi_arready),
-    .s_axi_rid    (s_axi_rid    ),
-    .s_axi_rdata  (s_axi_rdata  ),
-    .s_axi_rresp  (s_axi_rresp  ),
-    .s_axi_rlast  (s_axi_rlast  ),
-    .s_axi_rvalid (s_axi_rvalid ),
-    .s_axi_rready (s_axi_rready ),
-    .*
 );
 
 endmodule
