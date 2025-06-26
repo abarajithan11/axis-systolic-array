@@ -12,14 +12,15 @@ FREQ_MHZ = 100
 AXI_WIDTH = 128
 BOARD = zcu104
 
-TB_MODULE = top_tb
+SYS = axi
+TB_MODULE = top_$(SYS)_tb
 RUN_DIR = run
 WORK_DIR = run/work
 DATA_DIR = $(WORK_DIR)/data
 FULL_DATA_DIR = $(subst \,\\,$(abspath $(DATA_DIR)))
 FULL_WORK_DIR = $(subst \,\\,$(abspath $(WORK_DIR)))
 C_SOURCE = ../../c/sim.c
-SOURCES_FILE = sources.txt
+SOURCES_FILE = sources_$(SYS).txt
 
 #-----------------COMPILER OPTIONS ------------------
 

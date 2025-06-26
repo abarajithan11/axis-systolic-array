@@ -1,7 +1,7 @@
 `timescale 1ns/1ps
 `include "config.svh"
 
-module top_tb;
+module top_axi_tb;
   localparam
     // Defined in config.svh
     R                   = `R                 ,
@@ -153,7 +153,7 @@ logic [AXI_WIDTH-1:0] tmp_data;
   end
   
   initial begin
-    $dumpfile("top_tb.vcd");
+    $dumpfile("top_axi_tb.vcd");
     $dumpvars();
     #1000us;
     $fatal(1, "Error: Timeout.");

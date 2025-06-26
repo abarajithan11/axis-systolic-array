@@ -1,7 +1,0 @@
-../../rtl/sa/axis_sa.sv
-../../rtl/sa/mac.sv
-../../rtl/sa/n_delay.sv
-../../rtl/sa/tri_buffer.sv
-../../tb/axis_sa_tb.sv
-../../tb/axis_vip/tb/axis_sink.sv
-../../tb/axis_vip/tb/axis_source.sv

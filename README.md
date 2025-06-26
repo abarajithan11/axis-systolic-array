@@ -17,14 +17,14 @@ y(C,R) = k.T(C,K) @ x(K,R) + a(C,R)
 
 * `run/config.py` - Generates `run/work/config.svh`, `run/work/config.h` and `run/work/config.tcl` based on params passed
 * `run/golden.py` - Python reference that performs `y = k.T @ x + a`
-* `run/sources.txt` - List of source files needed for simulation
-* `tb/top_tb.sv` - Top testbench
-* `rtl/sys/top.v` - Top RTL module with 4 M_AXI & one S_AXIL ports.
+* `run/sources_axi.txt` - List of source files needed for simulation
+* `tb/top_axi_tb.sv` - Top testbench
+* `rtl/sys/top_axi.v` - Top RTL module with 4 M_AXI & one S_AXIL ports.
 * `c/firmware.h` - Contains the basic firmware
 * `rtl/sys/dma_controller.sv` - DMA controller that corresponds with firmware
 * `rtl/sa/axis_sa.sv` - AXI Stream Systolic array
 
-## To simulate the entire system:
+## Setting up Simulators & Environment:
 
 ### Windows
 
@@ -51,23 +51,22 @@ choco install gnuwin32-coreutils.install
 3. Add `C:/Program Files (x86)/GnuWin32/bin` to your `$PATH`
 
 
-#### Verilator (Linux)
+### To simulate the Subsystem with AXI ports
 
 ```
-make veri
+make veri SYS=axi   # Verilator
+make xsim SYS=axi   # Xilinx/AMD Vivado
+make xrun SYS=axi   # Cadence Xcelium
 ```
 
-#### Vivado Xsim
+### To simulate the Subsystem with simplified RAM ports
 
 ```
-make xsim
+make xsim SYS=ram
+make veri SYS=ram
+make xrun SYS=ram
 ```
 
-#### Cadence Xcelium
-
-```
-make xrun
-```
 
 ### Test on Xilinx FPGAs
 
