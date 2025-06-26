@@ -25,160 +25,331 @@ module top_ram #(
         OPT_LOWPOWER      = 1'b0,
         VALID_PROB        = 1000,
         READY_PROB        = 1000,
+        CLK_PERIOD        = 10,
+        DIR               = "./",
 
     localparam  LSB = $clog2(AXI_WIDTH)-3
-)(
-    input  wire                   clk,
-    input  wire                   rstn,
+)();
 
-    /* 
-      AXI Slave
-    */
-    input  wire [AXI_ID_WIDTH-1:0]     s_axi_awid   ,
-    input  wire [AXIL_ADDR_WIDTH-1:0]  s_axi_awaddr ,
-    input  wire [7:0]                  s_axi_awlen  ,
-    input  wire [2:0]                  s_axi_awsize ,
-    input  wire [1:0]                  s_axi_awburst,
-    input  wire                        s_axi_awlock ,
-    input  wire [3:0]                  s_axi_awcache,
-    input  wire [2:0]                  s_axi_awprot ,
-    input  wire                        s_axi_awvalid,
-    output wire                        s_axi_awready,
-    input  wire [AXIL_WIDTH-1:0]       s_axi_wdata  ,
-    input  wire [AXIL_STRB_WIDTH-1:0]  s_axi_wstrb  ,
-    input  wire                        s_axi_wlast  ,
-    input  wire                        s_axi_wvalid ,
-    output wire                        s_axi_wready ,
-    output wire [AXI_ID_WIDTH-1:0]     s_axi_bid    ,
-    output wire [1:0]                  s_axi_bresp  ,
-    output wire                        s_axi_bvalid ,
-    input  wire                        s_axi_bready ,
-    input  wire [AXI_ID_WIDTH-1:0]     s_axi_arid   ,
-    input  wire [AXIL_ADDR_WIDTH-1:0]  s_axi_araddr ,
-    input  wire [7:0]                  s_axi_arlen  ,
-    input  wire [2:0]                  s_axi_arsize ,
-    input  wire [1:0]                  s_axi_arburst,
-    input  wire                        s_axi_arlock ,
-    input  wire [3:0]                  s_axi_arcache,
-    input  wire [2:0]                  s_axi_arprot ,
-    input  wire                        s_axi_arvalid,
-    output wire                        s_axi_arready,
-    output wire [AXI_ID_WIDTH-1:0]     s_axi_rid    ,
-    output wire [AXIL_WIDTH-1:0]       s_axi_rdata  ,
-    output wire [1:0]                  s_axi_rresp  ,
-    output wire                        s_axi_rlast  ,
-    output wire                        s_axi_rvalid ,
-    input  wire                        s_axi_rready ,
+    logic clk = 0, rstn;
+    initial forever #(CLK_PERIOD/2) clk = ~clk;
 
+    logic [AXI_ID_WIDTH-1:0]     s_axi_awid   ;
+    logic [AXIL_ADDR_WIDTH-1:0]  s_axi_awaddr ;
+    logic [7:0]                  s_axi_awlen  ;
+    logic [2:0]                  s_axi_awsize ;
+    logic [1:0]                  s_axi_awburst;
+    logic                        s_axi_awlock ;
+    logic [3:0]                  s_axi_awcache;
+    logic [2:0]                  s_axi_awprot ;
+    logic                        s_axi_awvalid;
+    logic                        s_axi_awready;
+    logic [AXIL_WIDTH-1:0]       s_axi_wdata  ;
+    logic [AXIL_STRB_WIDTH-1:0]  s_axi_wstrb  ;
+    logic                        s_axi_wlast  ;
+    logic                        s_axi_wvalid ;
+    logic                        s_axi_wready ;
+    logic [AXI_ID_WIDTH-1:0]     s_axi_bid    ;
+    logic [1:0]                  s_axi_bresp  ;
+    logic                        s_axi_bvalid ;
+    logic                        s_axi_bready ;
+    logic [AXI_ID_WIDTH-1:0]     s_axi_arid   ;
+    logic [AXIL_ADDR_WIDTH-1:0]  s_axi_araddr ;
+    logic [7:0]                  s_axi_arlen  ;
+    logic [2:0]                  s_axi_arsize ;
+    logic [1:0]                  s_axi_arburst;
+    logic                        s_axi_arlock ;
+    logic [3:0]                  s_axi_arcache;
+    logic [2:0]                  s_axi_arprot ;
+    logic                        s_axi_arvalid;
+    logic                        s_axi_arready;
+    logic [AXI_ID_WIDTH-1:0]     s_axi_rid    ;
+    logic [AXIL_WIDTH-1:0]       s_axi_rdata  ;
+    logic [1:0]                  s_axi_rresp  ;
+    logic                        s_axi_rlast  ;
+    logic                        s_axi_rvalid ;
+    logic                        s_axi_rready ;
+
+    logic                            mm2s_0_ren;
+    logic  [AXI_ADDR_WIDTH-LSB-1:0]  mm2s_0_addr;
+    logic  [AXI_WIDTH-1:0]           mm2s_0_data;
     
-    output wire                            mm2s_0_ren,
-    output wire  [AXI_ADDR_WIDTH-LSB-1:0]  mm2s_0_addr,
-    input  wire  [AXI_WIDTH-1:0]           mm2s_0_data,
+    logic                            mm2s_1_ren;
+    logic  [AXI_ADDR_WIDTH-LSB-1:0]  mm2s_1_addr;
+    logic  [AXI_WIDTH-1:0]           mm2s_1_data;
     
-    output wire                            mm2s_1_ren,
-    output wire  [AXI_ADDR_WIDTH-LSB-1:0]  mm2s_1_addr,
-    input  wire  [AXI_WIDTH-1:0]           mm2s_1_data,
+    logic                            mm2s_2_ren;
+    logic  [AXI_ADDR_WIDTH-LSB-1:0]  mm2s_2_addr;
+    logic  [AXI_WIDTH-1:0]           mm2s_2_data;
     
-    output wire                            mm2s_2_ren,
-    output wire  [AXI_ADDR_WIDTH-LSB-1:0]  mm2s_2_addr,
-    input  wire  [AXI_WIDTH-1:0]           mm2s_2_data,
+    logic                            s2mm_wen;
+    logic  [AXI_ADDR_WIDTH-LSB-1:0]  s2mm_addr;
+    logic  [AXI_WIDTH-1:0]           s2mm_data;
+    logic  [AXI_WIDTH/8-1:0]         s2mm_strb;
+
+
+`ifdef VERILATOR
+  `define AUTOMATIC
+`elsif XCELIUM
+  `define AUTOMATIC
+`else
+  `define AUTOMATIC automatic
+`endif
+
+  export "DPI-C" task task_get_config;
+  export "DPI-C" function fn_get_config;
+  export "DPI-C" task set_config;
+  import "DPI-C" context function byte get_byte_a32 (input int unsigned addr);
+  import "DPI-C" context function void  set_byte_a32 (input int unsigned addr, input byte data);
+  // import "DPI-C" context task void print_output (chandle mem_ptr_virtual);
+
+  task axi_write(input logic [AXIL_ADDR_WIDTH-1:0] addr, input logic [AXIL_WIDTH-1:0] data);
+    begin
+      @(posedge clk) #10ps;
+      s_axi_awid     <= 4'h1;
+      s_axi_awaddr   <= addr;
+      s_axi_awlen    <= 8'd0;
+      s_axi_awsize   <= 3'd2; // 4 bytes
+      s_axi_awburst  <= 2'b01;
+      s_axi_awlock   <= 0;
+      s_axi_awcache  <= 0;
+      s_axi_awprot   <= 0;
+      s_axi_awvalid  <= 1;
+
+      wait (s_axi_awready);
+      @(posedge clk) #10ps;
+      s_axi_awvalid <= 0;
+
+      s_axi_wdata   <= data;
+      s_axi_wstrb   <= 4'hF;
+      s_axi_wlast   <= 1;
+      s_axi_wvalid  <= 1;
+
+      wait (s_axi_wready);
+      @(posedge clk) #10ps;
+      s_axi_wvalid <= 0;
+
+      s_axi_bready <= 1;
+      wait (s_axi_bvalid);
+      @(posedge clk) #10ps;
+      s_axi_bready <= 0;
+    end
+  endtask
+
+  task axi_read(input logic [AXIL_ADDR_WIDTH-1:0] addr, output logic [AXIL_WIDTH-1:0] rdata);
+    begin
+      @(posedge clk) #10ps;
+      s_axi_arid     <= 4'h1;
+      s_axi_araddr   <= addr;
+      s_axi_arlen    <= 8'd0;
+      s_axi_arsize   <= 3'd2;
+      s_axi_arburst  <= 2'b01;
+      s_axi_arlock   <= 0;
+      s_axi_arcache  <= 0;
+      s_axi_arprot   <= 0;
+      s_axi_arvalid  <= 1;
+
+      wait (s_axi_arready) #10ps;
+      @(posedge clk);
+      s_axi_arvalid <= 0;
+
+      s_axi_rready <= 1;
+      wait (s_axi_rvalid);
+      rdata = s_axi_rdata;
+      @(posedge clk) #10ps;
+      s_axi_rready <= 0;
+    end
+  endtask
+
+  int tmp_get_data;
+  task automatic task_get_config(input chandle config_base, input int offset);
+    // @(posedge clk) tmp_get_data = dut.TOP.CONTROLLER.cfg [offset];
+    axi_read(AXIL_BASE_ADDR + (offset * 4), tmp_get_data);
+  endtask
+
+  function automatic int fn_get_config();
+    return tmp_get_data;
+  endfunction
+
+  task automatic set_config(input chandle config_base, input int offset, input int data);
+    // @(posedge clk) #10ps dut.TOP.CONTROLLER.cfg [offset] <= data;
+    axi_write(AXIL_BASE_ADDR + (offset * 4), data);
+  endtask
+
+byte tmp_byte;
+logic [AXI_WIDTH-1:0] tmp_data;
+
+  always_ff @(posedge clk) begin : Axi_rw
+
+    if (mm2s_0_ren) begin
+      for (int i = 0; i < AXI_WIDTH/8; i++) begin
+        tmp_data[i*8 +: 8] = get_byte_a32((32'(mm2s_0_addr) << LSB) + i);
+      end
+      mm2s_0_data <= tmp_data;
+    end
+
+    if (mm2s_1_ren) begin
+      for (int i = 0; i < AXI_WIDTH/8; i++) begin
+        tmp_data[i*8 +: 8] = get_byte_a32((32'(mm2s_1_addr) << LSB) + i);
+      end
+      mm2s_1_data <= tmp_data;
+    end
+
+    if (mm2s_2_ren) begin
+      for (int i = 0; i < AXI_WIDTH/8; i++) begin
+        tmp_data[i*8 +: 8] = get_byte_a32((32'(mm2s_2_addr) << LSB) + i);
+      end
+      mm2s_2_data <= tmp_data;
+    end
+
+    if (s2mm_wen) 
+      for (int i = 0; i < AXI_WIDTH/8; i++) 
+        if (s2mm_strb[i]) 
+          set_byte_a32((32'(s2mm_addr) << LSB) + i, s2mm_data[i*8 +: 8]);
+  end
+  
+
+  import "DPI-C" context task `AUTOMATIC run(input chandle mem_ptr_virtual, input chandle p_config);
+  import "DPI-C" context function chandle get_mp ();
+  
+
+  initial begin
+    $dumpfile("top_tb.vcd");
+    $dumpvars();
+    #1000us;
+    $fatal(1, "Error: Timeout.");
+  end
+
+  int file_out, file_exp, status, error=0, i=0;
+  byte out_byte, exp_byte;
+
+  chandle mem_ptr_virtual, cfg_ptr_virtual;
+  initial begin
+    rstn <= 0;
+    repeat(2) @(posedge clk) #10ps;
+    rstn <= 1;
+    mem_ptr_virtual = get_mp();
+
+    run(mem_ptr_virtual, cfg_ptr_virtual);
+
+
+    // Read from output & expected and compare
+    file_out = $fopen({DIR, "/y.bin"}, "rb");
+    file_exp = $fopen({DIR, "/y_exp.bin" }, "rb");
+    if (file_out==0 || file_exp==0) $fatal(0, "Error: Failed to open output/expected file(s).");
+
+    while($feof(file_exp) == 0) begin
+      if ($feof(file_out)) $fatal(0, "Error: output file is shorter than expected file.");
+      else begin
+        out_byte = $fgetc(file_out);
+        exp_byte = $fgetc(file_exp);
+        // Compare
+        if (exp_byte != out_byte) begin
+          $display("Mismatch at index %0d: Expected %h, Found %h", i, exp_byte, out_byte);
+          error += 1;
+        end 
+      end
+      i += 1;
+    end
+    $fclose(file_exp);
+    $fclose(file_out);
     
-    output wire                            s2mm_wen,
-    output wire  [AXI_ADDR_WIDTH-LSB-1:0]  s2mm_addr,
-    output wire  [AXI_WIDTH-1:0]           s2mm_data,
-    output wire  [AXI_WIDTH/8-1:0]         s2mm_strb
-);
+    if (error==0) $display("\n\nVerification successful: Output matches Expected data. \nError count: %0d\n\n", error);
+    else          $fatal (0, "\n\nERROR: Output data does not match Expected data.\n\n");
+    $finish;
+  end
+
 
 // AXI ports from top on-chip module
 
-    wire [AXI_ID_WIDTH-1:0]    m_axi_mm2s_0_arid;
-    wire [AXI_ADDR_WIDTH-1:0]  m_axi_mm2s_0_araddr;
-    wire [7:0]                 m_axi_mm2s_0_arlen;
-    wire [2:0]                 m_axi_mm2s_0_arsize;
-    wire [1:0]                 m_axi_mm2s_0_arburst;
-    wire                       m_axi_mm2s_0_arlock;
-    wire [3:0]                 m_axi_mm2s_0_arcache;
-    wire [2:0]                 m_axi_mm2s_0_arprot;
-    wire                       m_axi_mm2s_0_arvalid;
-    wire                       m_axi_mm2s_0_arvalid_zipcpu;
-    wire                       m_axi_mm2s_0_arready;
-    wire                       m_axi_mm2s_0_arready_zipcpu;
-    wire [AXI_ID_WIDTH-1:0]    m_axi_mm2s_0_rid;
-    wire [AXI_WIDTH-1:0]       m_axi_mm2s_0_rdata;
-    wire [1:0]                 m_axi_mm2s_0_rresp;
-    wire                       m_axi_mm2s_0_rlast;
-    wire                       m_axi_mm2s_0_rvalid;
-    wire                       m_axi_mm2s_0_rvalid_zipcpu;
-    wire                       m_axi_mm2s_0_rready;
-    wire                       m_axi_mm2s_0_rready_zipcpu;
+    logic [AXI_ID_WIDTH-1:0]    m_axi_mm2s_0_arid;
+    logic [AXI_ADDR_WIDTH-1:0]  m_axi_mm2s_0_araddr;
+    logic [7:0]                 m_axi_mm2s_0_arlen;
+    logic [2:0]                 m_axi_mm2s_0_arsize;
+    logic [1:0]                 m_axi_mm2s_0_arburst;
+    logic                       m_axi_mm2s_0_arlock;
+    logic [3:0]                 m_axi_mm2s_0_arcache;
+    logic [2:0]                 m_axi_mm2s_0_arprot;
+    logic                       m_axi_mm2s_0_arvalid;
+    logic                       m_axi_mm2s_0_arvalid_zipcpu;
+    logic                       m_axi_mm2s_0_arready;
+    logic                       m_axi_mm2s_0_arready_zipcpu;
+    logic [AXI_ID_WIDTH-1:0]    m_axi_mm2s_0_rid;
+    logic [AXI_WIDTH-1:0]       m_axi_mm2s_0_rdata;
+    logic [1:0]                 m_axi_mm2s_0_rresp;
+    logic                       m_axi_mm2s_0_rlast;
+    logic                       m_axi_mm2s_0_rvalid;
+    logic                       m_axi_mm2s_0_rvalid_zipcpu;
+    logic                       m_axi_mm2s_0_rready;
+    logic                       m_axi_mm2s_0_rready_zipcpu;
     
-    wire [AXI_ID_WIDTH-1:0]    m_axi_mm2s_1_arid;
-    wire [AXI_ADDR_WIDTH-1:0]  m_axi_mm2s_1_araddr;
-    wire [7:0]                 m_axi_mm2s_1_arlen;
-    wire [2:0]                 m_axi_mm2s_1_arsize;
-    wire [1:0]                 m_axi_mm2s_1_arburst;
-    wire                       m_axi_mm2s_1_arlock;
-    wire [3:0]                 m_axi_mm2s_1_arcache;
-    wire [2:0]                 m_axi_mm2s_1_arprot;
-    wire                       m_axi_mm2s_1_arvalid;
-    wire                       m_axi_mm2s_1_arvalid_zipcpu;
-    wire                       m_axi_mm2s_1_arready;
-    wire                       m_axi_mm2s_1_arready_zipcpu;
-    wire [AXI_ID_WIDTH-1:0]    m_axi_mm2s_1_rid;
-    wire [AXI_WIDTH-1:0]       m_axi_mm2s_1_rdata;
-    wire [1:0]                 m_axi_mm2s_1_rresp;
-    wire                       m_axi_mm2s_1_rlast;
-    wire                       m_axi_mm2s_1_rvalid;
-    wire                       m_axi_mm2s_1_rvalid_zipcpu;
-    wire                       m_axi_mm2s_1_rready;
-    wire                       m_axi_mm2s_1_rready_zipcpu;
+    logic [AXI_ID_WIDTH-1:0]    m_axi_mm2s_1_arid;
+    logic [AXI_ADDR_WIDTH-1:0]  m_axi_mm2s_1_araddr;
+    logic [7:0]                 m_axi_mm2s_1_arlen;
+    logic [2:0]                 m_axi_mm2s_1_arsize;
+    logic [1:0]                 m_axi_mm2s_1_arburst;
+    logic                       m_axi_mm2s_1_arlock;
+    logic [3:0]                 m_axi_mm2s_1_arcache;
+    logic [2:0]                 m_axi_mm2s_1_arprot;
+    logic                       m_axi_mm2s_1_arvalid;
+    logic                       m_axi_mm2s_1_arvalid_zipcpu;
+    logic                       m_axi_mm2s_1_arready;
+    logic                       m_axi_mm2s_1_arready_zipcpu;
+    logic [AXI_ID_WIDTH-1:0]    m_axi_mm2s_1_rid;
+    logic [AXI_WIDTH-1:0]       m_axi_mm2s_1_rdata;
+    logic [1:0]                 m_axi_mm2s_1_rresp;
+    logic                       m_axi_mm2s_1_rlast;
+    logic                       m_axi_mm2s_1_rvalid;
+    logic                       m_axi_mm2s_1_rvalid_zipcpu;
+    logic                       m_axi_mm2s_1_rready;
+    logic                       m_axi_mm2s_1_rready_zipcpu;
     
-    wire [AXI_ID_WIDTH-1:0]    m_axi_mm2s_2_arid;
-    wire [AXI_ADDR_WIDTH-1:0]  m_axi_mm2s_2_araddr;
-    wire [7:0]                 m_axi_mm2s_2_arlen;
-    wire [2:0]                 m_axi_mm2s_2_arsize;
-    wire [1:0]                 m_axi_mm2s_2_arburst;
-    wire                       m_axi_mm2s_2_arlock;
-    wire [3:0]                 m_axi_mm2s_2_arcache;
-    wire [2:0]                 m_axi_mm2s_2_arprot;
-    wire                       m_axi_mm2s_2_arvalid;
-    wire                       m_axi_mm2s_2_arvalid_zipcpu;
-    wire                       m_axi_mm2s_2_arready;
-    wire                       m_axi_mm2s_2_arready_zipcpu;
-    wire [AXI_ID_WIDTH-1:0]    m_axi_mm2s_2_rid;
-    wire [AXI_WIDTH-1:0]       m_axi_mm2s_2_rdata;
-    wire [1:0]                 m_axi_mm2s_2_rresp;
-    wire                       m_axi_mm2s_2_rlast;
-    wire                       m_axi_mm2s_2_rvalid;
-    wire                       m_axi_mm2s_2_rvalid_zipcpu;
-    wire                       m_axi_mm2s_2_rready;
-    wire                       m_axi_mm2s_2_rready_zipcpu;
+    logic [AXI_ID_WIDTH-1:0]    m_axi_mm2s_2_arid;
+    logic [AXI_ADDR_WIDTH-1:0]  m_axi_mm2s_2_araddr;
+    logic [7:0]                 m_axi_mm2s_2_arlen;
+    logic [2:0]                 m_axi_mm2s_2_arsize;
+    logic [1:0]                 m_axi_mm2s_2_arburst;
+    logic                       m_axi_mm2s_2_arlock;
+    logic [3:0]                 m_axi_mm2s_2_arcache;
+    logic [2:0]                 m_axi_mm2s_2_arprot;
+    logic                       m_axi_mm2s_2_arvalid;
+    logic                       m_axi_mm2s_2_arvalid_zipcpu;
+    logic                       m_axi_mm2s_2_arready;
+    logic                       m_axi_mm2s_2_arready_zipcpu;
+    logic [AXI_ID_WIDTH-1:0]    m_axi_mm2s_2_rid;
+    logic [AXI_WIDTH-1:0]       m_axi_mm2s_2_rdata;
+    logic [1:0]                 m_axi_mm2s_2_rresp;
+    logic                       m_axi_mm2s_2_rlast;
+    logic                       m_axi_mm2s_2_rvalid;
+    logic                       m_axi_mm2s_2_rvalid_zipcpu;
+    logic                       m_axi_mm2s_2_rready;
+    logic                       m_axi_mm2s_2_rready_zipcpu;
     
-    wire [AXI_ID_WIDTH-1:0]    m_axi_s2mm_awid;
-    wire [AXI_ADDR_WIDTH-1:0]  m_axi_s2mm_awaddr;
-    wire [7:0]                 m_axi_s2mm_awlen;
-    wire [2:0]                 m_axi_s2mm_awsize;
-    wire [1:0]                 m_axi_s2mm_awburst;
-    wire                       m_axi_s2mm_awlock;
-    wire [3:0]                 m_axi_s2mm_awcache;
-    wire [2:0]                 m_axi_s2mm_awprot;
-    wire                       m_axi_s2mm_awvalid;
-    wire                       m_axi_s2mm_awvalid_zipcpu;
-    wire                       m_axi_s2mm_awready;
-    wire                       m_axi_s2mm_awready_zipcpu;
-    wire [AXI_WIDTH-1:0]       m_axi_s2mm_wdata;
-    wire [AXI_STRB_WIDTH-1:0]  m_axi_s2mm_wstrb;
-    wire                       m_axi_s2mm_wlast;
-    wire                       m_axi_s2mm_wvalid;
-    wire                       m_axi_s2mm_wvalid_zipcpu;
-    wire                       m_axi_s2mm_wready;
-    wire                       m_axi_s2mm_wready_zipcpu;
-    wire [AXI_ID_WIDTH-1:0]    m_axi_s2mm_bid;
-    wire [1:0]                 m_axi_s2mm_bresp;
-    wire                       m_axi_s2mm_bvalid;
-    wire                       m_axi_s2mm_bvalid_zipcpu;
-    wire                       m_axi_s2mm_bready;
-    wire                       m_axi_s2mm_bready_zipcpu;
+    logic [AXI_ID_WIDTH-1:0]    m_axi_s2mm_awid;
+    logic [AXI_ADDR_WIDTH-1:0]  m_axi_s2mm_awaddr;
+    logic [7:0]                 m_axi_s2mm_awlen;
+    logic [2:0]                 m_axi_s2mm_awsize;
+    logic [1:0]                 m_axi_s2mm_awburst;
+    logic                       m_axi_s2mm_awlock;
+    logic [3:0]                 m_axi_s2mm_awcache;
+    logic [2:0]                 m_axi_s2mm_awprot;
+    logic                       m_axi_s2mm_awvalid;
+    logic                       m_axi_s2mm_awvalid_zipcpu;
+    logic                       m_axi_s2mm_awready;
+    logic                       m_axi_s2mm_awready_zipcpu;
+    logic [AXI_WIDTH-1:0]       m_axi_s2mm_wdata;
+    logic [AXI_STRB_WIDTH-1:0]  m_axi_s2mm_wstrb;
+    logic                       m_axi_s2mm_wlast;
+    logic                       m_axi_s2mm_wvalid;
+    logic                       m_axi_s2mm_wvalid_zipcpu;
+    logic                       m_axi_s2mm_wready;
+    logic                       m_axi_s2mm_wready_zipcpu;
+    logic [AXI_ID_WIDTH-1:0]    m_axi_s2mm_bid;
+    logic [1:0]                 m_axi_s2mm_bresp;
+    logic                       m_axi_s2mm_bvalid;
+    logic                       m_axi_s2mm_bvalid_zipcpu;
+    logic                       m_axi_s2mm_bready;
+    logic                       m_axi_s2mm_bready_zipcpu;
 
     logic rand_mm2s_0_ar;
     logic rand_mm2s_0_r;
