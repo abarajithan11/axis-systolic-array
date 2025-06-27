@@ -139,17 +139,7 @@ module top_tb;
   logic                       m_axi_s2mm_bvalid;
   logic                       m_axi_s2mm_bready;
 
-  top_ram #(
-    .R                 (R                ), 
-    .C                 (C                ), 
-    .WK                (WK               ), 
-    .WX                (WX               ), 
-    .WA                (WA               ), 
-    .WY                (WY               ), 
-    .LM                (LM               ), 
-    .LA                (LA               ), 
-    .VALID_PROB        (VALID_PROB       ),
-    .READY_PROB        (READY_PROB       ),
+  firebridge_axi #(
     .AXI_WIDTH         (AXI_WIDTH        ), 
     .AXI_ID_WIDTH      (AXI_ID_WIDTH     ), 
     .AXI_STRB_WIDTH    (AXI_STRB_WIDTH   ), 
@@ -159,8 +149,8 @@ module top_tb;
     .AXIL_ADDR_WIDTH   (AXIL_ADDR_WIDTH  ), 
     .AXIL_STRB_WIDTH   (AXIL_STRB_WIDTH  ), 
     .AXIL_BASE_ADDR    (AXIL_BASE_ADDR   ),
-    .CLK_PERIOD        (CLK_PERIOD       ),
-    .DIR               (DIR              )
+    .VALID_PROB        (VALID_PROB       ),
+    .READY_PROB        (READY_PROB       )
   ) dut(.*);
 
 
@@ -193,12 +183,40 @@ module top_tb;
     $fatal(1, "Error: Timeout.");
   end
 
+  int file_out, file_exp, status, error=0, i=0;
+  byte out_byte, exp_byte;
+
   initial begin
     rstn <= 0;
     repeat(2) @(posedge clk) #10ps;
     rstn <= 1;
 
     wait(done);
+
+    // Read from output & expected and compare
+    file_out = $fopen({DIR, "/y.bin"}, "rb");
+    file_exp = $fopen({DIR, "/y_exp.bin" }, "rb");
+    if (file_out==0 || file_exp==0) $fatal(0, "Error: Failed to open output/expected file(s).");
+
+    while($feof(file_exp) == 0) begin
+      if ($feof(file_out)) $fatal(0, "Error: output file is shorter than expected file.");
+      else begin
+        out_byte = $fgetc(file_out);
+        exp_byte = $fgetc(file_exp);
+        // Compare
+        if (exp_byte != out_byte) begin
+          $display("Mismatch at index %0d: Expected %h, Found %h", i, exp_byte, out_byte);
+          error += 1;
+        end 
+      end
+      i += 1;
+    end
+    $fclose(file_exp);
+    $fclose(file_out);
+    
+    if (error==0) $display("\n\nVerification successful: Output matches Expected data. \nError count: %0d\n\n", error);
+    else          $fatal (0, "\n\nERROR: Output data does not match Expected data.\n\n");
+
     $finish;
   end
 
