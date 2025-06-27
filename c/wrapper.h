@@ -30,13 +30,17 @@ typedef double   f64;
   #define TO_STRING(x) STRINGIFY(x)
 
   Memory_st mem_phy;
-  extern EXT_C void set_config(void*, u32, u32);
-	extern EXT_C void task_get_config(void*, u32);
-	extern EXT_C u32  fn_get_config();
+  extern EXT_C void fb_task_write_reg32(u64, u32);
+	extern EXT_C void fb_task_read_reg32(u64);
+	extern EXT_C u32  fb_fn_read_reg32();
 
-	u32 get_config(void* base, u32 offset){
-    task_get_config(base, offset);
-    return fn_get_config();
+	u32 fb_read_reg32(void* addr){
+    fb_task_read_reg32((u64)addr);
+    u32 data = fb_fn_read_reg32();
+    return data;
+  }
+  void fb_write_reg32(void* addr, u32 data) {
+    fb_task_write_reg32((u64)addr, data);
   }
   static inline void flush_cache(void *addr, uint32_t bytes) {} // Do nothing
 
@@ -44,12 +48,12 @@ typedef double   f64;
   #define sim_fprintf(...)
   #define mem_phy (*(Memory_st* restrict)MEM_BASEADDR)
 
-  volatile u32 get_config(void *config_base, u32 offset){
-    return *(volatile u32 *)(config_base + offset*4);
+  volatile u32 fb_read_reg32(void *addr){
+    return *(volatile u32 *)addr;
   }
 
-  void set_config(void *config_base, u32 offset, u32 data){	
-    *(volatile u32 *restrict)(config_base + offset*4) = data;
+  void fb_write_reg32(void *addr, u32 data){	
+    *(volatile u32 *restrict)addr = data;
   }
 #endif
 
@@ -64,56 +68,32 @@ typedef double   f64;
 // Rest of the helper functions used in simulation.
 #ifdef SIM
 
-extern EXT_C u32 addr_64to32(void* restrict addr){
+extern EXT_C u32 fb_addr_64to32(void* restrict addr){
   u64 offset = (u64)addr - (u64)&mem_phy;
   return (u32)offset + MEM_BASEADDR;
 }
 
-extern EXT_C u64 sim_addr_32to64(u32 addr){
+extern EXT_C u64 fb_sim_addr_32to64(u32 addr){
   return (u64)addr - (u64)MEM_BASEADDR + (u64)&mem_phy;
 }
 
-extern EXT_C u8 get_byte_a32 (u32 addr_32){
-  u64 addr = sim_addr_32to64(addr_32);
+extern EXT_C u8 fb_c_read_ddr8_addr32 (u32 addr_32){
+  u64 addr = fb_sim_addr_32to64(addr_32);
   u8 val = *(u8*restrict)addr;
-  //debug_printf("get_byte_a32: addr32:0x%x, addr64:0x%lx, val:0x%x\n", addr_32, addr, val);
   return val;
 }
 
-extern EXT_C void set_byte_a32 (u32 addr_32, u8 data){
-  u64 addr = sim_addr_32to64(addr_32);
+extern EXT_C void fb_c_write_ddr8_addr32 (u32 addr_32, u8 data){
+  u64 addr = fb_sim_addr_32to64(addr_32);
   *(u8*restrict)addr = data;
 }
 
-extern EXT_C void *get_mp(){
+extern EXT_C void *fb_get_mp(){
   return &mem_phy;
 }
 #else
 
-u32 addr_64to32 (void* addr){
+u32 fb_addr_64to32 (void* addr){
   return (u32)((u64)addr);
 }
-#endif
-
-// Wait loop
-#ifdef SIM
-  #define WAIT_INIT(label) \
-    static char label##_is_first_call = 1; \
-    if (label##_is_first_call) label##_is_first_call = 0; \
-    else goto label;
-
-  // if sim, return. so SV can pass time, and call again, which will jump to DMA_WAIT again
-  #define WAIT(cond, LABEL) do { \
-      LABEL: \
-      if (cond) {  \
-        *done = 0; \
-        return;    \
-      } \
-    } while(0)
-#else
-  #define WAIT_INIT(...)
-  // if FPGA, run a while loop
-  #define WAIT(cond, LABEL) do { \
-      while (cond) {} \
-    } while(0)
 #endif

@@ -8,6 +8,8 @@ typedef struct {
   TY y [C][R];
 } Memory_st;
 
+int *config_base = (int *)CONFIG_BASEADDR;
+
 #define MEM_BASEADDR    0x20000000
 #define A_START         0x0
 #define A_MM2S_0_DONE   0x1
@@ -28,7 +30,7 @@ typedef struct {
 
 #include "wrapper.h"
 
-extern EXT_C void run(Memory_st *restrict mp, void *p_config) {
+extern EXT_C void run(Memory_st *restrict mp) {
  
   #ifdef SIM // only read/write files in simulation
     FILE *fp;
@@ -44,17 +46,17 @@ extern EXT_C void run(Memory_st *restrict mp, void *p_config) {
   #endif
   
   // Start DMA
-  set_config(p_config, A_MM2S_0_ADDR , addr_64to32(mem_phy.k));
-  set_config(p_config, A_MM2S_0_BYTES,      sizeof(mem_phy.k));
-  set_config(p_config, A_MM2S_1_ADDR , addr_64to32(mem_phy.x));
-  set_config(p_config, A_MM2S_1_BYTES,      sizeof(mem_phy.x));
-  set_config(p_config, A_MM2S_2_ADDR , addr_64to32(mem_phy.a));
-  set_config(p_config, A_MM2S_2_BYTES,      sizeof(mem_phy.a));
-  set_config(p_config, A_S2MM_ADDR   , addr_64to32(mem_phy.y));
-  set_config(p_config, A_S2MM_BYTES  ,      sizeof(mem_phy.y));
-  set_config(p_config, A_START       , 1);  // Start
+  fb_write_reg32(config_base + A_MM2S_0_ADDR , fb_addr_64to32(mem_phy.k));
+  fb_write_reg32(config_base + A_MM2S_0_BYTES,      sizeof(mem_phy.k));
+  fb_write_reg32(config_base + A_MM2S_1_ADDR , fb_addr_64to32(mem_phy.x));
+  fb_write_reg32(config_base + A_MM2S_1_BYTES,      sizeof(mem_phy.x));
+  fb_write_reg32(config_base + A_MM2S_2_ADDR , fb_addr_64to32(mem_phy.a));
+  fb_write_reg32(config_base + A_MM2S_2_BYTES,      sizeof(mem_phy.a));
+  fb_write_reg32(config_base + A_S2MM_ADDR   , fb_addr_64to32(mem_phy.y));
+  fb_write_reg32(config_base + A_S2MM_BYTES  ,      sizeof(mem_phy.y));
+  fb_write_reg32(config_base + A_START       , 1);  // Start
 
-  while (!(get_config(p_config, A_S2MM_DONE))) {}
+  while (!(fb_read_reg32(config_base + A_S2MM_DONE))) {}
 
   #ifdef SIM
     sprintf(f_path, "%s/y.bin", DIR);

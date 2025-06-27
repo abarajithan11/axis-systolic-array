@@ -183,32 +183,21 @@ module firebridge_axi #(
     s_axi_rready[i] <= 0;
   endtask
 
-
-`ifdef VERILATOR
-  `define AUTOMATIC
-`elsif XCELIUM
-  `define AUTOMATIC
-`else
-  `define AUTOMATIC automatic
-`endif
-
-  export "DPI-C" task task_get_config;
-  export "DPI-C" function fn_get_config;
-  export "DPI-C" task set_config;
-  import "DPI-C" context function byte get_byte_a32 (input int unsigned addr);
-  import "DPI-C" context function void  set_byte_a32 (input int unsigned addr, input byte data);
+  export "DPI-C" task fb_task_read_reg32;
+  export "DPI-C" function fb_fn_read_reg32;
+  export "DPI-C" task fb_task_write_reg32;
 
   int tmp_get_data;
-  task automatic task_get_config(input chandle config_base, input int offset);
-    axi_read(S_AXI_BASE_ADDR + (offset * 4), tmp_get_data);
+  task automatic fb_task_read_reg32(input longint addr);
+    axi_read(addr, tmp_get_data);
   endtask
 
-  function automatic int fn_get_config();
+  function automatic int fb_fn_read_reg32();
     return tmp_get_data;
   endfunction
 
-  task automatic set_config(input chandle config_base, input int offset, input int data);
-    axi_write(S_AXI_BASE_ADDR + (offset * 4), data);
+  task automatic fb_task_write_reg32(input longint addr, input int data);
+    axi_write(addr, data);
   endtask
 
 
@@ -243,7 +232,9 @@ module firebridge_axi #(
   
 
   // Handle M Masters
-  
+  import "DPI-C" context function byte fb_c_read_ddr8_addr32  (input int unsigned addr);
+  import "DPI-C" context function void fb_c_write_ddr8_addr32 (input int unsigned addr, input byte data);
+
   for (m=0; m< M_COUNT; m++) begin
 
     always_ff @( posedge clk ) begin
@@ -321,29 +312,37 @@ module firebridge_axi #(
     always_ff @(posedge clk) begin
       if (ren[m]) begin
         for (int i = 0; i < M_AXI_DATA_WIDTH/8; i++) begin
-          tmp_data[i*8 +: 8] = get_byte_a32((32'(raddr[m]) << LSB) + i);
+          tmp_data[i*8 +: 8] = fb_c_read_ddr8_addr32((32'(raddr[m]) << LSB) + i);
         end
         rdata[m] <= tmp_data;
       end
       if (wen[m]) 
         for (int i = 0; i < M_AXI_DATA_WIDTH/8; i++) 
           if (wstrb[m][i]) 
-            set_byte_a32((32'(waddr[m]) << LSB) + i, wdata[m][i*8 +: 8]);
+            fb_c_write_ddr8_addr32((32'(waddr[m]) << LSB) + i, wdata[m][i*8 +: 8]);
     end
   end
 
 
   // Simulation
 
-  import "DPI-C" context task `AUTOMATIC run(input chandle mem_ptr_virtual, input chandle p_config);
-  import "DPI-C" context function chandle get_mp ();
+`ifdef VERILATOR
+  `define AUTOMATIC
+`elsif XCELIUM
+  `define AUTOMATIC
+`else
+  `define AUTOMATIC automatic
+`endif
 
-  chandle mem_ptr_virtual, cfg_ptr_virtual;
+  import "DPI-C" context task `AUTOMATIC run(input chandle mem_ptr_virtual);
+  import "DPI-C" context function chandle fb_get_mp ();
+
+  chandle mem_ptr_virtual;
   initial begin
     firebridge_done <= 0;
     wait (rstn);
-    mem_ptr_virtual = get_mp();
-    run(mem_ptr_virtual, cfg_ptr_virtual);
+    mem_ptr_virtual = fb_get_mp();
+    run(mem_ptr_virtual);
     firebridge_done <= 1;
   end
 
