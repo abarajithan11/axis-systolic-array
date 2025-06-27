@@ -41,7 +41,9 @@ VERI_FLAGS = --binary -j 0 -O3 \
 	-CFLAGS -g --Mdir ../$(WORK_DIR) \
 	-CFLAGS -I$(WORK_DIR) 
 
-XCELIUM_FLAGS = -64bit -sv -dpi -CFLAGS -DSIM -CFLAGS -I.
+GCC_FLAGS = -std=gnu99 -fPIC -g -O2 -DSIM "-DDIR=$(WORK_DIR)/" "-I$(FULL_WORK_DIR)" -shared
+
+XCELIUM_FLAGS = -64bit -sv -dpi -CFLAGS -DSIM -CFLAGS -I. -sv_lib fw
 
 #----------------- COMMON SETUP ------------------
 
@@ -148,8 +150,11 @@ vivado: $(WORK_DIR) $(WORK_DIR)/config.svh $(WORK_DIR)/config.tcl
 
 #----------------- XCELIUM --------------------
 
-xrun: $(WORK_DIR) $(DATA_DIR)/kxa.bin $(WORK_DIR)/config.svh $(WORK_DIR)/config.h
-	cd $(WORK_DIR) && xrun $(XCELIUM_FLAGS) -f ../$(SOURCES_FILE) $(C_SOURCE)
+$(WORK_DIR)/fw.so: $(WORK_DIR)
+	cd $(WORK_DIR) && gcc $(GCC_FLAGS) -o fw.so $(C_SOURCE)
+
+xrun: $(WORK_DIR) $(DATA_DIR)/kxa.bin $(WORK_DIR)/config.svh $(WORK_DIR)/config.h $(WORK_DIR)/fw.so
+	cd $(WORK_DIR) && xrun $(XCELIUM_FLAGS) -f ../$(SOURCES_FILE)
 
 
 #----------------- VERILATOR ------------------
