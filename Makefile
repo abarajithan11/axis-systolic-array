@@ -172,6 +172,12 @@ veri_smoke: rtl/sa/axis_sa.sv rtl/sa/mac.sv rtl/sa/n_delay.sv rtl/sa/tri_buffer.
 	verilator --top smoke_tb --binary -j 0 -O3 --trace --Wno-BLKANDNBLK --Wno-INITIALDLY --Mdir $(WORK_DIR) $^
 	@cd run && work/Vsmoke_tb
 
+#----------------- VERILATOR ------------------
+
+ibex: 
+	@cd ibex-soc && make build-simple-system && make run-simple-system
+
+
 # Clean work directory
 clean:
 	"rm" -rf $(WORK_DIR)*
