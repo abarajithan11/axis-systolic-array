@@ -25,7 +25,7 @@ SOURCES_FILE = sources.txt
 
 XSC_FLAGS = \
 	--gcc_compile_options -DSIM \
-	--gcc_compile_options "-DDIR=$(WORK_DIR)/" \
+	--gcc_compile_options "-DDIR../../$(WORK_DIR)/" \
 	--gcc_compile_options "-I$(FULL_WORK_DIR)"
 
 XVLOG_FLAGS = -sv -i $(abspath $(RUN_DIR))
@@ -139,7 +139,7 @@ elab: vlog
 
 # Run simulation
 xsim: elab $(DATA_DIR)
-	echo log_wave -recursive *; run all; exit > $(WORK_DIR)/cfg.tcl
+	echo "log_wave -recursive *; run all; exit" > $(WORK_DIR)/cfg.tcl
 	cd $(WORK_DIR) && xsim $(TB_MODULE) $(XSIM_FLAGS)
 
 
