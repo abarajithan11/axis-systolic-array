@@ -39,20 +39,27 @@ module top_ram_tb;
   logic                       reg_rd_en  ;
   logic [AXIL_WIDTH     -1:0] reg_rd_data;
 
-  logic                          mm2s_0_ren;
-  logic [AXI_ADDR_WIDTH-LSB-1:0] mm2s_0_addr;
-  logic [AXI_WIDTH    -1:0]      mm2s_0_data;
-  logic                          mm2s_1_ren;
-  logic [AXI_ADDR_WIDTH-LSB-1:0] mm2s_1_addr;
-  logic [AXI_WIDTH    -1:0]      mm2s_1_data;
-  logic                          mm2s_2_ren;
-  logic [AXI_ADDR_WIDTH-LSB-1:0] mm2s_2_addr;
-  logic [AXI_WIDTH    -1:0]      mm2s_2_data;
-
-  logic                          s2mm_wen;
-  logic [AXI_ADDR_WIDTH-LSB-1:0] s2mm_addr;
-  logic [AXI_WIDTH    -1:0]      s2mm_data;
-  logic [AXI_WIDTH/8  -1:0]      s2mm_strb;
+  logic                       mm2s_0_rd_en  ;
+  logic [AXI_ADDR_WIDTH-1:0]  mm2s_0_rd_addr;
+  logic [AXI_WIDTH-1:0]       mm2s_0_rd_data;
+  logic                       mm2s_0_rd_wait;
+  logic                       mm2s_0_rd_ack ;
+  logic                       mm2s_1_rd_en  ;
+  logic [AXI_ADDR_WIDTH-1:0]  mm2s_1_rd_addr;
+  logic [AXI_WIDTH-1:0]       mm2s_1_rd_data;
+  logic                       mm2s_1_rd_wait;
+  logic                       mm2s_1_rd_ack ;
+  logic                       mm2s_2_rd_en  ;
+  logic [AXI_ADDR_WIDTH-1:0]  mm2s_2_rd_addr;
+  logic [AXI_WIDTH-1:0]       mm2s_2_rd_data;
+  logic                       mm2s_2_rd_wait;
+  logic                       mm2s_2_rd_ack ;
+  logic                       s2mm_wr_en    ;
+  logic [AXI_ADDR_WIDTH-1:0]  s2mm_wr_addr  ;
+  logic [AXI_WIDTH-1:0]       s2mm_wr_data  ;
+  logic [AXI_STRB_WIDTH-1:0]  s2mm_wr_strb  ;
+  logic                       s2mm_wr_wait  ;
+  logic                       s2mm_wr_ack   ;
 
   top_sa_ram #(
     .R                 (R                ), 
@@ -106,34 +113,42 @@ logic [AXI_WIDTH-1:0] tmp_data;
 
   always_ff @(posedge clk) begin : Axi_rw
 
-    if (mm2s_0_ren) begin
+    mm2s_0_rd_wait <= 0;
+    mm2s_0_rd_ack  <= mm2s_0_rd_en;
+    if (mm2s_0_rd_en) begin
       for (int i = 0; i < AXI_WIDTH/8; i++) begin
-        get_byte_a32((32'(mm2s_0_addr) << LSB) + i, tmp_byte);
+        get_byte_a32((32'(mm2s_0_rd_addr)) + i, tmp_byte);
         tmp_data[i*8 +: 8] = tmp_byte;
       end
-      mm2s_0_data <= tmp_data;
+      mm2s_0_rd_data <= tmp_data;
     end
 
-    if (mm2s_1_ren) begin
+    mm2s_1_rd_wait <= 0;
+    mm2s_1_rd_ack  <= mm2s_1_rd_en;
+    if (mm2s_1_rd_en) begin
       for (int i = 0; i < AXI_WIDTH/8; i++) begin
-        get_byte_a32((32'(mm2s_1_addr) << LSB) + i, tmp_byte);
+        get_byte_a32((32'(mm2s_1_rd_addr)) + i, tmp_byte);
         tmp_data[i*8 +: 8] = tmp_byte;
       end
-      mm2s_1_data <= tmp_data;
+      mm2s_1_rd_data <= tmp_data;
     end
 
-    if (mm2s_2_ren) begin
+    mm2s_2_rd_wait <= 0;
+    mm2s_2_rd_ack  <= mm2s_2_rd_en;
+    if (mm2s_2_rd_en) begin
       for (int i = 0; i < AXI_WIDTH/8; i++) begin
-        get_byte_a32((32'(mm2s_2_addr) << LSB) + i, tmp_byte);
+        get_byte_a32((32'(mm2s_2_rd_addr)) + i, tmp_byte);
         tmp_data[i*8 +: 8] = tmp_byte;
       end
-      mm2s_2_data <= tmp_data;
+      mm2s_2_rd_data <= tmp_data;
     end
 
-    if (s2mm_wen) 
+    s2mm_wr_wait <= 0;
+    s2mm_wr_ack  <= s2mm_wr_en;
+    if (s2mm_wr_en) 
       for (int i = 0; i < AXI_WIDTH/8; i++) 
-        if (s2mm_strb[i]) 
-          set_byte_a32((32'(s2mm_addr) << LSB) + i, s2mm_data[i*8 +: 8]);
+        if (s2mm_wr_strb[i]) 
+          set_byte_a32((32'(s2mm_wr_addr)) + i, s2mm_wr_data[i*8 +: 8]);
   end
   
   initial begin
