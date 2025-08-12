@@ -25,7 +25,7 @@ module top #(
         AXIL_WIDTH              = 32,
         AXIL_ADDR_WIDTH         = 40,
         STRB_WIDTH              = 4,
-        AXIL_BASE_ADDR          = 32'hB0000000
+    parameter  [AXIL_ADDR_WIDTH-1:0] AXIL_BASE_ADDR = 'hB0000000
 
 ) (
     // axilite interface for configuration
@@ -366,10 +366,8 @@ wire reg_rd_en;
 wire [AXIL_WIDTH-1:0] reg_rd_data;
 
 // Veriltor width mismatch bullshit
-localparam AXIL_ADDR_EXTRA = AXIL_ADDR_WIDTH - 32;
-wire [AXIL_ADDR_EXTRA -1:0] axil_addr_zeros = 0;
-wire [AXIL_ADDR_WIDTH-1:0] reg_wr_addr_ctrl = (reg_wr_addr-{axil_addr_zeros, AXIL_BASE_ADDR}) >> 2;
-wire [AXIL_ADDR_WIDTH-1:0] reg_rd_addr_ctrl = (reg_rd_addr-{axil_addr_zeros,AXIL_BASE_ADDR})  >> 2;
+wire [AXIL_ADDR_WIDTH-1:0] reg_wr_addr_ctrl = (reg_wr_addr-AXIL_BASE_ADDR) >> 2;
+wire [AXIL_ADDR_WIDTH-1:0] reg_rd_addr_ctrl = (reg_rd_addr-AXIL_BASE_ADDR) >> 2;
 
 
 localparam      AXI_LEN_WIDTH           = 32,

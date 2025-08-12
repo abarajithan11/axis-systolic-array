@@ -23,7 +23,7 @@ module top_axi_tb;
     AXI_MAX_BURST_LEN   = 32                 ,
     AXI_ADDR_WIDTH      = 32                 ,
     AXIL_WIDTH          = 32                 ,
-    AXIL_ADDR_WIDTH     = 40                 ,
+    AXIL_ADDR_WIDTH     = 32                 ,
     STRB_WIDTH          = 4                  ,
     DATA_WR_WIDTH       = AXIL_WIDTH         ,
     DATA_RD_WIDTH       = AXIL_WIDTH         ,
