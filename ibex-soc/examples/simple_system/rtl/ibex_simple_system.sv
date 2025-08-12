@@ -18,8 +18,6 @@
   `define RegFile ibex_pkg::RegFileFF
 `endif
 
-`include "config.svh"
-
 /**
  * Ibex simple system
  *
@@ -58,42 +56,18 @@ module ibex_simple_system (
 
   logic clk_sys = 1'b0, rst_sys_n;
 
-  localparam
-    R                       =`R        ,
-    C                       =`C        ,
-    WK                      =`WK       ,
-    WX                      =`WX       ,
-    WY                      =`WY       ,
-    AXI_WIDTH               =`AXI_WIDTH,
-    AXI_ID_WIDTH            = 6,
-    AXI_STRB_WIDTH          = (AXI_WIDTH/8),
-    AXI_MAX_BURST_LEN       = 32,
-    AXI_ADDR_WIDTH          = 32,
-    AXIS_USER_WIDTH         = 8,         
-    LSB                     = $clog2(AXI_WIDTH)-3,
-    // AXI-Lite
-    AXIL_WIDTH              = 32,
-    AXIL_ADDR_WIDTH         = 32,
-    STRB_WIDTH              = 4,
-    AXIL_BASE_ADDR          = 32'hB0000000;
-
   typedef enum logic {
-    CoreD,
-    dma0,
-    dma1,
-    dma2,
-    dma3
+    CoreD
   } bus_host_e;
 
   typedef enum logic[1:0] {
     Ram,
     SimCtrl,
-    Timer,
-    SAConfig
+    Timer
   } bus_device_e;
 
-  localparam int NrDevices = 4;
-  localparam int NrHosts = 5;
+  localparam int NrDevices = 3;
+  localparam int NrHosts = 1;
 
   // interrupts
   logic timer_irq;
@@ -131,8 +105,6 @@ module ibex_simple_system (
   assign cfg_device_addr_mask[SimCtrl] = ~32'h3FF; // 1 kB
   assign cfg_device_addr_base[Timer] = 32'h30000;
   assign cfg_device_addr_mask[Timer] = ~32'h3FF; // 1 kB
-  assign cfg_device_addr_base[SAConfig] = AXIL_BASE_ADDR;
-  assign cfg_device_addr_mask[SAConfig] = ~32'h3FF; // 1 kB
 
   // Instruction fetch signals
   logic instr_req;
@@ -313,98 +285,6 @@ module ibex_simple_system (
       .b_wdata_i   (32'b0),
       .b_rvalid_o  (instr_rvalid),
       .b_rdata_o   (instr_rdata)
-    );
-
-  logic [AXIL_ADDR_WIDTH-1:0]      reg_wr_addr; // i
-  logic [AXIL_WIDTH     -1:0]      reg_wr_data; // i
-  logic [STRB_WIDTH     -1:0]      reg_wr_strb; // i
-  logic                            reg_wr_en  ; // i
-  logic [AXIL_ADDR_WIDTH-1:0]      reg_rd_addr; // i
-  logic                            reg_rd_en  ; // i
-  logic [AXIL_WIDTH     -1:0]      reg_rd_data; // o 
-  logic                            mm2s_0_ren ; // o
-  logic  [AXI_ADDR_WIDTH-LSB-1:0]  mm2s_0_addr; // o
-  logic  [AXI_WIDTH-1:0]           mm2s_0_data; // i
-  logic                            mm2s_1_ren ; // o
-  logic  [AXI_ADDR_WIDTH-LSB-1:0]  mm2s_1_addr; // o
-  logic  [AXI_WIDTH-1:0]           mm2s_1_data; // i
-  logic                            mm2s_2_ren ; // o
-  logic  [AXI_ADDR_WIDTH-LSB-1:0]  mm2s_2_addr; // o
-  logic  [AXI_WIDTH-1:0]           mm2s_2_data; // i
-  logic                            s2mm_wen   ; // o
-  logic  [AXI_ADDR_WIDTH-LSB-1:0]  s2mm_addr  ; // o
-  logic  [AXI_WIDTH-1:0]           s2mm_data  ; // o
-  logic  [AXI_WIDTH/8-1:0]         s2mm_strb  ; // o
-
-  always @* begin
-    host_req      [NrHosts  ];
-    host_gnt      [NrHosts  ];
-    host_addr     [NrHosts  ];
-    host_we       [NrHosts  ];
-    host_be       [NrHosts  ];
-    host_wdata    [NrHosts  ];
-    host_rvalid   [NrHosts  ];
-    host_rdata    [NrHosts  ];
-    host_err      [NrHosts  ];
-
-
-    reg_rd_en                = (!device_we [SAConfig]) && device_req[SAConfig];
-    reg_wr_en                =   device_we [SAConfig]  && device_req[SAConfig];
-    reg_wr_strb              = device_be  [SAConfig];
-    reg_wr_addr              = device_addr[SAConfig];
-    reg_rd_addr              = device_addr[SAConfig];
-    reg_wr_data              = device_wdata  [SAConfig];
-    device_rdata  [SAConfig] = reg_rd_data;
-    device_err    [SAConfig] = 0;
-  end
-
-  always_ff @(posedge clk_sys or negedge rst_sys_n)
-    if (!rst_sys_n) device_rvalid [SAConfig] <= 0;
-    else            device_rvalid [SAConfig] <= device_req[SAConfig];
-
-  top_sa_ram #(
-      .R                 (R                ),
-      .C                 (C                ),
-      .WK                (WK               ),
-      .WX                (WX               ),
-      .WY                (WY               ),
-      .AXI_WIDTH         (AXI_WIDTH        ),
-      .WA                (WA               ),
-      .LM                (LM               ),
-      .LA                (LA               ),
-      .AXI_ID_WIDTH      (AXI_ID_WIDTH     ),
-      .AXI_STRB_WIDTH    (AXI_STRB_WIDTH   ),
-      .AXI_MAX_BURST_LEN (AXI_MAX_BURST_LEN),
-      .AXI_ADDR_WIDTH    (AXI_ADDR_WIDTH   ),
-      .AXIS_USER_WIDTH   (AXIS_USER_WIDTH  ),         
-      .LSB               (LSB              ),
-      .AXIL_WIDTH        (AXIL_WIDTH       ),
-      .AXIL_ADDR_WIDTH   (AXIL_ADDR_WIDTH  ),
-      .STRB_WIDTH        (STRB_WIDTH       ),
-      .AXIL_BASE_ADDR    (AXIL_BASE_ADDR   )
-    ) SA_RAM (
-      .clk        (clk_sys  ),
-      .rstn       (rst_sys_n),
-      .reg_wr_addr(),
-      .reg_wr_data(),
-      .reg_wr_strb(),
-      .reg_wr_en  (),
-      .reg_rd_addr(),
-      .reg_rd_en  (),
-      .reg_rd_data(),
-      .mm2s_0_ren (),
-      .mm2s_0_addr(),
-      .mm2s_0_data(),
-      .mm2s_1_ren (),
-      .mm2s_1_addr(),
-      .mm2s_1_data(),
-      .mm2s_2_ren (),
-      .mm2s_2_addr(),
-      .mm2s_2_data(),
-      .s2mm_wen   (),
-      .s2mm_addr  (),
-      .s2mm_data  (),
-      .s2mm_strb  ()
     );
 
   simulator_ctrl #(

@@ -33,6 +33,9 @@ build-simple-system:
 		lowrisc:ibex:ibex_simple_system \
 		$(FUSESOC_CONFIG_OPTS)
 
+build-run-simple: build-simple-system run-simple-system
+	cat ibex_simple_system.log
+
 simple-system-program = examples/sw/simple_system/hello_test/hello_test.vmem
 sw-simple-hello: $(simple-system-program)
 
