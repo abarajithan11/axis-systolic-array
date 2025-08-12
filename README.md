@@ -89,6 +89,14 @@ make vivado BOARD=zcu102
 1. Open Vitis serial console and connect to the correct COM port.
 1. Click `Resume` to run the program.
 
+## For Ibex
+
+1. Set up & run [Ibex Simple System](https://github.com/lowRISC/ibex/tree/master/examples/simple_system)
+1. Run `fusesoc library add sa_ip /root/of/this/repo`
+1. Check if it is added `fusesoc core show vendor:sa:sa_for_ibex`
+1. `cd ibex_soc`
+1. `make build_run_simple`
+
 ## Resources & Performance
 
 Following was done on ZCU104. 

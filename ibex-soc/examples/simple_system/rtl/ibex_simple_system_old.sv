@@ -18,8 +18,6 @@
   `define RegFile ibex_pkg::RegFileFF
 `endif
 
-`include "config.svh"
-
 /**
  * Ibex simple system
  *
@@ -58,24 +56,18 @@ module ibex_simple_system (
 
   logic clk_sys = 1'b0, rst_sys_n;
 
-  localparam int NrDevices = 3+1;
-  localparam int NrHosts = 1+4;
-
-  typedef enum logic[$clog2(NrHosts)-1:0] {
-    CoreD,
-    SA0,
-    SA1,
-    SA2,
-    SA3
+  typedef enum logic {
+    CoreD
   } bus_host_e;
 
-  typedef enum logic[$clog2(NrDevices)-1:0] {
+  typedef enum logic[1:0] {
     Ram,
     SimCtrl,
-    Timer,
-    SA_Config
+    Timer
   } bus_device_e;
 
+  localparam int NrDevices = 3;
+  localparam int NrHosts = 1;
 
   // interrupts
   logic timer_irq;
@@ -113,62 +105,6 @@ module ibex_simple_system (
   assign cfg_device_addr_mask[SimCtrl] = ~32'h3FF; // 1 kB
   assign cfg_device_addr_base[Timer] = 32'h30000;
   assign cfg_device_addr_mask[Timer] = ~32'h3FF; // 1 kB
-  assign cfg_device_addr_base[SA_Config] = `AXIL_BASE_ADDR;
-  assign cfg_device_addr_mask[SA_Config] = ~32'h3FF; // 1 kB
-
-  sa_for_ibex sa (
-    .clk            (IO_CLK),
-    .rstn           (IO_RST_N),
-    .dev_req_i      (device_req   [SA_Config]),
-    .dev_addr_i     (device_addr  [SA_Config]),
-    .dev_we_i       (device_we    [SA_Config]),
-    .dev_be_i       (device_be    [SA_Config]),
-    .dev_wdata_i    (device_wdata [SA_Config]),
-    .dev_rvalid_o   (device_rvalid[SA_Config]),
-    .dev_rdata_o    (device_rdata [SA_Config]),
-    .dev_err_o      (device_err   [SA_Config]),
-    .dev_gnt_o      (),
-
-    .host0_req_o    (host_req    [SA0]),
-    .host0_gnt_i    (host_gnt    [SA0]),
-    .host0_addr_o   (host_addr   [SA0]),
-    .host0_we_o     (host_we     [SA0]),
-    .host0_be_o     (host_be     [SA0]),
-    .host0_wdata_o  (host_wdata  [SA0]),
-    .host0_rvalid_i (host_rvalid [SA0]),
-    .host0_rdata_i  (host_rdata  [SA0]),
-    .host0_err_i    (host_err    [SA0]),
-
-    .host1_req_o    (host_req    [SA1]),
-    .host1_gnt_i    (host_gnt    [SA1]),
-    .host1_addr_o   (host_addr   [SA1]),
-    .host1_we_o     (host_we     [SA1]),
-    .host1_be_o     (host_be     [SA1]),
-    .host1_wdata_o  (host_wdata  [SA1]),
-    .host1_rvalid_i (host_rvalid [SA1]),
-    .host1_rdata_i  (host_rdata  [SA1]),
-    .host1_err_i    (host_err    [SA1]),
-
-    .host2_req_o    (host_req    [SA2]),
-    .host2_gnt_i    (host_gnt    [SA2]),
-    .host2_addr_o   (host_addr   [SA2]),
-    .host2_we_o     (host_we     [SA2]),
-    .host2_be_o     (host_be     [SA2]),
-    .host2_wdata_o  (host_wdata  [SA2]),
-    .host2_rvalid_i (host_rvalid [SA2]),
-    .host2_rdata_i  (host_rdata  [SA2]),
-    .host2_err_i    (host_err    [SA2]),
-
-    .host3_req_o    (host_req    [SA3]),
-    .host3_gnt_i    (host_gnt    [SA3]),
-    .host3_addr_o   (host_addr   [SA3]),
-    .host3_we_o     (host_we     [SA3]),
-    .host3_be_o     (host_be     [SA3]),
-    .host3_wdata_o  (host_wdata  [SA3]),
-    .host3_rvalid_i (host_rvalid [SA3]),
-    .host3_rdata_i  (host_rdata  [SA3]),
-    .host3_err_i    (host_err    [SA3])
-  );
 
   // Instruction fetch signals
   logic instr_req;

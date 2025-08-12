@@ -9,6 +9,7 @@ filesets:
     depend:
       - lowrisc:ibex:ibex_top_tracing
       - lowrisc:ibex:sim_shared
+      - vendor:sa:sa_for_ibex
     files:
       - rtl/ibex_simple_system.sv
     file_type: systemVerilogSource

@@ -23,9 +23,9 @@ module top #(
         AXIS_USER_WIDTH         = 8,         
         // AXI-Lite
         AXIL_WIDTH              = 32,
-        AXIL_ADDR_WIDTH         = 40,
+        AXIL_ADDR_WIDTH         = 32,
         STRB_WIDTH              = 4,
-    parameter  [AXIL_ADDR_WIDTH-1:0] AXIL_BASE_ADDR = 'hB0000000
+    parameter  [AXIL_ADDR_WIDTH-1:0] AXIL_BASE_ADDR = `AXIL_BASE_ADDR
 
 ) (
     // axilite interface for configuration
