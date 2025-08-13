@@ -41,6 +41,7 @@ typedef double   f64;
   }
   void fb_write_reg32(void* addr, u32 data) {
     fb_task_write_reg32((u64)addr, data);
+    printf("fb_task_write_reg32 finished\n");
   }
   static inline void flush_cache(void *addr, uint32_t bytes) {} // Do nothing
 

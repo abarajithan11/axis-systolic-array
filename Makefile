@@ -36,6 +36,8 @@ XSIM_FLAGS = --tclbatch cfg.tcl
 
 VERI_FLAGS = --binary -j 0 -O3 \
 	--Wno-BLKANDNBLK --Wno-INITIALDLY \
+	--Wno-WIDTHTRUNC --Wno-WIDTHEXPAND \
+	--Wno-UNSIGNED --Wno-CASEINCOMPLETE \
 	-I$(RUN_DIR) \
 	-CFLAGS -DSIM \
 	-CFLAGS -g --Mdir ../$(WORK_DIR) \

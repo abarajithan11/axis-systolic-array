@@ -32,15 +32,15 @@ module firebridge_axi #(
   output logic [S_COUNT-1:0][3:0]                   s_axi_awcache,
   output logic [S_COUNT-1:0][2:0]                   s_axi_awprot ,
   output logic [S_COUNT-1:0]                        s_axi_awvalid,
-  input  logic [S_COUNT-1:0]                        s_axi_awready,
+  input  logic [S_COUNT-1:0]                        s_axi_awready /* verilator public */,
   output logic [S_COUNT-1:0][S_AXI_DATA_WIDTH-1:0]  s_axi_wdata  ,
   output logic [S_COUNT-1:0][S_AXI_STRB_WIDTH-1:0]  s_axi_wstrb  ,
   output logic [S_COUNT-1:0]                        s_axi_wlast  ,
   output logic [S_COUNT-1:0]                        s_axi_wvalid ,
-  input  logic [S_COUNT-1:0]                        s_axi_wready ,
+  input  logic [S_COUNT-1:0]                        s_axi_wready /* verilator public */,
   input  logic [S_COUNT-1:0][M_AXI_ID_WIDTH-1:0]    s_axi_bid    ,
   input  logic [S_COUNT-1:0][1:0]                   s_axi_bresp  ,
-  input  logic [S_COUNT-1:0]                        s_axi_bvalid ,
+  input  logic [S_COUNT-1:0]                        s_axi_bvalid /* verilator public */,
   output logic [S_COUNT-1:0]                        s_axi_bready ,
   output logic [S_COUNT-1:0][M_AXI_ID_WIDTH-1:0]    s_axi_arid   ,
   output logic [S_COUNT-1:0][S_AXI_ADDR_WIDTH-1:0]  s_axi_araddr ,
@@ -51,12 +51,12 @@ module firebridge_axi #(
   output logic [S_COUNT-1:0][3:0]                   s_axi_arcache,
   output logic [S_COUNT-1:0][2:0]                   s_axi_arprot ,
   output logic [S_COUNT-1:0]                        s_axi_arvalid,
-  input  logic [S_COUNT-1:0]                        s_axi_arready,
+  input  logic [S_COUNT-1:0]                        s_axi_arready /* verilator public */,
   input  logic [S_COUNT-1:0][M_AXI_ID_WIDTH-1:0]    s_axi_rid    ,
   input  logic [S_COUNT-1:0][S_AXI_DATA_WIDTH-1:0]  s_axi_rdata  ,
   input  logic [S_COUNT-1:0][1:0]                   s_axi_rresp  ,
   input  logic [S_COUNT-1:0]                        s_axi_rlast  ,
-  input  logic [S_COUNT-1:0]                        s_axi_rvalid ,
+  input  logic [S_COUNT-1:0]                        s_axi_rvalid /* verilator public */,
   output logic [S_COUNT-1:0]                        s_axi_rready ,
   // AXI Masters
   input  logic [M_COUNT-1:0][M_AXI_ID_WIDTH-1:0]    m_axi_awid   ,
@@ -123,11 +123,19 @@ module firebridge_axi #(
     return index;
   endfunction
 
+  import "DPI-C" context function void at_posedge_clk();
+
+  import "DPI-C" context function void wait_s_axi_awready(input int i);
+  import "DPI-C" context function void wait_s_axi_wready(input int i);
+  import "DPI-C" context function void wait_s_axi_bvalid(input int i);
+
   task axi_write(input logic [S_AXI_ADDR_WIDTH-1:0] addr, input logic [S_AXI_DATA_WIDTH-1:0] data);
 
     automatic int i = get_s_index(addr);
 
-    @(posedge clk) #10ps;
+    // @(posedge clk) #10ps;
+    at_posedge_clk();
+    $display("here 1");
     s_axi_awid   [i]  <= 4'h1;
     s_axi_awaddr [i]  <= addr;
     s_axi_awlen  [i]  <= 8'd0;
@@ -138,29 +146,42 @@ module firebridge_axi #(
     s_axi_awprot [i]  <= 0;
     s_axi_awvalid[i]  <= 1;
 
-    wait (s_axi_awready[i]);
-    @(posedge clk) #10ps;
+    // wait (s_axi_awready[i]);
+    // @(posedge clk) #10ps;
+    wait_s_axi_awready(i);
+    at_posedge_clk();
+    $display("here 2");
     s_axi_awvalid[i]  <= 0;
     s_axi_wdata  [i]  <= data;
     s_axi_wstrb  [i]  <= 4'hF;
     s_axi_wlast  [i]  <= 1;
     s_axi_wvalid [i]  <= 1;
 
-    wait (s_axi_wready[i]);
-    @(posedge clk) #10ps;
+    // wait (s_axi_wready[i]);
+    // @(posedge clk) #10ps;
+    wait_s_axi_wready(i);
+    at_posedge_clk();
+    $display("here 3");
     s_axi_wvalid [i] <= 0;
     s_axi_bready [i] <= 1;
 
-    wait (s_axi_bvalid[i]);
-    @(posedge clk) #10ps;
+    // wait (s_axi_bvalid[i]);
+    // @(posedge clk) #10ps;
+    wait_s_axi_bvalid(i);
+    at_posedge_clk();
+    $display("here 4");
     s_axi_bready[i] <= 0;
   endtask
+
+  import "DPI-C" context function void wait_s_axi_arready(input int i);
+  import "DPI-C" context function void wait_s_axi_rvalid(input int i);
 
   task axi_read(input logic [S_AXI_ADDR_WIDTH-1:0] addr, output logic [S_AXI_DATA_WIDTH-1:0] rdata);
 
     automatic int i = get_s_index(addr);
 
-    @(posedge clk) #10ps;
+    // @(posedge clk) #10ps;
+    at_posedge_clk();
     s_axi_arid   [i]  <= 4'h1;
     s_axi_araddr [i]  <= addr;
     s_axi_arlen  [i]  <= 8'd0;
@@ -171,15 +192,19 @@ module firebridge_axi #(
     s_axi_arprot [i]  <= 0;
     s_axi_arvalid[i]  <= 1;
 
-    wait (s_axi_arready[i]);
-    @(posedge clk) #10ps;
+    // wait (s_axi_arready[i]);
+    // @(posedge clk) #10ps;
+    wait_s_axi_arready(i);
+    at_posedge_clk();
     s_axi_arvalid[i] <= 0;
     s_axi_rready [i] <= 1;
 
-    wait (s_axi_rvalid [i]);
+    // wait (s_axi_rvalid [i]);
+    wait_s_axi_rvalid(i);
     rdata = s_axi_rdata[i];
 
-    @(posedge clk) #10ps;
+    // @(posedge clk) #10ps;
+    at_posedge_clk();
     s_axi_rready[i] <= 0;
   endtask
 

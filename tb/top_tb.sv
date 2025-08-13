@@ -29,7 +29,7 @@ module top_tb;
     DATA_RD_WIDTH       = AXIL_WIDTH         ,
     LSB                 = $clog2(AXI_WIDTH)-3;
 
-  logic clk = 0, rstn, firebridge_done=0;
+  logic clk /* verilator public */ = 0, rstn, firebridge_done=0;
   initial forever #(CLK_PERIOD/2) clk = ~clk;
 
   localparam S_COUNT = 1;
@@ -266,7 +266,7 @@ module top_tb;
     rstn <= 0;
     repeat(2) @(posedge clk) #10ps;
     rstn <= 1;
-
+    
     wait(firebridge_done);
 
     // Read from output & expected and compare
