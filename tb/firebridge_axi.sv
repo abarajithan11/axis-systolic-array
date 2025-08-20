@@ -135,7 +135,6 @@ module firebridge_axi #(
 
     // @(posedge clk) #10ps;
     at_posedge_clk();
-    $display("here 1");
     s_axi_awid   [i]  <= 4'h1;
     s_axi_awaddr [i]  <= addr;
     s_axi_awlen  [i]  <= 8'd0;
@@ -150,7 +149,6 @@ module firebridge_axi #(
     // @(posedge clk) #10ps;
     wait_s_axi_awready(i);
     at_posedge_clk();
-    $display("here 2");
     s_axi_awvalid[i]  <= 0;
     s_axi_wdata  [i]  <= data;
     s_axi_wstrb  [i]  <= 4'hF;
@@ -161,7 +159,6 @@ module firebridge_axi #(
     // @(posedge clk) #10ps;
     wait_s_axi_wready(i);
     at_posedge_clk();
-    $display("here 3");
     s_axi_wvalid [i] <= 0;
     s_axi_bready [i] <= 1;
 
@@ -169,7 +166,6 @@ module firebridge_axi #(
     // @(posedge clk) #10ps;
     wait_s_axi_bvalid(i);
     at_posedge_clk();
-    $display("here 4");
     s_axi_bready[i] <= 0;
   endtask
 

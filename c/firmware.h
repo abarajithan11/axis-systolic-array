@@ -47,9 +47,7 @@ extern EXT_C void run(Memory_st *restrict mp) {
   
   // Start DMA
   fb_write_reg32(config_base + A_MM2S_0_ADDR , fb_addr_64to32(mem_phy.k));
-  printf("fb_write_reg32 finished 1\n");
   fb_write_reg32(config_base + A_MM2S_0_BYTES,      sizeof(mem_phy.k));
-  printf("fb_write_reg32 finished 2\n");
   fb_write_reg32(config_base + A_MM2S_1_ADDR , fb_addr_64to32(mem_phy.x));
   fb_write_reg32(config_base + A_MM2S_1_BYTES,      sizeof(mem_phy.x));
   fb_write_reg32(config_base + A_MM2S_2_ADDR , fb_addr_64to32(mem_phy.a));

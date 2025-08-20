@@ -19,16 +19,19 @@ VerilatedContext *contextp;
 #endif
 
 extern EXT_C void at_posedge_clk(){
+    vluint8_t prev_clk = top_tb_1->top_tb->clk;
     while(true){
-        if(top_tb_1->top_tb->clk){
+        top_tb_1->eval();
+        contextp->timeInc(1);
+
+        if(prev_clk == 0 && top_tb_1->top_tb->clk == 1){
             for (int i = 0; i < 10; i++){
                 top_tb_1->eval();
                 contextp->timeInc(1);
             }
             break;
         }
-        top_tb_1->eval();
-        contextp->timeInc(1);
+        prev_clk = top_tb_1->top_tb->clk;
     }
 }
 extern EXT_C void wait_s_axi_awready(int i){
@@ -83,7 +86,6 @@ extern EXT_C void wait_s_axi_rvalid(int i){
 }
 
 int main(int argc, char** argv){
-    printf("Beginning\n");
 
     // initializations for simualtion
     contextp = new VerilatedContext();
@@ -95,8 +97,6 @@ int main(int argc, char** argv){
         top_tb_1->eval();
         contextp->timeInc(1);
     }
-
-    printf("End\n");
 
     delete top_tb_1;
     delete contextp;

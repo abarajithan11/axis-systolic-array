@@ -29,7 +29,7 @@ module top_tb;
     DATA_RD_WIDTH       = AXIL_WIDTH         ,
     LSB                 = $clog2(AXI_WIDTH)-3;
 
-  logic clk /* verilator public */ = 0, rstn, firebridge_done=0;
+  logic clk /* verilator public */ = 0, rstn, firebridge_done;
   initial forever #(CLK_PERIOD/2) clk = ~clk;
 
   localparam S_COUNT = 1;
