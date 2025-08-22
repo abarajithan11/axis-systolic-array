@@ -20,6 +20,7 @@ FULL_DATA_DIR = $(subst \,\\,$(abspath $(DATA_DIR)))
 FULL_WORK_DIR = $(subst \,\\,$(abspath $(WORK_DIR)))
 C_SOURCE = ../../c/sim.c
 SOURCES_FILE = sources.txt
+VERI_SOURCES_FILE = sources_veri.txt
 
 #-----------------COMPILER OPTIONS ------------------
 
@@ -34,14 +35,15 @@ XELAB_FLAGS = --snapshot $(TB_MODULE) -log elaborate.log --debug typical -sv_lib
 
 XSIM_FLAGS = --tclbatch cfg.tcl
 
-VERI_FLAGS = --binary -j 0 -O3 \
+VERI_FLAGS = --cc --exe -j 0 -O3 \
 	--Wno-BLKANDNBLK --Wno-INITIALDLY \
 	--Wno-WIDTHTRUNC --Wno-WIDTHEXPAND \
 	--Wno-UNSIGNED --Wno-CASEINCOMPLETE \
 	-I$(RUN_DIR) \
 	-CFLAGS -DSIM \
 	-CFLAGS -g --Mdir ../$(WORK_DIR) \
-	-CFLAGS -I$(WORK_DIR) 
+	-CFLAGS -I$(WORK_DIR) \
+	--timing
 
 GCC_FLAGS = -std=gnu99 -fPIC -g -O2 -DSIM "-DDIR=$(WORK_DIR)/" "-I$(FULL_WORK_DIR)" -shared
 
@@ -162,9 +164,12 @@ xrun: $(WORK_DIR) $(DATA_DIR)/kxa.bin $(WORK_DIR)/config.svh $(WORK_DIR)/config.
 #----------------- VERILATOR ------------------
 
 work_verilator: $(WORK_DIR) $(DATA_DIR)/kxa.bin $(WORK_DIR)/config.svh $(WORK_DIR)/config.h
-	cd run && verilator --top $(TB_MODULE) -F $(SOURCES_FILE) $(C_SOURCE) $(VERI_FLAGS)
+	cd run && verilator --top $(TB_MODULE) -F $(VERI_SOURCES_FILE) $(C_SOURCE) $(VERI_FLAGS)
 
-veri: work_verilator $(DATA_DIR)
+compile_veri:
+	make -C $(WORK_DIR) -f Vtop_tb.mk Vtop_tb
+
+veri: work_verilator $(DATA_DIR) compile_veri
 	cd $(WORK_DIR) && ./V$(TB_MODULE)
 
 
