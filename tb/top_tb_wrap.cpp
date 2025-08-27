@@ -34,6 +34,17 @@ extern EXT_C void at_posedge_clk(){
         prev_clk = top_tb_1->top_tb->clk;
     }
 }
+extern EXT_C void wait_for(int *signal){
+    while(true){
+        printf("What signal is: %d\n", *signal);
+        printf("What it should be: %d\n", top_tb_1->top_tb->FB->s_axi_bvalid);
+        if(*signal){
+            break;
+        }
+        top_tb_1->eval();
+        contextp->timeInc(1);
+    }
+}
 extern EXT_C void wait_s_axi_awready(int i){
     while(true){
         int s_axi_awready_i = (top_tb_1->top_tb->FB->s_axi_awready >> i) & 1;
@@ -57,6 +68,7 @@ extern EXT_C void wait_s_axi_wready(int i){
 extern EXT_C void wait_s_axi_bvalid(int i){
     while(true){
         int s_axi_bvalid_i = (top_tb_1->top_tb->FB->s_axi_bvalid >> i) & 1;
+        printf("What it should be: %d\n", s_axi_bvalid_i);
         if(s_axi_bvalid_i){
             break;
         }

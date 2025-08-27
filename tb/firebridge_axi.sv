@@ -124,10 +124,18 @@ module firebridge_axi #(
   endfunction
 
   import "DPI-C" context function void at_posedge_clk();
+  import "DPI-C" context function void wait_for(inout int signal);
 
   import "DPI-C" context function void wait_s_axi_awready(input int i);
   import "DPI-C" context function void wait_s_axi_wready(input int i);
   import "DPI-C" context function void wait_s_axi_bvalid(input int i);
+
+  logic [S_COUNT-1:0] s_axi_awready_wrap;
+  logic [S_COUNT-1:0] s_axi_wready_wrap;
+  logic [S_COUNT-1:0] s_axi_bvalid_wrap;
+  assign s_axi_awready_wrap = s_axi_awready;
+  assign s_axi_wready_wrap = s_axi_wready;
+  assign s_axi_bvalid_wrap = s_axi_bvalid;
 
   task axi_write(input logic [S_AXI_ADDR_WIDTH-1:0] addr, input logic [S_AXI_DATA_WIDTH-1:0] data);
 
@@ -147,7 +155,8 @@ module firebridge_axi #(
 
     // wait (s_axi_awready[i]);
     // @(posedge clk) #10ps;
-    wait_s_axi_awready(i);
+    // wait_s_axi_awready(i);
+    wait_for(s_axi_awready_wrap[i]);
     at_posedge_clk();
     s_axi_awvalid[i]  <= 0;
     s_axi_wdata  [i]  <= data;
@@ -157,14 +166,16 @@ module firebridge_axi #(
 
     // wait (s_axi_wready[i]);
     // @(posedge clk) #10ps;
-    wait_s_axi_wready(i);
+    // wait_s_axi_wready(i);
+    wait_for(s_axi_wready_wrap[i]);
     at_posedge_clk();
     s_axi_wvalid [i] <= 0;
     s_axi_bready [i] <= 1;
 
     // wait (s_axi_bvalid[i]);
     // @(posedge clk) #10ps;
-    wait_s_axi_bvalid(i);
+    // wait_s_axi_bvalid(i);
+    wait_for(s_axi_bvalid_wrap[i]);
     at_posedge_clk();
     s_axi_bready[i] <= 0;
   endtask
