@@ -18,6 +18,7 @@ VerilatedContext *contextp;
   #define EXT_C
 #endif
 
+// Below are helper function for axi_write and axia_read inside firebridge_axi.sv 
 extern EXT_C void at_posedge_clk(){
     vluint8_t prev_clk = top_tb_1->top_tb->clk;
     while(true){
@@ -32,17 +33,6 @@ extern EXT_C void at_posedge_clk(){
             break;
         }
         prev_clk = top_tb_1->top_tb->clk;
-    }
-}
-extern EXT_C void wait_for(int *signal){
-    while(true){
-        printf("What signal is: %d\n", *signal);
-        printf("What it should be: %d\n", top_tb_1->top_tb->FB->s_axi_bvalid);
-        if(*signal){
-            break;
-        }
-        top_tb_1->eval();
-        contextp->timeInc(1);
     }
 }
 extern EXT_C void wait_s_axi_awready(int i){
@@ -68,7 +58,6 @@ extern EXT_C void wait_s_axi_wready(int i){
 extern EXT_C void wait_s_axi_bvalid(int i){
     while(true){
         int s_axi_bvalid_i = (top_tb_1->top_tb->FB->s_axi_bvalid >> i) & 1;
-        printf("What it should be: %d\n", s_axi_bvalid_i);
         if(s_axi_bvalid_i){
             break;
         }
@@ -96,6 +85,8 @@ extern EXT_C void wait_s_axi_rvalid(int i){
         contextp->timeInc(1);
     }
 }
+
+
 
 int main(int argc, char** argv){
 
