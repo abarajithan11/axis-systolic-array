@@ -26,30 +26,8 @@ y(C,R) = k.T(C,K) @ x(K,R) + a(C,R)
 
 ## To simulate the entire system:
 
-### Windows
-
-You need `make` to run our `Makefile`. If you dont have `make` on Windows native, follow these steps
-
-1. Install `chocolatey`
-
-Open powershell as administrator and run the following command:
-
-```
-Set-ExecutionPolicy Bypass -Scope Process -Force; `
-[System.Net.ServicePointManager]::SecurityProtocol = `
-[System.Net.ServicePointManager]::SecurityProtocol -bor 3072; `
-iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-```
-
-2. Install `make` and GNU tools
-
-```
-choco install make
-choco install gnuwin32-coreutils.install
-```
-
-3. Add `C:/Program Files (x86)/GnuWin32/bin` to your `$PATH`
-
+* Make sure your compilers/simulators are in `$PATH`
+* For Windows, install Git bash from [here](https://gitforwindows.org/) to be able to run Makefiles.
 
 #### Verilator (Linux)
 
