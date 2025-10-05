@@ -4,42 +4,24 @@ FUSESOC_CONFIG_OPTS = $(shell ./util/ibex_config.py $(IBEX_CONFIG) fusesoc_opts)
 
 all: help
 
-.PHONY: help
-help:
-	@echo "This is a short hand for running popular tasks."
-	@echo "Please check the documentation on how to get started"
-	@echo "or how to set-up the different environments."
+print:
+	cat ibex_simple_system.log
 
-# Use a parallel run (make -j N) for a faster build
-build-all: build-riscv-compliance build-simple-system build-arty-100 \
-      build-csr-test
+wave:
+	gtkwave sim.fst &
 
+run: sw-simple-hello | $(Vibex_simple_system)
+	build/lowrisc_ibex_ibex_simple_system_0/sim-verilator/Vibex_simple_system -t \
+		--raminit=$(simple-system-program)
 
-# RISC-V compliance
-.PHONY: build-riscv-compliance
-build-riscv-compliance:
-	fusesoc --cores-root=. run --target=sim --setup --build \
-		lowrisc:ibex:ibex_riscv_compliance \
-		$(FUSESOC_CONFIG_OPTS)
-
-
-# Simple system
-# Use the following targets:
-# - "build-simple-system"
-# - "run-simple-system"
-.PHONY: build-simple-system
-build-simple-system:
+build:
 	fusesoc --cores-root=. run --target=sim --setup --build \
 		lowrisc:ibex:ibex_simple_system \
 		$(FUSESOC_CONFIG_OPTS)
 
-build-run-simple: build-simple-system run-simple-system
-	cat ibex_simple_system.log
-
 simple-system-program = examples/sw/simple_system/hello_test/hello_test.vmem
 sw-simple-hello: $(simple-system-program)
 
-.PHONY: $(simple-system-program)
 $(simple-system-program):
 	cd examples/sw/simple_system/hello_test && $(MAKE)
 
@@ -50,10 +32,21 @@ $(Vibex_simple_system):
 	@echo "Run \"make build-simple-system\" to create the dependency"
 	@false
 
-run-simple-system: sw-simple-hello | $(Vibex_simple_system)
-	build/lowrisc_ibex_ibex_simple_system_0/sim-verilator/Vibex_simple_system \
-		--raminit=$(simple-system-program)
 
+.PHONY: build $(simple-system-program) run print
+
+
+
+# Use a parallel run (make -j N) for a faster build
+build-all: build-riscv-compliance build build-arty-100 \
+      build-csr-test
+
+# RISC-V compliance
+.PHONY: build-riscv-compliance
+build-riscv-compliance:
+	fusesoc --cores-root=. run --target=sim --setup --build \
+		lowrisc:ibex:ibex_riscv_compliance \
+		$(FUSESOC_CONFIG_OPTS)
 
 # Arty A7 FPGA example
 # Use the following targets (depending on your hardware):
@@ -118,3 +111,8 @@ test-cfg:
 .PHONY: python-lint
 python-lint:
 	$(MAKE) -C util lint
+
+.PHONY: clean
+clean:
+	rm -rf build
+	$(MAKE) -C examples/sw/simple_system/hello_test clean

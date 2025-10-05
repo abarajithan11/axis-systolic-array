@@ -149,13 +149,18 @@ module sa_for_ibex #(
   logic [1:0]                   axiw_bresp;
   logic                         axiw_bvalid, axiw_bready;
 
+  // Make local offset addresses for AXI-Lite
+  logic [AXIL_ADDR_WIDTH-1:0]  axil_awaddr_off, axil_araddr_off;
+  assign axil_awaddr_off = axil_awaddr;
+  assign axil_araddr_off = axil_araddr;
+
   // ---------------- Instantiate SA core ----------------
   top u_sa (
     .clk  (clk),
     .rstn (rstn),
 
     // AXI-Lite slave (config)
-    .s_axil_awaddr (axil_awaddr),
+    .s_axil_awaddr (axil_awaddr_off),
     .s_axil_awprot (3'b000),
     .s_axil_awvalid(axil_awvalid),
     .s_axil_awready(axil_awready),
@@ -166,7 +171,7 @@ module sa_for_ibex #(
     .s_axil_bresp  (axil_bresp),
     .s_axil_bvalid (axil_bvalid),
     .s_axil_bready (axil_bready),
-    .s_axil_araddr (axil_araddr),
+    .s_axil_araddr (axil_araddr_off),
     .s_axil_arprot (3'b000),
     .s_axil_arvalid(axil_arvalid),
     .s_axil_arready(axil_arready),
