@@ -20,13 +20,21 @@ filesets:
       - rtl/ext/alex_axilite_wr.sv
       - rtl/ext/alex_axis_adapter.sv
       - rtl/ext/alex_axis_adapter_any.sv
+      - rtl/ext/arbiter.sv
+      - rtl/ext/axi_crossbar.sv
+      - rtl/ext/axi_crossbar_addr.sv
+      - rtl/ext/axi_crossbar_rd.sv
+      - rtl/ext/axi_crossbar_wr.sv
+      - rtl/ext/axi_register_rd.sv
+      - rtl/ext/axi_register_wr.sv
+      - rtl/ext/priority_encoder.sv
       - run/work/config.svh: { is_include_file: true }
     file_type: systemVerilogSource
 
   rtl_v:
     files:
       - rtl/sys/sa_for_ibex.v
-      - rtl/sys/top_axi.v
+      - rtl/sys/top_axi_int.v
     file_type: verilogSource
 
 targets:

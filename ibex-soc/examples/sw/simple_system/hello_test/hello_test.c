@@ -4,8 +4,8 @@
 
 #include "simple_system_common.h"
 
-#define R               4
-#define C               8
+#define R               8
+#define C               4
 #define K               8
 #define TK              int8_t
 #define TX              int8_t
