@@ -10,7 +10,8 @@ typedef struct {
 Memory_st mem_phy;
 
 volatile uint32_t get_config(void *config_base, uint32_t offset){
-  return *(volatile uint32_t *)(config_base + offset*4);
+    const volatile uint32_t *p = (const volatile uint32_t *)((uintptr_t)config_base + offset * 4u);
+    return *p;
 }
 
 void set_config(void *config_base, uint32_t offset, uint32_t data){	
@@ -36,25 +37,18 @@ extern void run(Memory_st *restrict mp, void *p_config, int *done) {
   puts("mem_phy.k: "); puthex((uintptr_t)mem_phy.k); putchar('\n');
 
   set_config(p_config, A_MM2S_0_ADDR , addr_64to32(mem_phy.k));
-  puts("Setting regs\n");
   set_config(p_config, A_MM2S_0_BYTES,      sizeof(mem_phy.k));
-  puts("Setting regs\n");
   set_config(p_config, A_MM2S_1_ADDR , addr_64to32(mem_phy.x));
-  puts("Setting regs\n");
   set_config(p_config, A_MM2S_1_BYTES,      sizeof(mem_phy.x));
-  puts("Setting regs\n");
   set_config(p_config, A_MM2S_2_ADDR , addr_64to32(mem_phy.a));
-  puts("Setting regs\n");
   set_config(p_config, A_MM2S_2_BYTES,      sizeof(mem_phy.a));
-  puts("Setting regs\n");
   set_config(p_config, A_S2MM_ADDR   , addr_64to32(mem_phy.y));
-  puts("Setting regs\n");
   set_config(p_config, A_S2MM_BYTES  ,      sizeof(mem_phy.y));
-  puts("Setting regs\n");
   set_config(p_config, A_START       , 1);  // Start
-  puts("Setting regs\n");
 
-  // while(!(get_config(p_config, A_S2MM_DONE))){};
+  while(!(get_config(p_config, A_S2MM_DONE))){
+    // puthex(get_config(p_config, A_S2MM_DONE)); putchar('\n');
+  }
 
   *done = 1;
 }
