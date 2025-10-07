@@ -54,7 +54,7 @@ extern void run(Memory_st *restrict mp, void *p_config, int *done) {
   set_config(p_config, A_START       , 1);  // Start
   puts("Setting regs\n");
 
-  while(!(get_config(p_config, A_S2MM_DONE))){};
+  // while(!(get_config(p_config, A_S2MM_DONE))){};
 
   *done = 1;
 }
