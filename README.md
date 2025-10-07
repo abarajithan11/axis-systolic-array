@@ -51,12 +51,20 @@ choco install gnuwin32-coreutils.install
 3. Add `C:/Program Files (x86)/GnuWin32/bin` to your `$PATH`
 
 
-### To simulate the Subsystem with AXI ports
+### To simulate the Subsystem with full throughput AXI ports (5 AXI ports)
 
 ```
 make veri SYS=axi   # Verilator
 make xsim SYS=axi   # Xilinx/AMD Vivado
 make xrun SYS=axi   # Cadence Xcelium
+```
+
+### To simulate the Subsystem with only two AXI ports (instead of 5) - Unified through an interconnect
+
+```
+make xsim SYS=axi_int
+make veri SYS=axi_int
+make xrun SYS=axi_int
 ```
 
 ### To simulate the Subsystem with simplified RAM ports
@@ -65,6 +73,22 @@ make xrun SYS=axi   # Cadence Xcelium
 make xsim SYS=ram
 make veri SYS=ram
 make xrun SYS=ram
+```
+
+
+### Build and Simulate a Full System on Chip with Ibex RISC-V processor
+
+1. Set up & run [Ibex Simple System](https://github.com/lowRISC/ibex/tree/master/examples/simple_system)
+1. Run `fusesoc library add sa_ip /root/of/this/repo`
+1. Check if it is added `fusesoc core show vendor:sa:sa_for_ibex`
+1. Use the following commands:
+
+```
+make ibuild      # Build hardware (takes a few minutes)
+make irun        # Build software, run simulation and print console output
+make iprint      # Print output
+make iclean      # Clean build & run
+make irun-clean  # Clean only run
 ```
 
 
@@ -88,14 +112,6 @@ make vivado BOARD=zcu102
 1. Right click on the project, `Run As`, `Debug: Launch on Hardware (Single Application Debug)`
 1. Open Vitis serial console and connect to the correct COM port.
 1. Click `Resume` to run the program.
-
-## For Ibex
-
-1. Set up & run [Ibex Simple System](https://github.com/lowRISC/ibex/tree/master/examples/simple_system)
-1. Run `fusesoc library add sa_ip /root/of/this/repo`
-1. Check if it is added `fusesoc core show vendor:sa:sa_for_ibex`
-1. `cd ibex_soc`
-1. `make build_run_simple`
 
 ## Resources & Performance
 
