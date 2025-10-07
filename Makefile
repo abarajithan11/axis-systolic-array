@@ -130,7 +130,9 @@ iprint:
 	$(MAKE) -C ibex-soc print
 irun: 
 	$(MAKE) -C ibex-soc run
-ibuild: 
+irun-clean:
+	$(MAKE) -C ibex-soc rm-sw
+ibuild: $(WORK_DIR)/config.svh
 	$(MAKE) -C ibex-soc build
 iwave:
 	$(MAKE) -C ibex-soc wave

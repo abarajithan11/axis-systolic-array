@@ -1,6 +1,14 @@
 IBEX_CONFIG ?= small
 
 FUSESOC_CONFIG_OPTS = $(shell ./util/ibex_config.py $(IBEX_CONFIG) fusesoc_opts)
+SYSTEM_DIR = examples/sw/simple_system/hello_test
+
+simple-system-program = $(SYSTEM_DIR)/hello_test.vmem
+Vibex_simple_system = build/lowrisc_ibex_ibex_simple_system_0/sim-verilator/Vibex_simple_system
+$(Vibex_simple_system):
+	@echo "$@ not found"
+	@echo "Run \"make build-simple-system\" to create the dependency"
+	@false
 
 all: help
 
@@ -13,25 +21,20 @@ wave:
 run: sw-simple-hello | $(Vibex_simple_system)
 	build/lowrisc_ibex_ibex_simple_system_0/sim-verilator/Vibex_simple_system -t \
 		--raminit=$(simple-system-program)
+	cat ibex_simple_system.log
 
 build:
 	fusesoc --cores-root=. run --target=sim --setup --build \
 		lowrisc:ibex:ibex_simple_system \
 		$(FUSESOC_CONFIG_OPTS)
 
-simple-system-program = examples/sw/simple_system/hello_test/hello_test.vmem
 sw-simple-hello: $(simple-system-program)
+$(simple-system-program): $(SYSTEM_DIR)/hello_test.c $(SYSTEM_DIR)/sa.h
+	cd $(SYSTEM_DIR) && $(MAKE)
 
-$(simple-system-program):
-	cd examples/sw/simple_system/hello_test && $(MAKE)
-
-Vibex_simple_system = \
-      build/lowrisc_ibex_ibex_simple_system_0/sim-verilator/Vibex_simple_system
-$(Vibex_simple_system):
-	@echo "$@ not found"
-	@echo "Run \"make build-simple-system\" to create the dependency"
-	@false
-
+rm-sw:
+	$(MAKE) -C $(SYSTEM_DIR) clean
+	rm -f ibex_simple_system.log
 
 .PHONY: build $(simple-system-program) run print
 
