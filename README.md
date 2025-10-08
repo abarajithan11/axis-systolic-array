@@ -78,9 +78,12 @@ make xrun SYS=ram
 
 ### Build and Simulate a Full System on Chip with Ibex RISC-V processor
 
-1. Set up & run [Ibex Simple System](https://github.com/lowRISC/ibex/tree/master/examples/simple_system)
+Check the [GitHub Actions workflow](https://github.com/abarajithan11/axis-systolic-array/blob/aba-ibex-soc/.github/workflows/verify.yaml) for more details
+
+1. Build [verilator](https://github.com/verilator/verilator) from source & install it (recommended)
+1. Install Python dependencies `pip3 install -U -r python-requirements.txt`
+1. Get the latest RISC-V toolchain supported by lowRISC [from here](https://github.com/lowRISC/lowrisc-toolchains/releases)
 1. Run `fusesoc library add sa_ip /root/of/this/repo`
-1. Check if it is added `fusesoc core show vendor:sa:sa_for_ibex`
 1. Use the following commands:
 
 ```
@@ -90,6 +93,13 @@ make iprint      # Print output
 make iclean      # Clean build & run
 make irun-clean  # Clean only run
 ```
+
+Key files:
+
+* `ibex-soc\examples\simple_system\rtl\ibex_simple_system.sv` - Top level SV of SoC
+* `ibex-soc\examples\sw\simple_system\hello_test\hello_test.c` - Top firmware that gets compiled
+* `ibex-soc\examples\sw\simple_system\hello_test\firmware_helpers.h` - Firmware helpers
+* `sa_for_ibex.core` - Defines this repo as a FuseSOC module
 
 
 ### Test on Xilinx FPGAs
