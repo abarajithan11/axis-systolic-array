@@ -57,6 +57,7 @@ make xrun SYS=ram
 ```
 
 
+
 ### Build and Simulate a Full System on Chip with Ibex RISC-V processor
 
 Check the [GitHub Actions workflow](https://github.com/abarajithan11/axis-systolic-array/blob/aba-ibex-soc/.github/workflows/verify.yaml) for more details
