@@ -78,9 +78,18 @@ module dma_controller #(
     ;
   logic [15:0][AXI_DATA_WIDTH-1:0] cfg ;
 
-  always_ff @(posedge clk)  // PS READ (1 clock latency)
-    if (!rstn)          reg_rd_data <= '0;
-    else if (reg_rd_en) reg_rd_data <= cfg[reg_rd_addr];
+  // always_ff @(posedge clk) begin
+  //   if (reg_rd_en)
+  //     $display("reg_rd: addr=0x%08X data=0x%08X", reg_rd_addr, cfg[reg_rd_addr]);
+  //   if (reg_wr_en)
+  //     $display("reg_wr: addr=0x%08X data=0x%08X", reg_wr_addr, reg_wr_data);
+  // end
+
+  // always_ff @(posedge clk)  // PS READ (1 clock latency)
+  //   if (!rstn)          reg_rd_data <= '0;
+  //   else if (reg_rd_en) reg_rd_data <= cfg[reg_rd_addr];
+
+  assign reg_rd_data = cfg[reg_rd_addr];
   
   // MM2S_0 Controller
   logic mm2s_0_done;

@@ -5,7 +5,7 @@ on: [push]
 
 jobs:
   verify-with-verilator:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - uses: actions/checkout@v2
@@ -28,6 +28,13 @@ jobs:
         python3 -m pip install --upgrade pip
         pip install numpy
 
+    - name: Install Fusoc
+      run: |
+        sudo apt install libelf-dev srecord
+        sudo apt install gcc-riscv64-unknown-elf
+        pip3 install --user -r ibex-soc/python-requirements.txt
+        for t in g++ gcc ld objcopy objdump; do sudo ln -sf "$(command -v riscv64-unknown-elf-$t)" "/usr/local/bin/riscv32-unknown-elf-$t"; done
+
     - name: Install Verilator
       run: |
         sudo apt-get install --only-upgrade python3 --fix-missing
@@ -36,9 +43,19 @@ jobs:
         git clone https://github.com/abarajithan11/verilator-compiled
         cd verilator-compiled
         tar -C ${HOME} -xzf verilator.tar.gz
+        echo "$HOME/verilator/bin" >> "$GITHUB_PATH"
 
-    - name: Verify Full Design
+    - name: Verify 5 AXI Ports with verilator
       run: |
-        export PATH=${HOME}/verilator/bin:$PATH
-        make veri
+        make veri SYS=axi
+    - name: Verify 2 AXI Ports (Via Interconnect) with verilator
+      run: |
+        make veri SYS=axi_int
+
+    - name: Run Ibex SoC with verilator
+      run: |
+        fusesoc library add sa_ip "$(pwd -P)"
+
+        make ibuild
+        make irun
 

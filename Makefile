@@ -5,21 +5,22 @@ K = 16
 WK = 8
 WX = 8
 WY = 32
-CONFIG_BASEADDR = B0000000
+CONFIG_BASEADDR = 40000
 VALID_PROB = 1
 READY_PROB = 50
 FREQ_MHZ = 100
-AXI_WIDTH = 128
+AXI_WIDTH = 32
 BOARD = zcu104
 
-TB_MODULE = top_tb
+SYS = axi
+TB_MODULE = top_$(SYS)_tb
 RUN_DIR = run
 WORK_DIR = run/work
 DATA_DIR = $(WORK_DIR)/data
 FULL_DATA_DIR = $(subst \,\\,$(abspath $(DATA_DIR)))
 FULL_WORK_DIR = $(subst \,\\,$(abspath $(WORK_DIR)))
 C_SOURCE = ../../c/sim.c
-SOURCES_FILE = sources.txt
+SOURCES_FILE = sources_$(SYS).txt
 
 #-----------------COMPILER OPTIONS ------------------
 
@@ -72,54 +73,6 @@ $(WORK_DIR)/config.svh $(WORK_DIR)/config.h $(WORK_DIR)/config.tcl: $(RUN_DIR)/c
 		--AXI_WIDTH $(AXI_WIDTH) \
 		--BOARD $(BOARD) \
 
-#----------------- REGRESSION ------------------
-
-regress:
-	@R_START=$$(echo $(R) | cut -d: -f1); \
-	 R_END=$$(echo $(R) | cut -d: -f2); \
-	 C_START=$$(echo $(C) | cut -d: -f1); \
-	 C_END=$$(echo $(C) | cut -d: -f2); \
-	 K_START=$$(echo $(K) | cut -d: -f1); \
-	 K_END=$$(echo $(K) | cut -d: -f2); \
-	 PASS=0; TIMEOUT=0; MISMATCH=0; OTHER=0; \
-	 for r in $$(seq $$R_START $$R_END); do \
-	   for c in $$(seq $$C_START $$C_END); do \
-	     for k in $$(seq $$K_START $$K_END); do \
-	       echo -e "\n\nRunning $(SIM) simulation for R=$$r, C=$$c, K=$$k\n\n"; \
-	       $(MAKE) clean > /dev/null; \
-	       OUT=$$(mktemp); \
-	       if $(MAKE) -s $(SIM) R=$$r C=$$c K=$$k WK=$(WK) WX=$(WX) WY=$(WY) > $$OUT 2>&1; then \
-	         if grep -q "Error count: 0" $$OUT; then \
-	           echo "✅ PASS R=$$r C=$$c K=$$k\n\n"; ((PASS++)); \
-	         elif grep -q "Error: Timeout" $$OUT; then \
-	           echo "⏱ TIMEOUT R=$$r C=$$c K=$$k\n\n"; ((TIMEOUT++)); \
-	         elif grep -q "ERROR: Output data does not match Expected data." $$OUT; then \
-	           echo "❌ MISMATCH R=$$r C=$$c K=$$k\n\n"; ((MISMATCH++)); \
-	         else \
-	           echo "⚠️  OTHER ERROR R=$$r C=$$c K=$$k\n\n"; ((OTHER++)); \
-	           cat $$OUT; \
-	         fi \
-	       else \
-	         echo "💥 CRASHED R=$$r C=$$c K=$$k\n\n"; ((OTHER++)); cat $$OUT; \
-	       fi; \
-	       rm -f $$OUT; \
-	     done; \
-	   done; \
-	 done; \
-	 echo -e "\n\n\n======== REGRESSION SUMMARY ========"; \
-	 echo "✅ PASSED   : $$PASS"; \
-	 echo "⏱ TIMEOUT  : $$TIMEOUT"; \
-	 echo "❌ MISMATCH : $$MISMATCH"; \
-	 echo "⚠️  OTHER    : $$OTHER"; \
-	 TOTAL=$$((PASS + TIMEOUT + MISMATCH + OTHER)); \
-	 if [ "$$PASS" -ne "$$TOTAL" ]; then \
-	   echo -e "\n❗ Some tests failed.\n\n\n"; \
-	   exit 1; \
-	 else \
-	   echo -e "\n✅ All tests passed.\n\n\n"; \
-	 fi
-
-
 
 #----------------- Vivado XSIM ------------------
 
@@ -171,8 +124,22 @@ veri_smoke: rtl/sa/axis_sa.sv rtl/sa/mac.sv rtl/sa/n_delay.sv rtl/sa/tri_buffer.
 	verilator --top smoke_tb --binary -j 0 -O3 --trace --Wno-BLKANDNBLK --Wno-INITIALDLY --Mdir $(WORK_DIR) $^
 	@cd run && work/Vsmoke_tb
 
+#----------------- Ibex System ------------------
+
+iprint: 
+	$(MAKE) -C ibex-soc print
+irun: 
+	$(MAKE) -C ibex-soc run
+irun-clean:
+	$(MAKE) -C ibex-soc run-clean
+ibuild: $(WORK_DIR)/config.svh
+	$(MAKE) -C ibex-soc build
+iwave:
+	$(MAKE) -C ibex-soc wave
+
 # Clean work directory
 clean:
 	"rm" -rf $(WORK_DIR)*
+	$(MAKE) -C ibex-soc clean
 
 .PHONY: sim vlog elab run clean vivado regress veri xrun
