@@ -1,5 +1,7 @@
-#include <assert.h>
-#include <stdlib.h>
+#ifndef RISCV
+  #include <assert.h>
+  #include <stdlib.h>
+#endif
 #include <limits.h>
 #include <stdint.h>
 
@@ -41,7 +43,12 @@ typedef double   f64;
 
 #else
   #define sim_fprintf(...)
-  #define mem_phy (*(Memory_st* restrict)MEM_BASEADDR)
+
+  #ifdef RISCV
+    Memory_st mem_phy;
+  #else
+    #define mem_phy (*(Memory_st* restrict)MEM_BASEADDR)
+  #endif
 
   volatile u32 get_config(void *config_base, u32 offset){
     return *(volatile u32 *)(config_base + offset*4);
@@ -90,7 +97,7 @@ extern EXT_C void *get_mp(){
 #else
 
 u32 addr_64to32 (void* addr){
-  return (u32)((u64)addr);
+  return (u32)((uintptr_t)addr);
 }
 #endif
 
