@@ -1,61 +1,74 @@
-
 name: Verify
-
 on: [push]
 
 jobs:
-  verify-with-verilator:
-    runs-on: ubuntu-22.04
-
+  setup:
+    runs-on: ubuntu-22.02
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-    - name: Cache modules
-      id: cache-verify
-      uses: actions/cache@v3
-      env:
-        cache-name: cache-verify
-      with:
-        path: ~/.verify
-        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-build-${{ env.cache-name }}-
-          ${{ runner.os }}-build-
-          ${{ runner.os }}-
+      - name: Base deps (toolchain, python, etc.)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git help2man perl python3 make autoconf g++ flex bison ccache \
+              liblzma-dev libunwind-dev libgoogle-perftools-dev numactl libfl2 libfl-dev \
+              libelf-dev srecord gcc-riscv64-unknown-elf
+          python3 -m pip install --upgrade pip
+          pip3 install --user -r ibex-soc/python-requirements.txt
+          for t in g++ gcc ld objcopy objdump; do sudo ln -sf "$(command -v riscv64-unknown-elf-$t)" "/usr/local/bin/riscv32-unknown-elf-$t"; done
 
-    - name: Install Python Packages
-      run: |
-        python3 -m pip install --upgrade pip
-        pip install numpy
+      - name: Install Verilator (prebuilt)
+        run: |
+          git clone https://github.com/abarajithan11/verilator-compiled
+          cd verilator-compiled
+          tar -C "$HOME" -xzf verilator.tar.gz
+          "$HOME/verilator/bin/verilator" --version
 
-    - name: Install Fusoc
-      run: |
-        sudo apt install libelf-dev srecord
-        sudo apt install gcc-riscv64-unknown-elf
-        pip3 install --user -r ibex-soc/python-requirements.txt
-        for t in g++ gcc ld objcopy objdump; do sudo ln -sf "$(command -v riscv64-unknown-elf-$t)" "/usr/local/bin/riscv32-unknown-elf-$t"; done
+      - name: Prime FuseSoC caches (optional but speeds up later)
+        run: |
+          echo "$HOME/verilator/bin" >> "$GITHUB_PATH"
+          fusesoc --version || true
+          fusesoc library add sa_ip "$(pwd -P)" || true
 
-    - name: Install Verilator
-      run: |
-        sudo apt-get install --only-upgrade python3 --fix-missing
-        sudo apt-get install  --fix-missing --fix-broken git help2man perl python3 make autoconf g++ flex bison ccache liblzma-dev libunwind-dev libgoogle-perftools-dev numactl libfl2 libfl-dev
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tooldeps
+          path: |
+            $HOME/verilator
+            ~/.cache/fusesoc
+            ~/.fusesoc
+            ~/.config/fusesoc
+          if-no-files-found: warn
 
-        git clone https://github.com/abarajithan11/verilator-compiled
-        cd verilator-compiled
-        tar -C ${HOME} -xzf verilator.tar.gz
-        echo "$HOME/verilator/bin" >> "$GITHUB_PATH"
+  veri-axi:
+    runs-on: ubuntu-22.02
+    needs: setup
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { name: tooldeps, path: $HOME }
+      - run: echo "$HOME/verilator/bin" >> "$GITHUB_PATH"
+      - run: make veri SYS=axi
 
-    - name: Verify 5 AXI Ports with verilator
-      run: |
-        make veri SYS=axi
-    - name: Verify 2 AXI Ports (Via Interconnect) with verilator
-      run: |
-        make veri SYS=axi_int
+  veri-axi-int:
+    runs-on: ubuntu-22.02
+    needs: setup
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { name: tooldeps, path: $HOME }
+      - run: echo "$HOME/verilator/bin" >> "$GITHUB_PATH"
+      - run: make veri SYS=axi_int
 
-    - name: Run Ibex SoC with verilator
-      run: |
-        fusesoc library add sa_ip "$(pwd -P)"
-
-        make ibuild
-        make irun
-
+  ibex-run:
+    runs-on: ubuntu-22.02
+    needs: setup
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { name: tooldeps, path: $HOME }
+      - run: echo "$HOME/verilator/bin" >> "$GITHUB_PATH"; fusesoc library add sa_ip "$(pwd -P)" || true
+      - run: |
+          make ibuild
+          make irun
