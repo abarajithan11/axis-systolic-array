@@ -48,7 +48,7 @@ jobs:
         export PATH=${HOME}/verilator/bin:$PATH
         make veri
 
-    - name: Run Ibex with verilator
+    - name: Run Ibex SoC with verilator
       run: |
         export PATH=${HOME}/verilator/bin:$PATH
         sudo ln -s $(which riscv64-unknown-elf-g++) /usr/local/bin/riscv32-unknown-elf-g++
@@ -56,5 +56,10 @@ jobs:
         sudo ln -s $(which riscv64-unknown-elf-ld) /usr/local/bin/riscv32-unknown-elf-ld
         sudo ln -s $(which riscv64-unknown-elf-objcopy) /usr/local/bin/riscv32-unknown-elf-objcopy
         sudo ln -s $(which riscv64-unknown-elf-objdump) /usr/local/bin/riscv32-unknown-elf-objdump
-        make ibex
+
+        fusesoc library add sa_ip "$(pwd -P)"
+
+        make ibuild
+        make irun
+
 
