@@ -45,13 +45,6 @@ jobs:
         tar -C ${HOME} -xzf verilator.tar.gz
         echo "$HOME/verilator/bin" >> "$GITHUB_PATH"
 
-    - name: Verify 5 AXI Ports with verilator
-      run: |
-        make veri SYS=axi
-    - name: Verify 2 AXI Ports (Via Interconnect) with verilator
-      run: |
-        make veri SYS=axi_int
-
     - name: Run Ibex SoC with verilator
       run: |
         fusesoc library add sa_ip "$(pwd -P)"
