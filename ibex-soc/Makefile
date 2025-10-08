@@ -32,7 +32,7 @@ sw-simple-hello: $(simple-system-program)
 $(simple-system-program): $(SYSTEM_DIR)/hello_test.c $(SYSTEM_DIR)/sa.h
 	cd $(SYSTEM_DIR) && $(MAKE)
 
-rm-sw:
+run-clean:
 	$(MAKE) -C $(SYSTEM_DIR) clean
 	rm -f ibex_simple_system.log
 

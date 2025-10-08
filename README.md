@@ -24,47 +24,41 @@ y(C,R) = k.T(C,K) @ x(K,R) + a(C,R)
 * `rtl/sys/dma_controller.sv` - DMA controller that corresponds with firmware
 * `rtl/sa/axis_sa.sv` - AXI Stream Systolic array
 
-
-## To simulate the entire system:
+## To simulate the subsytem in various configurations
 
 * Build [verilator](https://github.com/verilator/verilator) from source & install it (recommended)
 * Make sure your compilers/simulators are in `$PATH`
 * For Windows, install Git bash from [here](https://gitforwindows.org/) to be able to run Makefiles.
 
-
-### To simulate the Subsystem with full throughput AXI ports (5 AXI ports)
-
-```
-make veri SYS=axi   # Verilator
-make xsim SYS=axi   # Xilinx/AMD Vivado
-make xrun SYS=axi   # Cadence Xcelium
+Use the template:
+```bash
+make <TOOL> SYS=<CFG>
 ```
 
-### To simulate the Subsystem with only two AXI ports (instead of 5) - Unified through an interconnect
+Where:
+* `<TOOL>`:
+  * `veri` - Verilator
+  * `xsim` - Vivado XSim 
+  * `xrun` - Xcelium
+* `<CFG>`
+  * `axi` - 5 AXI ports. One S_AXIL and four M_AXI. Full-throughput 
+  * `axi_int` - 2 AXI ports. 4xM_AXI merged into one via interconnect
+  * `ram` - simplified RAM ports x 5
 
+Examples
 ```
-make xsim SYS=axi_int
-make veri SYS=axi_int
-make xrun SYS=axi_int
+make veri SYS=axi       # Verilator, 5 AXI ports
+make xsim SYS=axi_int   # Vivado, 2 AXI ports
+make xrun SYS=ram       # Xcelium, simplified RAM ports
 ```
 
-### To simulate the Subsystem with simplified RAM ports
-
-```
-make xsim SYS=ram
-make veri SYS=ram
-make xrun SYS=ram
-```
-
-
-
-### Build and Simulate a Full System on Chip with Ibex RISC-V processor
+## Build and Simulate a Full SoC (System on Chip) with Ibex RISC-V processor
 
 Check the [GitHub Actions workflow](https://github.com/abarajithan11/axis-systolic-array/blob/aba-ibex-soc/.github/workflows/verify.yaml) for more details
 
-1. Install Python dependencies `pip3 install -U -r python-requirements.txt`
+1. Install Python dependencies `pip3 install -U -r ibex-soc/python-requirements.txt`
 1. Get the latest RISC-V toolchain supported by lowRISC [from here](https://github.com/lowRISC/lowrisc-toolchains/releases)
-1. Run `fusesoc library add sa_ip /root/of/this/repo`
+1. Add Systolic Array to FuseSoC `fusesoc library add sa_ip "$(pwd -P)"`
 1. Use the following commands:
 
 ```
@@ -83,16 +77,16 @@ Key files:
 * `sa_for_ibex.core` - Defines this repo as a FuseSOC module
 
 
-### Test on Xilinx FPGAs
+## Implement on Xilinx FPGAs
 
-#### Vivado: 
+### Vivado: 
 
 ```
 make vivado BOARD=zcu104
 make vivado BOARD=zcu102
 ```
 
-#### Vitis:
+### Vitis:
 
 1. Launch SDK, create a new application project, select `Custom XSA` and select `run/work/sa_zcu104/design_1_wrapper.xsa`.
 1. Choose Hello World template.
