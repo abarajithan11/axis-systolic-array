@@ -1,6 +1,6 @@
 # Define variables
-R = 8
-C = 4
+R = 4
+C = 8
 K = 16
 WK = 8
 WX = 8
@@ -142,4 +142,24 @@ clean:
 	"rm" -rf $(WORK_DIR)*
 	$(MAKE) -C ibex-soc clean
 
-.PHONY: sim vlog elab run clean vivado regress veri xrun
+#----------------- Regression ------------------
+
+R_LIST := 2 3 4 5 6 7 8 9 10 11 12
+C_LIST := 2 3 4 5 6 7 8 9 10 11 12
+
+regress:
+	@set -e; \
+	for Rv in $(R_LIST); do \
+	  for Cv in $(C_LIST); do \
+	    WD="$(RUN_DIR)/work_R$${Rv}_C$${Cv}"; \
+	    DD="$${WD}/data"; \
+	    echo "\n\n\n================== [regress] R=$$Rv C=$$Cv ==================\n\n\n"; \
+	    $(MAKE) --no-print-directory veri \
+	      R=$$Rv C=$$Cv \
+	      WORK_DIR="$$WD" \
+	      DATA_DIR="$$DD"; \
+	  done; \
+	done
+
+
+.PHONY: sim vlog elab run clean vivado regress veri xrun ibuild irun iprint iwave irun-clean veri_axis veri_smoke regress

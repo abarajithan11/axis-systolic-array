@@ -59,3 +59,7 @@ jobs:
         make ibuild
         make irun
 
+    - name: Full Regression
+      run: |
+        make regress
+
