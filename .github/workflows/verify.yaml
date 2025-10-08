@@ -1,65 +1,106 @@
-
 name: Verify
-
 on: [push]
 
 jobs:
   verify-with-verilator:
     runs-on: ubuntu-22.04
 
+    env:
+      # ccache + where we’ll put our sim objects
+      CCACHE_DIR: ~/.cache/ccache
+      CCACHE_MAXSIZE: 2G
+      VERILATOR_HOME: $HOME/verilator
+
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
-    - name: Cache modules
-      id: cache-verify
-      uses: actions/cache@v3
-      env:
-        cache-name: cache-verify
+    # Faster pip: uses GHA's built-in pip cache
+    - name: Set up Python
+      uses: actions/setup-python@v5
       with:
-        path: ~/.verify
-        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+        python-version: "3.12"
+        cache: "pip"
+        cache-dependency-path: |
+          ibex-soc/python-requirements.txt
+          **/requirements.txt
+
+    - name: Cache Verilator install
+      id: cache-verilator
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.VERILATOR_HOME }}
+        key: verilator-bin-prebuilt-v1
+        # ^ bump this key when your tarball changes
+
+    - name: Cache ccache
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.CCACHE_DIR }}
+        key: ccache-${{ runner.os }}-${{ hashFiles('**/*.[schv]v','**/Makefile','**/*.mk') }}
         restore-keys: |
-          ${{ runner.os }}-build-${{ env.cache-name }}-
-          ${{ runner.os }}-build-
-          ${{ runner.os }}-
+          ccache-${{ runner.os }}-
 
-    - name: Install Python Packages
+    # Cache FuseSoC/Edalize work dirs (safe & big win)
+    - name: Cache FuseSoC
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/fusesoc
+          ~/.config/fusesoc
+          ~/.fusesoc
+          ~/.verify
+          build
+        key: fusesoc-${{ runner.os }}-${{ hashFiles('**/*.core','**/core.yaml','**/fusesoc.conf','**/edam.yaml','**/Makefile') }}
+        restore-keys: |
+          fusesoc-${{ runner.os }}-
+
+    - name: Base packages
       run: |
-        python3 -m pip install --upgrade pip
+        sudo apt-get update
+        sudo apt-get install -y git help2man perl make autoconf g++ flex bison ccache \
+            liblzma-dev libunwind-dev libgoogle-perftools-dev numactl libfl2 libfl-dev \
+            libelf-dev srecord gcc-riscv64-unknown-elf
+
+    - name: Python deps
+      run: |
+        python -m pip install --upgrade pip
         pip install numpy
+        pip install --user -r ibex-soc/python-requirements.txt || pip install -r ibex-soc/python-requirements.txt
 
-    - name: Install Fusoc
+    - name: Install / Restore Verilator
+      if: steps.cache-verilator.outputs.cache-hit != 'true'
       run: |
-        sudo apt install libelf-dev srecord
-        sudo apt install gcc-riscv64-unknown-elf
-        pip3 install --user -r ibex-soc/python-requirements.txt
-
-    - name: Install Verilator
-      run: |
-        sudo apt-get install --only-upgrade python3 --fix-missing
-        sudo apt-get install  --fix-missing --fix-broken git help2man perl python3 make autoconf g++ flex bison ccache liblzma-dev libunwind-dev libgoogle-perftools-dev numactl libfl2 libfl-dev
-
         git clone https://github.com/abarajithan11/verilator-compiled
         cd verilator-compiled
-        tar -C ${HOME} -xzf verilator.tar.gz
+        mkdir -p "${VERILATOR_HOME%/*}"
+        tar -C "$HOME" -xzf verilator.tar.gz
+    - name: Add Verilator to PATH
+      run: echo "${{ env.VERILATOR_HOME }}/bin" >> "$GITHUB_PATH"
 
-    - name: Verify Full Design
+    - name: Link RV32 tool aliases (if needed)
       run: |
-        export PATH=${HOME}/verilator/bin:$PATH
-        make veri
+        sudo ln -sf "$(which riscv64-unknown-elf-g++)" /usr/local/bin/riscv32-unknown-elf-g++
+        sudo ln -sf "$(which riscv64-unknown-elf-gcc)" /usr/local/bin/riscv32-unknown-elf-gcc
+        sudo ln -sf "$(which riscv64-unknown-elf-ld)" /usr/local/bin/riscv32-unknown-elf-ld
+        sudo ln -sf "$(which riscv64-unknown-elf-objcopy)" /usr/local/bin/riscv32-unknown-elf-objcopy
+        sudo ln -sf "$(which riscv64-unknown-elf-objdump)" /usr/local/bin/riscv32-unknown-elf-objdump
 
-    - name: Run Ibex SoC with verilator
+    - name: Add local IP library for FuseSoC
+      run: fusesoc library add sa_ip "$(pwd -P)"
+
+    - name: Verify Full Design (use ccache)
+      env:
+        # Encourage downstream makefiles to use ccache
+        CC: "ccache gcc"
+        CXX: "ccache g++"
+        EDALIZE_CCACHE: "1"
+      run: make veri
+
+    - name: Build + Run Ibex SoC (use ccache)
+      env:
+        CC: "ccache gcc"
+        CXX: "ccache g++"
+        EDALIZE_CCACHE: "1"
       run: |
-        export PATH=${HOME}/verilator/bin:$PATH
-        sudo ln -s $(which riscv64-unknown-elf-g++) /usr/local/bin/riscv32-unknown-elf-g++
-        sudo ln -s $(which riscv64-unknown-elf-gcc) /usr/local/bin/riscv32-unknown-elf-gcc
-        sudo ln -s $(which riscv64-unknown-elf-ld) /usr/local/bin/riscv32-unknown-elf-ld
-        sudo ln -s $(which riscv64-unknown-elf-objcopy) /usr/local/bin/riscv32-unknown-elf-objcopy
-        sudo ln -s $(which riscv64-unknown-elf-objdump) /usr/local/bin/riscv32-unknown-elf-objdump
-
-        fusesoc library add sa_ip "$(pwd -P)"
-
         make ibuild
         make irun
-
-
