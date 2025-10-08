@@ -58,6 +58,10 @@ Check the [GitHub Actions workflow](https://github.com/abarajithan11/axis-systol
 
 1. Install Python dependencies `pip3 install -U -r ibex-soc/python-requirements.txt`
 1. Get the latest RISC-V toolchain supported by lowRISC [from here](https://github.com/lowRISC/lowrisc-toolchains/releases)
+1. [Optional] Add symlinks mapping `riscv64` to `riscv32` using 
+  ```
+  for t in g++ gcc ld objcopy objdump; do sudo ln -sf "$(command -v riscv64-unknown-elf-$t)" "/usr/local/bin/riscv32-unknown-elf-$t"; done
+  ```
 1. Add Systolic Array to FuseSoC `fusesoc library add sa_ip "$(pwd -P)"`
 1. Use the following commands:
 
