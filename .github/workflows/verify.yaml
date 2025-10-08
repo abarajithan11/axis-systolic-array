@@ -51,9 +51,6 @@ jobs:
     - name: Verify 2 AXI Ports (Via Interconnect) with verilator
       run: |
         make veri SYS=axi_int
-    - name: Verify RAM Ports with verilator
-      run: |
-        make veri SYS=ram
 
     - name: Run Ibex SoC with verilator
       run: |

@@ -166,6 +166,15 @@ wire                       m_axi_mm2s_2_rlast  , m_axi_mm2s_1_rlast  , m_axi_mm2
 wire                       m_axi_mm2s_2_rvalid , m_axi_mm2s_1_rvalid , m_axi_mm2s_0_rvalid ;
 wire                       m_axi_mm2s_2_rready , m_axi_mm2s_1_rready , m_axi_mm2s_0_rready ;
 
+wire [AXI_ADDR_WIDTH-1:0]  m_axil_mm2s_2_araddr , m_axil_mm2s_1_araddr , m_axil_mm2s_0_araddr ;
+wire [2:0]                 m_axil_mm2s_2_arprot , m_axil_mm2s_1_arprot , m_axil_mm2s_0_arprot ;
+wire                       m_axil_mm2s_2_arvalid, m_axil_mm2s_1_arvalid, m_axil_mm2s_0_arvalid;
+wire                       m_axil_mm2s_2_arready, m_axil_mm2s_1_arready, m_axil_mm2s_0_arready;
+wire [AXI_WIDTH   -1:0]    m_axil_mm2s_2_rdata  , m_axil_mm2s_1_rdata  , m_axil_mm2s_0_rdata  ;
+wire [1:0]                 m_axil_mm2s_2_rresp  , m_axil_mm2s_1_rresp  , m_axil_mm2s_0_rresp  ;
+wire                       m_axil_mm2s_2_rvalid , m_axil_mm2s_1_rvalid , m_axil_mm2s_0_rvalid ;
+wire                       m_axil_mm2s_2_rready , m_axil_mm2s_1_rready , m_axil_mm2s_0_rready ;
+
 wire [AXI_ID_WIDTH-1:0]    m_axi_s2mm_awid;
 wire [AXI_ADDR_WIDTH-1:0]  m_axi_s2mm_awaddr;
 wire [7:0]                 m_axi_s2mm_awlen;
@@ -186,17 +195,28 @@ wire [1:0]                 m_axi_s2mm_bresp;
 wire                       m_axi_s2mm_bvalid;
 wire                       m_axi_s2mm_bready;
 
-localparam  OPT_LOCK          = 1'b0,
-            OPT_LOCKID        = 1'b1,
-            OPT_LOWPOWER      = 1'b0;
+wire [AXI_ADDR_WIDTH-1:0]  m_axil_s2mm_awaddr ;
+wire [2:0]                 m_axil_s2mm_awprot ;
+wire                       m_axil_s2mm_awvalid;
+wire                       m_axil_s2mm_awready;
+wire [AXI_WIDTH   -1:0]    m_axil_s2mm_wdata  ;
+wire [AXI_STRB_WIDTH-1:0]  m_axil_s2mm_wstrb  ;
+wire                       m_axil_s2mm_wvalid ;
+wire                       m_axil_s2mm_wready ;
+wire [1:0]                 m_axil_s2mm_bresp  ;
+wire                       m_axil_s2mm_bvalid ;
+wire                       m_axil_s2mm_bready ;
 
-axi2tlul #( 
-  .ADDR_WIDTH   (AXI_ADDR_WIDTH),
-  .DATA_WIDTH   (AXI_WIDTH),
-  .AXI_ID_WIDTH (AXI_ID_WIDTH)
-) AXI2TLUL_0 (
+axi_axil_adapter #(
+  .ADDR_WIDTH           (AXI_ADDR_WIDTH),
+  .AXI_DATA_WIDTH       (AXI_WIDTH),
+  .AXI_STRB_WIDTH       (AXI_STRB_WIDTH),
+  .AXI_ID_WIDTH         (AXI_ID_WIDTH),
+  .AXIL_DATA_WIDTH      (AXI_WIDTH),
+  .AXIL_STRB_WIDTH      (AXI_STRB_WIDTH)
+  ) AXI_TO_AXIL_0 (
   .clk          (clk ),
-  .rstn         (rstn),
+  .rst          (!rstn),
   .s_axi_awid   (),
   .s_axi_awaddr (),
   .s_axi_awlen  (),
@@ -232,26 +252,80 @@ axi2tlul #(
   .s_axi_rlast  (m_axi_mm2s_0_rlast  ),
   .s_axi_rvalid (m_axi_mm2s_0_rvalid ),
   .s_axi_rready (m_axi_mm2s_0_rready ),
-  .reg_wr_en    (),
-  .reg_wr_addr  (),
-  .reg_wr_data  (),
-  .reg_wr_strb  (),
-  .reg_wr_wait  (1'b0),
-  .reg_wr_ack   (1'b0),
-  .reg_rd_en    (mm2s_0_rd_en  ),
-  .reg_rd_addr  (mm2s_0_rd_addr),
-  .reg_rd_data  (mm2s_0_rd_data),
-  .reg_rd_wait  (mm2s_0_rd_wait),
-  .reg_rd_ack   (mm2s_0_rd_ack )
+
+  .m_axil_awaddr (),
+  .m_axil_awprot (),
+  .m_axil_awvalid(1'b0),
+  .m_axil_awready(),
+  .m_axil_wdata  (),
+  .m_axil_wstrb  (),
+  .m_axil_wvalid (1'b0),
+  .m_axil_wready (),
+  .m_axil_bresp  (),
+  .m_axil_bvalid (),
+  .m_axil_bready (1'b0),
+  
+  .m_axil_araddr (m_axil_mm2s_0_araddr ),
+  .m_axil_arprot (m_axil_mm2s_0_arprot ),
+  .m_axil_arvalid(m_axil_mm2s_0_arvalid),
+  .m_axil_arready(m_axil_mm2s_0_arready),
+  .m_axil_rdata  (m_axil_mm2s_0_rdata  ),
+  .m_axil_rresp  (m_axil_mm2s_0_rresp  ),
+  .m_axil_rvalid (m_axil_mm2s_0_rvalid ),
+  .m_axil_rready (m_axil_mm2s_0_rready )
 );
 
-axi2tlul #( 
-  .ADDR_WIDTH   (AXI_ADDR_WIDTH),
-  .DATA_WIDTH   (AXI_WIDTH),
-  .AXI_ID_WIDTH (AXI_ID_WIDTH)
-) AXI2TLUL_1 (
+alex_axilite_ram #(
+  .DATA_WR_WIDTH (AXI_WIDTH),
+  .DATA_RD_WIDTH (AXI_WIDTH),
+  .ADDR_WIDTH    (AXI_ADDR_WIDTH),
+  .STRB_WIDTH    (AXI_STRB_WIDTH)
+  ) AXIL_TO_RAM_0 (
+  .clk            (clk),
+  .rstn           (rstn),
+  .s_axil_awaddr  (),
+  .s_axil_awprot  (),
+  .s_axil_awvalid (),
+  .s_axil_awready (),
+  .s_axil_wdata   (),
+  .s_axil_wstrb   (),
+  .s_axil_wvalid  (),
+  .s_axil_wready  (),
+  .s_axil_bresp   (),
+  .s_axil_bvalid  (),
+  .s_axil_bready  (),
+  .s_axil_araddr  (),
+  .s_axil_arprot  (),
+  .s_axil_arvalid (),
+  .s_axil_arready (),
+  .s_axil_rdata   (),
+  .s_axil_rresp   (),
+  .s_axil_rvalid  (),
+  .s_axil_rready  (),
+
+  .reg_wr_en      (),
+  .reg_wr_addr    (),
+  .reg_wr_data    (),
+  .reg_wr_strb    (),
+  .reg_wr_wait    (1'b0),
+  .reg_wr_ack     (1'b0),
+  .reg_rd_en      (mm2s_0_rd_en  ),
+  .reg_rd_addr    (mm2s_0_rd_addr),
+  .reg_rd_data    (mm2s_0_rd_data),
+  .reg_rd_wait    (mm2s_0_rd_wait),
+  .reg_rd_ack     (mm2s_0_rd_ack )
+);
+
+axi_axil_adapter #(
+  .ADDR_WIDTH           (AXI_ADDR_WIDTH),
+  .AXI_DATA_WIDTH       (AXI_WIDTH),
+  .AXI_STRB_WIDTH       (AXI_STRB_WIDTH),
+  .AXI_ID_WIDTH         (AXI_ID_WIDTH),
+  .AXIL_DATA_WIDTH      (AXI_WIDTH),
+  .AXIL_STRB_WIDTH      (AXI_STRB_WIDTH)
+  ) AXI_TO_AXIL_1 (
   .clk          (clk ),
-  .rstn         (rstn),
+  .rst          (!rstn),
   .s_axi_awid   (),
   .s_axi_awaddr (),
   .s_axi_awlen  (),
@@ -287,26 +361,80 @@ axi2tlul #(
   .s_axi_rlast  (m_axi_mm2s_1_rlast  ),
   .s_axi_rvalid (m_axi_mm2s_1_rvalid ),
   .s_axi_rready (m_axi_mm2s_1_rready ),
-  .reg_wr_en    (),
-  .reg_wr_addr  (),
-  .reg_wr_data  (),
-  .reg_wr_strb  (),
-  .reg_wr_wait  (1'b0),
-  .reg_wr_ack   (1'b0),
-  .reg_rd_en    (mm2s_1_rd_en  ),
-  .reg_rd_addr  (mm2s_1_rd_addr),
-  .reg_rd_data  (mm2s_1_rd_data),
-  .reg_rd_wait  (mm2s_1_rd_wait),
-  .reg_rd_ack   (mm2s_1_rd_ack )
+
+  .m_axil_awaddr (),
+  .m_axil_awprot (),
+  .m_axil_awvalid(1'b0),
+  .m_axil_awready(),
+  .m_axil_wdata  (),
+  .m_axil_wstrb  (),
+  .m_axil_wvalid (1'b0),
+  .m_axil_wready (),
+  .m_axil_bresp  (),
+  .m_axil_bvalid (),
+  .m_axil_bready (1'b0),
+  
+  .m_axil_araddr (m_axil_mm2s_1_araddr ),
+  .m_axil_arprot (m_axil_mm2s_1_arprot ),
+  .m_axil_arvalid(m_axil_mm2s_1_arvalid),
+  .m_axil_arready(m_axil_mm2s_1_arready),
+  .m_axil_rdata  (m_axil_mm2s_1_rdata  ),
+  .m_axil_rresp  (m_axil_mm2s_1_rresp  ),
+  .m_axil_rvalid (m_axil_mm2s_1_rvalid ),
+  .m_axil_rready (m_axil_mm2s_1_rready )
 );
 
-axi2tlul #( 
-  .ADDR_WIDTH   (AXI_ADDR_WIDTH),
-  .DATA_WIDTH   (AXI_WIDTH),
-  .AXI_ID_WIDTH (AXI_ID_WIDTH)
-) AXI2TLUL_2 (
+alex_axilite_ram #(
+  .DATA_WR_WIDTH (AXI_WIDTH),
+  .DATA_RD_WIDTH (AXI_WIDTH),
+  .ADDR_WIDTH    (AXI_ADDR_WIDTH),
+  .STRB_WIDTH    (AXI_STRB_WIDTH)
+  ) AXIL_TO_RAM_1 (
+  .clk            (clk),
+  .rstn           (rstn),
+  .s_axil_awaddr  (),
+  .s_axil_awprot  (),
+  .s_axil_awvalid (),
+  .s_axil_awready (),
+  .s_axil_wdata   (),
+  .s_axil_wstrb   (),
+  .s_axil_wvalid  (),
+  .s_axil_wready  (),
+  .s_axil_bresp   (),
+  .s_axil_bvalid  (),
+  .s_axil_bready  (),
+  .s_axil_araddr  (),
+  .s_axil_arprot  (),
+  .s_axil_arvalid (),
+  .s_axil_arready (),
+  .s_axil_rdata   (),
+  .s_axil_rresp   (),
+  .s_axil_rvalid  (),
+  .s_axil_rready  (),
+
+  .reg_wr_en      (),
+  .reg_wr_addr    (),
+  .reg_wr_data    (),
+  .reg_wr_strb    (),
+  .reg_wr_wait    (1'b0),
+  .reg_wr_ack     (1'b0),
+  .reg_rd_en      (mm2s_1_rd_en  ),
+  .reg_rd_addr    (mm2s_1_rd_addr),
+  .reg_rd_data    (mm2s_1_rd_data),
+  .reg_rd_wait    (mm2s_1_rd_wait),
+  .reg_rd_ack     (mm2s_1_rd_ack )
+);
+
+axi_axil_adapter #(
+  .ADDR_WIDTH           (AXI_ADDR_WIDTH),
+  .AXI_DATA_WIDTH       (AXI_WIDTH),
+  .AXI_STRB_WIDTH       (AXI_STRB_WIDTH),
+  .AXI_ID_WIDTH         (AXI_ID_WIDTH),
+  .AXIL_DATA_WIDTH      (AXI_WIDTH),
+  .AXIL_STRB_WIDTH      (AXI_STRB_WIDTH)
+  ) AXI_TO_AXIL_2 (
   .clk          (clk ),
-  .rstn         (rstn),
+  .rst          (!rstn),
   .s_axi_awid   (),
   .s_axi_awaddr (),
   .s_axi_awlen  (),
@@ -342,26 +470,81 @@ axi2tlul #(
   .s_axi_rlast  (m_axi_mm2s_2_rlast  ),
   .s_axi_rvalid (m_axi_mm2s_2_rvalid ),
   .s_axi_rready (m_axi_mm2s_2_rready ),
-  .reg_wr_en    (),
-  .reg_wr_addr  (),
-  .reg_wr_data  (),
-  .reg_wr_strb  (),
-  .reg_wr_wait  (1'b0),
-  .reg_wr_ack   (1'b0),
-  .reg_rd_en    (mm2s_2_rd_en  ),
-  .reg_rd_addr  (mm2s_2_rd_addr),
-  .reg_rd_data  (mm2s_2_rd_data),
-  .reg_rd_wait  (mm2s_2_rd_wait),
-  .reg_rd_ack   (mm2s_2_rd_ack )
+
+  .m_axil_awaddr (),
+  .m_axil_awprot (),
+  .m_axil_awvalid(1'b0),
+  .m_axil_awready(),
+  .m_axil_wdata  (),
+  .m_axil_wstrb  (),
+  .m_axil_wvalid (1'b0),
+  .m_axil_wready (),
+  .m_axil_bresp  (),
+  .m_axil_bvalid (),
+  .m_axil_bready (1'b0),
+  
+  .m_axil_araddr (m_axil_mm2s_2_araddr ),
+  .m_axil_arprot (m_axil_mm2s_2_arprot ),
+  .m_axil_arvalid(m_axil_mm2s_2_arvalid),
+  .m_axil_arready(m_axil_mm2s_2_arready),
+  .m_axil_rdata  (m_axil_mm2s_2_rdata  ),
+  .m_axil_rresp  (m_axil_mm2s_2_rresp  ),
+  .m_axil_rvalid (m_axil_mm2s_2_rvalid ),
+  .m_axil_rready (m_axil_mm2s_2_rready )
 );
 
-axi2tlul #( 
-  .ADDR_WIDTH   (AXI_ADDR_WIDTH),
-  .DATA_WIDTH   (AXI_WIDTH),
-  .AXI_ID_WIDTH (AXI_ID_WIDTH)
-) AXI2TLUL_3 (
+alex_axilite_ram #(
+  .DATA_WR_WIDTH (AXI_WIDTH),
+  .DATA_RD_WIDTH (AXI_WIDTH),
+  .ADDR_WIDTH    (AXI_ADDR_WIDTH),
+  .STRB_WIDTH    (AXI_STRB_WIDTH)
+  ) AXIL_TO_RAM_2 (
+  .clk            (clk),
+  .rstn           (rstn),
+  .s_axil_awaddr  (),
+  .s_axil_awprot  (),
+  .s_axil_awvalid (),
+  .s_axil_awready (),
+  .s_axil_wdata   (),
+  .s_axil_wstrb   (),
+  .s_axil_wvalid  (),
+  .s_axil_wready  (),
+  .s_axil_bresp   (),
+  .s_axil_bvalid  (),
+  .s_axil_bready  (),
+  .s_axil_araddr  (),
+  .s_axil_arprot  (),
+  .s_axil_arvalid (),
+  .s_axil_arready (),
+  .s_axil_rdata   (),
+  .s_axil_rresp   (),
+  .s_axil_rvalid  (),
+  .s_axil_rready  (),
+
+  .reg_wr_en      (),
+  .reg_wr_addr    (),
+  .reg_wr_data    (),
+  .reg_wr_strb    (),
+  .reg_wr_wait    (1'b0),
+  .reg_wr_ack     (1'b0),
+  .reg_rd_en      (mm2s_2_rd_en  ),
+  .reg_rd_addr    (mm2s_2_rd_addr),
+  .reg_rd_data    (mm2s_2_rd_data),
+  .reg_rd_wait    (mm2s_2_rd_wait),
+  .reg_rd_ack     (mm2s_2_rd_ack )
+);
+
+
+axi_axil_adapter #(
+  .ADDR_WIDTH           (AXI_ADDR_WIDTH),
+  .AXI_DATA_WIDTH       (AXI_WIDTH),
+  .AXI_STRB_WIDTH       (AXI_STRB_WIDTH),
+  .AXI_ID_WIDTH         (AXI_ID_WIDTH),
+  .AXIL_DATA_WIDTH      (AXI_WIDTH),
+  .AXIL_STRB_WIDTH      (AXI_STRB_WIDTH)
+  ) AXI_TO_AXIL_3 (
   .clk          (clk ),
-  .rstn         (rstn),
+  .rst          (!rstn),
   .s_axi_awid   (m_axi_s2mm_awid   ),
   .s_axi_awaddr (m_axi_s2mm_awaddr ),
   .s_axi_awlen  (m_axi_s2mm_awlen  ),
@@ -381,6 +564,7 @@ axi2tlul #(
   .s_axi_bresp  (m_axi_s2mm_bresp  ),
   .s_axi_bvalid (m_axi_s2mm_bvalid ),
   .s_axi_bready (m_axi_s2mm_bready ),
+
   .s_axi_arid   (),
   .s_axi_araddr (),
   .s_axi_arlen  (),
@@ -398,17 +582,67 @@ axi2tlul #(
   .s_axi_rvalid (),
   .s_axi_rready (1'b0),
 
-  .reg_wr_en    (s2mm_wr_en  ),
-  .reg_wr_addr  (s2mm_wr_addr),
-  .reg_wr_data  (s2mm_wr_data),
-  .reg_wr_strb  (s2mm_wr_strb),
-  .reg_wr_wait  (s2mm_wr_wait),
-  .reg_wr_ack   (s2mm_wr_ack ),
-  .reg_rd_en    (),
-  .reg_rd_addr  (),
-  .reg_rd_data  (),
-  .reg_rd_wait  (1'b0),
-  .reg_rd_ack   (1'b0)
+  .m_axil_awaddr (m_axil_s2mm_awaddr ),
+  .m_axil_awprot (m_axil_s2mm_awprot ),
+  .m_axil_awvalid(m_axil_s2mm_awvalid),
+  .m_axil_awready(m_axil_s2mm_awready),
+  .m_axil_wdata  (m_axil_s2mm_wdata  ),
+  .m_axil_wstrb  (m_axil_s2mm_wstrb  ),
+  .m_axil_wvalid (m_axil_s2mm_wvalid ),
+  .m_axil_wready (m_axil_s2mm_wready ),
+  .m_axil_bresp  (m_axil_s2mm_bresp  ),
+  .m_axil_bvalid (m_axil_s2mm_bvalid ),
+  .m_axil_bready (m_axil_s2mm_bready ),
+
+  .m_axil_araddr (),
+  .m_axil_arprot (),
+  .m_axil_arvalid(),
+  .m_axil_arready(1'b0),
+  .m_axil_rdata  (),
+  .m_axil_rresp  (),
+  .m_axil_rvalid (1'b0),
+  .m_axil_rready ()
+);
+
+alex_axilite_ram #(
+  .DATA_WR_WIDTH (AXI_WIDTH),
+  .DATA_RD_WIDTH (AXI_WIDTH),
+  .ADDR_WIDTH    (AXI_ADDR_WIDTH),
+  .STRB_WIDTH    (AXI_STRB_WIDTH)
+  ) AXIL_TO_RAM_3 (
+  .clk            (clk),
+  .rstn           (rstn),
+  .s_axil_awaddr  (m_axil_s2mm_awaddr ),
+  .s_axil_awprot  (m_axil_s2mm_awprot ),
+  .s_axil_awvalid (m_axil_s2mm_awvalid),
+  .s_axil_awready (m_axil_s2mm_awready),
+  .s_axil_wdata   (m_axil_s2mm_wdata  ),
+  .s_axil_wstrb   (m_axil_s2mm_wstrb  ),
+  .s_axil_wvalid  (m_axil_s2mm_wvalid ),
+  .s_axil_wready  (m_axil_s2mm_wready ),
+  .s_axil_bresp   (m_axil_s2mm_bresp  ),
+  .s_axil_bvalid  (m_axil_s2mm_bvalid ),
+  .s_axil_bready  (m_axil_s2mm_bready ),
+  .s_axil_araddr  (),
+  .s_axil_arprot  (),
+  .s_axil_arvalid (),
+  .s_axil_arready (),
+  .s_axil_rdata   (),
+  .s_axil_rresp   (),
+  .s_axil_rvalid  (),
+  .s_axil_rready  (),
+
+  .reg_wr_en      (s2mm_wr_en  ),
+  .reg_wr_addr    (s2mm_wr_addr),
+  .reg_wr_data    (s2mm_wr_data),
+  .reg_wr_strb    (s2mm_wr_strb),
+  .reg_wr_wait    (s2mm_wr_wait),
+  .reg_wr_ack     (s2mm_wr_ack ),
+  .reg_rd_en      (),
+  .reg_rd_addr    (),
+  .reg_rd_data    (),
+  .reg_rd_wait    (1'b0),
+  .reg_rd_ack     (1'b0)
 );
 
 // AXI Stream side
