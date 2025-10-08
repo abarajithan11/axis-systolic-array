@@ -24,31 +24,12 @@ y(C,R) = k.T(C,K) @ x(K,R) + a(C,R)
 * `rtl/sys/dma_controller.sv` - DMA controller that corresponds with firmware
 * `rtl/sa/axis_sa.sv` - AXI Stream Systolic array
 
-## Setting up Simulators & Environment:
 
-### Windows
+## To simulate the entire system:
 
-You need `make` to run our `Makefile`. If you dont have `make` on Windows native, follow these steps
-
-1. Install `chocolatey`
-
-Open powershell as administrator and run the following command:
-
-```
-Set-ExecutionPolicy Bypass -Scope Process -Force; `
-[System.Net.ServicePointManager]::SecurityProtocol = `
-[System.Net.ServicePointManager]::SecurityProtocol -bor 3072; `
-iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-```
-
-2. Install `make` and GNU tools
-
-```
-choco install make
-choco install gnuwin32-coreutils.install
-```
-
-3. Add `C:/Program Files (x86)/GnuWin32/bin` to your `$PATH`
+* Build [verilator](https://github.com/verilator/verilator) from source & install it (recommended)
+* Make sure your compilers/simulators are in `$PATH`
+* For Windows, install Git bash from [here](https://gitforwindows.org/) to be able to run Makefiles.
 
 
 ### To simulate the Subsystem with full throughput AXI ports (5 AXI ports)
@@ -80,7 +61,6 @@ make xrun SYS=ram
 
 Check the [GitHub Actions workflow](https://github.com/abarajithan11/axis-systolic-array/blob/aba-ibex-soc/.github/workflows/verify.yaml) for more details
 
-1. Build [verilator](https://github.com/verilator/verilator) from source & install it (recommended)
 1. Install Python dependencies `pip3 install -U -r python-requirements.txt`
 1. Get the latest RISC-V toolchain supported by lowRISC [from here](https://github.com/lowRISC/lowrisc-toolchains/releases)
 1. Run `fusesoc library add sa_ip /root/of/this/repo`
