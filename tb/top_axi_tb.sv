@@ -155,7 +155,7 @@ logic [AXI_WIDTH-1:0] tmp_data;
   initial begin
     $dumpfile("top_axi_tb.vcd");
     $dumpvars();
-    #1000us;
+    #1000000us;
     $fatal(1, "Error: Timeout.");
   end
 

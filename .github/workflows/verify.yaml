@@ -44,6 +44,10 @@ jobs:
         cd verilator-compiled
         tar -C ${HOME} -xzf verilator.tar.gz
         echo "$HOME/verilator/bin" >> "$GITHUB_PATH"
+            
+    - name: Full Regression
+      run: |
+        make regress
         
     - name: Verify 5 AXI Ports with verilator
       run: |
@@ -58,8 +62,4 @@ jobs:
 
         make ibuild
         make irun
-
-    - name: Full Regression
-      run: |
-        make regress
 
