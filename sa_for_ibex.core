@@ -8,6 +8,7 @@ filesets:
     files:
       - rtl/sys/saxi_to_host.sv
       - rtl/sys/dev_to_maxil.sv
+      - rtl/sys/skid_buffer.sv
       - rtl/sa/axis_sa.sv
       - rtl/sa/mac.sv
       - rtl/sa/n_delay.sv
