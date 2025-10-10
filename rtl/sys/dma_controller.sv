@@ -78,16 +78,23 @@ module dma_controller #(
     ;
   logic [15:0][AXI_DATA_WIDTH-1:0] cfg ;
 
-  // always_ff @(posedge clk) begin
-  //   if (reg_rd_en)
-  //     $display("reg_rd: addr=0x%08X data=0x%08X", reg_rd_addr, cfg[reg_rd_addr]);
-  //   if (reg_wr_en)
-  //     $display("reg_wr: addr=0x%08X data=0x%08X", reg_wr_addr, reg_wr_data);
-  // end
-
-  // always_ff @(posedge clk)  // PS READ (1 clock latency)
-  //   if (!rstn)          reg_rd_data <= '0;
-  //   else if (reg_rd_en) reg_rd_data <= cfg[reg_rd_addr];
+  // For debug
+  wire [AXI_DATA_WIDTH-1:0] cfg_START        = cfg[A_START       ];
+  wire [AXI_DATA_WIDTH-1:0] cfg_MM2S_0_DONE  = cfg[A_MM2S_0_DONE ];
+  wire [AXI_DATA_WIDTH-1:0] cfg_MM2S_0_ADDR  = cfg[A_MM2S_0_ADDR ];
+  wire [AXI_DATA_WIDTH-1:0] cfg_MM2S_0_BYTES = cfg[A_MM2S_0_BYTES];
+  wire [AXI_DATA_WIDTH-1:0] cfg_MM2S_0_TUSER = cfg[A_MM2S_0_TUSER];
+  wire [AXI_DATA_WIDTH-1:0] cfg_MM2S_1_DONE  = cfg[A_MM2S_1_DONE ];
+  wire [AXI_DATA_WIDTH-1:0] cfg_MM2S_1_ADDR  = cfg[A_MM2S_1_ADDR ];
+  wire [AXI_DATA_WIDTH-1:0] cfg_MM2S_1_BYTES = cfg[A_MM2S_1_BYTES];
+  wire [AXI_DATA_WIDTH-1:0] cfg_MM2S_1_TUSER = cfg[A_MM2S_1_TUSER];
+  wire [AXI_DATA_WIDTH-1:0] cfg_MM2S_2_DONE  = cfg[A_MM2S_2_DONE ];
+  wire [AXI_DATA_WIDTH-1:0] cfg_MM2S_2_ADDR  = cfg[A_MM2S_2_ADDR ];
+  wire [AXI_DATA_WIDTH-1:0] cfg_MM2S_2_BYTES = cfg[A_MM2S_2_BYTES];
+  wire [AXI_DATA_WIDTH-1:0] cfg_MM2S_2_TUSER = cfg[A_MM2S_2_TUSER];
+  wire [AXI_DATA_WIDTH-1:0] cfg_S2MM_DONE    = cfg[A_S2MM_DONE   ];
+  wire [AXI_DATA_WIDTH-1:0] cfg_S2MM_ADDR    = cfg[A_S2MM_ADDR   ];
+  wire [AXI_DATA_WIDTH-1:0] cfg_S2MM_BYTES   = cfg[A_S2MM_BYTES  ];
 
   assign reg_rd_data = cfg[reg_rd_addr];
   

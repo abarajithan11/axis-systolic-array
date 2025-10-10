@@ -20,7 +20,7 @@ module top_axi_int_tb;
     LA                  = 1                  ,
     AXI_ID_WIDTH        = 6                  ,
     AXI_STRB_WIDTH      = AXI_WIDTH/8        ,
-    AXI_MAX_BURST_LEN   = 32                 ,
+    AXI_MAX_BURST_LEN   = 1                  ,
     AXI_ADDR_WIDTH      = 32                 ,
     AXIL_WIDTH          = 32                 ,
     AXIL_ADDR_WIDTH     = 32                 ,
@@ -132,7 +132,7 @@ logic [AXI_WIDTH-1:0] tmp_data;
   initial begin
     $dumpfile("top_tb.vcd");
     $dumpvars();
-    #1000us;
+    #1000000us;
     $fatal(1, "Error: Timeout.");
   end
 

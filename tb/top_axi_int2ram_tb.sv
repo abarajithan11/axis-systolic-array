@@ -15,7 +15,7 @@ module top_axi_int2ram_tb #(
         AXI_WIDTH         = 128,
         AXI_ID_WIDTH      = 6,
         AXI_STRB_WIDTH    = AXI_WIDTH/8,
-        AXI_MAX_BURST_LEN = 32,
+        AXI_MAX_BURST_LEN = 4,
         AXI_ADDR_WIDTH    = 32,
         AXIL_WIDTH        = 32,
         AXIL_ADDR_WIDTH   = 32,

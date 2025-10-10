@@ -45,16 +45,16 @@ jobs:
         tar -C ${HOME} -xzf verilator.tar.gz
         echo "$HOME/verilator/bin" >> "$GITHUB_PATH"
             
-    - name: Full Regression
-      run: |
-        make regress
+    - name: Full Regression (5 AXI Ports)
+      run: make regress
+
+    - name: Full Regression (2 AXI Ports)
+      run: make regress SYS=axi_int
         
     - name: Verify 5 AXI Ports with verilator
-      run: |
-        make veri SYS=axi
+      run: make veri SYS=axi
     - name: Verify 2 AXI Ports (Via Interconnect) with verilator
-      run: |
-        make veri SYS=axi_int
+      run: make veri SYS=axi_int
 
     - name: Run Ibex SoC with verilator
       run: |

@@ -19,7 +19,7 @@ module top_axi_int #(
         AXI_ID_WIDTH            = 6,
         DMA_ID_WIDTH            = 6-$clog2(4),
         AXI_STRB_WIDTH          = (AXI_WIDTH/8),
-        AXI_MAX_BURST_LEN       = 32,
+        AXI_MAX_BURST_LEN       = 1,
         AXI_ADDR_WIDTH          = 32,
         AXIS_USER_WIDTH         = 8,         
         // AXI-Lite
@@ -132,18 +132,18 @@ wire                       m_axi_s2mm_rready , m_axi_mm2s_2_rready , m_axi_mm2s_
 // Stream Side
 
 localparam K_BUS_W = C*WK;
-wire                       s_k_tready;
-wire                       s_k_tvalid;
-wire                       s_k_tlast ;
-wire [K_BUS_W        -1:0] s_k_tdata ;
-wire [AXIS_USER_WIDTH-1:0] s_k_tuser ;
+wire                       s_k_tready, s_k_skid_tready;
+wire                       s_k_tvalid, s_k_skid_tvalid;
+wire                       s_k_tlast , s_k_skid_tlast ;
+wire [K_BUS_W        -1:0] s_k_tdata , s_k_skid_tdata ;
+wire [AXIS_USER_WIDTH-1:0] s_k_tuser , s_k_skid_tuser ;
 
 localparam X_BUS_W = R*WX;
-wire                       s_x_tready;
-wire                       s_x_tvalid;
-wire                       s_x_tlast ;
-wire [X_BUS_W        -1:0] s_x_tdata ;
-wire [AXIS_USER_WIDTH-1:0] s_x_tuser ;
+wire                       s_x_tready, s_x_skid_tready;
+wire                       s_x_tvalid, s_x_skid_tvalid;
+wire                       s_x_tlast , s_x_skid_tlast ;
+wire [X_BUS_W        -1:0] s_x_tdata , s_x_skid_tdata ;
+wire [AXIS_USER_WIDTH-1:0] s_x_tuser , s_x_skid_tuser ;
 
 localparam OUT_BUS_W = R*WY;
 wire                       m_ready;
@@ -181,17 +181,17 @@ axis_sa #(
   );
 
 localparam A_BUS_W = R*WA;
-wire                       s_a_tready;
-wire                       s_a_tvalid;
-wire                       s_a_tlast ;
-wire [A_BUS_W        -1:0] s_a_tdata ;
-wire [AXIS_USER_WIDTH-1:0] s_a_tuser ;
+wire                       s_a_tready, s_a_skid_tready;
+wire                       s_a_tvalid, s_a_skid_tvalid;
+wire                       s_a_tlast , s_a_skid_tlast ;
+wire [A_BUS_W        -1:0] s_a_tdata , s_a_skid_tdata ;
+wire [AXIS_USER_WIDTH-1:0] s_a_tuser , s_a_skid_tuser ;
 
 localparam Y_BUS_W = R*WY;
-wire                       m_y_tready;
-wire                       m_y_tvalid;
-wire                       m_y_tlast ;
-wire [Y_BUS_W     -1:0]    m_y_tdata ;
+wire                       m_y_tready, m_y_skid_tready;
+wire                       m_y_tvalid, m_y_skid_tvalid;
+wire                       m_y_tlast , m_y_skid_tlast ;
+wire [Y_BUS_W     -1:0]    m_y_tdata , m_y_skid_tdata ;
 
 // Synchronize (m, s_a) => (m_y) streams
 assign m_y_tvalid = s_a_tvalid & m_valid;
@@ -207,6 +207,64 @@ generate
         assign m_y_tdata  [(r+1)*WY-1:r*WY] = $signed(m_data[(r+1)*WY-1:r*WY]) + $signed(a_data_temp[(r+1)*WY-1:r*WY]);
     end
 endgenerate
+
+
+
+// Skid buffers to prevent valid going low
+
+skid_buffer #(
+  .WIDTH(K_BUS_W + AXIS_USER_WIDTH + 1)
+  ) SKID_K (
+  .clk     (clk                                             ),
+  .rstn    (rstn                                            ),
+  .s_ready (s_k_skid_tready                                 ),
+  .s_valid (s_k_skid_tvalid                                 ),
+  .s_data  ({s_k_skid_tdata, s_k_skid_tuser, s_k_skid_tlast}),
+  .m_ready (s_k_tready                                      ),
+  .m_valid (s_k_tvalid                                      ),
+  .m_data  ({s_k_tdata,      s_k_tuser,      s_k_tlast     })
+);
+
+skid_buffer #(
+  .WIDTH(X_BUS_W + AXIS_USER_WIDTH + 1)
+  ) SKID_X (
+  .clk     (clk                                             ),
+  .rstn    (rstn                                            ),
+  .s_ready (s_x_skid_tready                                 ),
+  .s_valid (s_x_skid_tvalid                                 ),
+  .s_data  ({s_x_skid_tdata, s_x_skid_tuser, s_x_skid_tlast}),
+  .m_ready (s_x_tready                                      ),
+  .m_valid (s_x_tvalid                                      ),
+  .m_data  ({s_x_tdata,      s_x_tuser,      s_x_tlast     })
+);
+
+skid_buffer #(
+  .WIDTH(A_BUS_W + AXIS_USER_WIDTH + 1)
+  ) SKID_A (
+  .clk     (clk                                             ),
+  .rstn    (rstn                                            ),
+  .s_ready (s_a_skid_tready                                 ),
+  .s_valid (s_a_skid_tvalid                                 ),
+  .s_data  ({s_a_skid_tdata, s_a_skid_tuser, s_a_skid_tlast}),
+  .m_ready (s_a_tready                                      ),
+  .m_valid (s_a_tvalid                                      ),
+  .m_data  ({s_a_tdata,      s_a_tuser,      s_a_tlast     })
+);
+
+skid_buffer #(
+  .WIDTH(Y_BUS_W + 1)
+  ) SKID_Y (
+  .clk     (clk                             ),
+  .rstn    (rstn                            ),
+  .s_ready (m_y_tready                      ),
+  .s_valid (m_y_tvalid                      ),
+  .s_data  ({m_y_tdata,      m_y_tlast     }),
+  .m_ready (m_y_skid_tready                 ),
+  .m_valid (m_y_skid_tvalid                 ),
+  .m_data  ({m_y_skid_tdata, m_y_skid_tlast})
+);
+
+
 
 // AXI side
 
@@ -257,11 +315,11 @@ alex_axis_adapter_any #(
   .s_axis_tuser  (s_axis_mm2s_0_tuser ),
   .s_axis_tid    (),
   .s_axis_tdest  (),
-  .m_axis_tready (s_k_tready),
-  .m_axis_tvalid (s_k_tvalid),
-  .m_axis_tlast  (s_k_tlast ),
-  .m_axis_tdata  (s_k_tdata ),
-  .m_axis_tuser  (s_k_tuser ),
+  .m_axis_tready (s_k_skid_tready),
+  .m_axis_tvalid (s_k_skid_tvalid),
+  .m_axis_tlast  (s_k_skid_tlast ),
+  .m_axis_tdata  (s_k_skid_tdata ),
+  .m_axis_tuser  (s_k_skid_tuser ),
   .m_axis_tkeep  (),
   .m_axis_tid    (),
   .m_axis_tdest  ()
@@ -286,11 +344,11 @@ alex_axis_adapter_any #(
   .s_axis_tuser  (s_axis_mm2s_1_tuser ),
   .s_axis_tid    (),
   .s_axis_tdest  (),
-  .m_axis_tready (s_x_tready),
-  .m_axis_tvalid (s_x_tvalid),
-  .m_axis_tlast  (s_x_tlast ),
-  .m_axis_tdata  (s_x_tdata ),
-  .m_axis_tuser  (s_x_tuser ),
+  .m_axis_tready (s_x_skid_tready),
+  .m_axis_tvalid (s_x_skid_tvalid),
+  .m_axis_tlast  (s_x_skid_tlast ),
+  .m_axis_tdata  (s_x_skid_tdata ),
+  .m_axis_tuser  (s_x_skid_tuser ),
   .m_axis_tkeep  (),
   .m_axis_tid    (),
   .m_axis_tdest  ()
@@ -314,11 +372,11 @@ alex_axis_adapter_any #(
   .s_axis_tuser  (s_axis_mm2s_2_tuser ),
   .s_axis_tid    (),
   .s_axis_tdest  (),
-  .m_axis_tready (s_a_tready),
-  .m_axis_tvalid (s_a_tvalid),
-  .m_axis_tlast  (s_a_tlast ),
-  .m_axis_tdata  (s_a_tdata ),
-  .m_axis_tuser  (s_a_tuser ),
+  .m_axis_tready (s_a_skid_tready),
+  .m_axis_tvalid (s_a_skid_tvalid),
+  .m_axis_tlast  (s_a_skid_tlast ),
+  .m_axis_tdata  (s_a_skid_tdata ),
+  .m_axis_tuser  (s_a_skid_tuser ),
   .m_axis_tkeep  (),
   .m_axis_tid    (),
   .m_axis_tdest  ()
@@ -333,10 +391,10 @@ alex_axis_adapter_any #(
 ) ADAPTER_S2MM (
   .clk           (clk),
   .rstn          (rstn),
-  .s_axis_tready (m_y_tready),
-  .s_axis_tvalid (m_y_tvalid),
-  .s_axis_tlast  (m_y_tlast ),
-  .s_axis_tdata  (m_y_tdata ),
+  .s_axis_tready (m_y_skid_tready),
+  .s_axis_tvalid (m_y_skid_tvalid),
+  .s_axis_tlast  (m_y_skid_tlast ),
+  .s_axis_tdata  (m_y_skid_tdata ),
   .s_axis_tkeep  ({Y_KEEP_W{1'b1}}),
   .s_axis_tuser  (),
   .s_axis_tid    (),
@@ -735,7 +793,7 @@ alex_axi_dma_wr #(
     .s_axis_write_data_tdest (),
     .s_axis_write_data_tuser (),
     // External AXI
-    .m_axi_awid(m_axi_s2mm_awid),
+    .m_axi_awid(),
     .m_axi_awaddr(m_axi_s2mm_awaddr),
     .m_axi_awlen(m_axi_s2mm_awlen),
     .m_axi_awsize(m_axi_s2mm_awsize),
