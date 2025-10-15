@@ -28,7 +28,15 @@ y(C,R) = k.T(C,K) @ x(K,R) + a(C,R)
 
 * Build [verilator](https://github.com/verilator/verilator) from source & install it (recommended)
 * Make sure your compilers/simulators are in `$PATH`
-* For Windows, install Git bash from [here](https://gitforwindows.org/) to be able to run Makefiles.
+* For Windows:
+  1. Install Make & MinGW via Chocolatey. Open Terminal as administrator:
+    ```
+    Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+
+    choco install make -y
+    choco install mingw -y
+    ```
+  2. Install Git bash from [here](https://gitforwindows.org/), and run all the following commands from Git Bash.
 
 Use the template:
 ```bash
@@ -54,16 +62,17 @@ make xrun SYS=ram       # Xcelium, simplified RAM ports
 
 ## Build and Simulate a Full SoC (System on Chip) with Ibex RISC-V processor
 
-Check the [GitHub Actions workflow](https://github.com/abarajithan11/axis-systolic-array/blob/aba-ibex-soc/.github/workflows/verify.yaml) for more details
+This is only supported in Linux (Tested on Ubuntu 22.04).
+Check the [GitHub Actions workflow](https://github.com/abarajithan11/axis-systolic-array/blob/aba-ibex-soc/.github/workflows/verify.yaml) for more details.
 
 1. Install Python dependencies `pip3 install -U -r ibex-soc/python-requirements.txt`
-1. Get the latest RISC-V toolchain supported by lowRISC [from here](https://github.com/lowRISC/lowrisc-toolchains/releases)
-1. [Optional] Add symlinks mapping `riscv64` to `riscv32` using 
+2. Get the latest RISC-V toolchain supported by lowRISC [from here](https://github.com/lowRISC/lowrisc-toolchains/releases)
+3. [Optional] Add symlinks mapping `riscv64` to `riscv32` using 
   ```
   for t in g++ gcc ld objcopy objdump; do sudo ln -sf "$(command -v riscv64-unknown-elf-$t)" "/usr/local/bin/riscv32-unknown-elf-$t"; done
   ```
-1. Add Systolic Array to FuseSoC `fusesoc library add sa_ip "$(pwd -P)"`
-1. Use the following commands:
+4. Add Systolic Array to FuseSoC `fusesoc library add sa_ip "$(pwd -P)"`
+5. Use the following commands:
 
 ```
 make ibuild      # Build hardware (takes a few minutes)
