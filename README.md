@@ -2,13 +2,17 @@
 
 ```
 # Matrices:
-k: (K,C) # Weights
-x: (K,R) # Inputs
-a: (C,R) # Partial sums
-y: (C,R) # Outputs
+k: [K,C] # Weights
+x: [K,R] # Inputs
+a: [C,R] # Partial sums
+y: [C,R] # Outputs
 
 The system performs:
-y(C,R) = k.T(C,K) @ x(K,R) + a(C,R)
+
+  y  =   k.T   @   x   +   a
+[C,R]   [C,K]    [K,R]   [C,R]
+
+Note that the weights k[K,C] needs to be transposed as k.T[C,K] and stored in the memory
 ```
 
 ![Full System](docs/sys.png)
