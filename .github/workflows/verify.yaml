@@ -53,14 +53,14 @@ jobs:
       run: make veri SYS=ram
             
     - name: Full Regression -- 5 AXI Ports)
-      run: make regress SYS=axi
+      run: make regress SYS=axi CLEAN_REGRESS=1
 
     - name: Full Regression -- 5 AXI Ports)
-      run: make regress SYS=ram
+      run: make regress SYS=ram CLEAN_REGRESS=1
 
     # Fails for R=3 C=10
     # - name: Full Regression -- 2 AXI Ports)
-    #   run: make regress SYS=axi_int
+    #   run: make regress SYS=axi_int CLEAN_REGRESS=1
 
     - name: Run Ibex SoC with verilator
       run: |

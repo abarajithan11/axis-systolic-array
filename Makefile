@@ -13,6 +13,7 @@ AXI_WIDTH = 32
 BOARD = zcu104
 TRACE = 0
 OPTIMIZE = 0
+CLEAN_REGRESS = 0
 
 SYS = axi
 TB_MODULE = top_$(SYS)_tb
@@ -159,6 +160,7 @@ R_LIST := 2 3 4 5 6 7 8 9 10 11 12
 C_LIST := 2 3 4 5 6 7 8 9 10 11 12
 
 regress:
+	@if [ -n "$(CLEAN_REGRESS)" ]; then $(MAKE) clean; fi; \
 	@set -e; \
 	for Rv in $(R_LIST); do \
 	  for Cv in $(C_LIST); do \
