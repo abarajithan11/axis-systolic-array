@@ -45,7 +45,7 @@ VERI_FLAGS = --binary -j 0 \
 	-CFLAGS -I$(WORK_DIR) 
 
 ifeq ($(TRACE),1)
-  VERI_FLAGS += --trace-fst
+  VERI_FLAGS += --trace-fst -CFLAGS -g
 endif
 ifeq ($(OPTIMIZE),1)
 	VERI_FLAGS += -O3

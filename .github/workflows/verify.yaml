@@ -51,7 +51,16 @@ jobs:
     #   run: make veri SYS=axi_int
     - name: Smoke test -- 5 RAM Ports (Via Interconnect) with verilator
       run: make veri SYS=ram
-            
+
+    - name: Free disk space
+      run: |
+        echo "Before cleanup:"; df -h
+        sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /opt/hostedtoolcache/CodeQL || true
+        sudo apt-get clean || true
+        sudo rm -rf /var/lib/apt/lists/* || true
+        docker system prune -af || true
+        echo "After cleanup:"; df -h
+        
     - name: Full Regression -- 2 AXI Ports)
       run: make regress SYS=axi_int CLEAN_REGRESS=1
 
