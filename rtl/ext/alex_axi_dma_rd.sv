@@ -71,7 +71,8 @@ module alex_axi_dma_rd #
     // (multiple descriptors per AXI stream frame)
     parameter ENABLE_SG = 0,
     // Enable support for unaligned transfers
-    parameter ENABLE_UNALIGNED = 1
+    parameter ENABLE_UNALIGNED = 1,
+    parameter AXI_ID = 0
 )
 (
     input  wire                       clk,
@@ -297,7 +298,7 @@ assign m_axis_read_desc_status_tag = m_axis_read_desc_status_tag_reg;
 assign m_axis_read_desc_status_error = m_axis_read_desc_status_error_reg;
 assign m_axis_read_desc_status_valid = m_axis_read_desc_status_valid_reg;
 
-assign m_axi_arid = {AXI_ID_WIDTH{1'b0}};
+assign m_axi_arid = AXI_ID_WIDTH'(AXI_ID);
 assign m_axi_araddr = m_axi_araddr_reg;
 assign m_axi_arlen = m_axi_arlen_reg;
 assign m_axi_arsize = 3'(AXI_BURST_SIZE);
@@ -589,7 +590,7 @@ always @(posedge clk `OR_NEGEDGE(rstn)) begin
         axis_cmd_output_cycle_count_reg <= {CYCLE_COUNT_WIDTH{1'b0}};
         axis_cmd_bubble_cycle_reg <= 1'b0;
         axis_cmd_tag_reg <= {TAG_WIDTH{1'b0}};
-        axis_cmd_axis_id_reg <= {AXIS_ID_WIDTH{1'b0}};
+        axis_cmd_axis_id_reg <= AXIS_ID_WIDTH'(AXI_ID);
         axis_cmd_axis_dest_reg <= {AXIS_DEST_WIDTH{1'b0}};
         axis_cmd_axis_user_reg <= {AXIS_USER_WIDTH{1'b0}};
         axis_cmd_valid_reg <= 1'b0;
@@ -604,7 +605,7 @@ always @(posedge clk `OR_NEGEDGE(rstn)) begin
         output_last_cycle_reg <= 1'b0;
         rresp_reg <= AXI_RESP_OKAY;
         tag_reg <= {TAG_WIDTH{1'b0}};
-        axis_id_reg <= {AXIS_ID_WIDTH{1'b0}};
+        axis_id_reg <= AXIS_ID_WIDTH'(AXI_ID);
         axis_dest_reg <= {AXIS_DEST_WIDTH{1'b0}};
         axis_user_reg <= {AXIS_USER_WIDTH{1'b0}};
         s_axis_read_desc_ready_reg <= 1'b0;
@@ -707,7 +708,7 @@ assign m_axis_read_data_tdata  = m_axis_read_data_tdata_reg;
 assign m_axis_read_data_tkeep  = AXIS_KEEP_ENABLE ? m_axis_read_data_tkeep_reg : {AXIS_KEEP_WIDTH{1'b1}};
 assign m_axis_read_data_tvalid = m_axis_read_data_tvalid_reg;
 assign m_axis_read_data_tlast  = AXIS_LAST_ENABLE ? m_axis_read_data_tlast_reg : 1'b1;
-assign m_axis_read_data_tid    = AXIS_ID_ENABLE   ? m_axis_read_data_tid_reg   : {AXIS_ID_WIDTH{1'b0}};
+assign m_axis_read_data_tid    = AXIS_ID_ENABLE   ? m_axis_read_data_tid_reg   : AXIS_ID_WIDTH'(AXI_ID);
 assign m_axis_read_data_tdest  = AXIS_DEST_ENABLE ? m_axis_read_data_tdest_reg : {AXIS_DEST_WIDTH{1'b0}};
 assign m_axis_read_data_tuser  = AXIS_USER_ENABLE ? m_axis_read_data_tuser_reg : {AXIS_USER_WIDTH{1'b0}};
 
@@ -721,7 +722,7 @@ always @(posedge clk `OR_NEGEDGE(rstn)) begin
         m_axis_read_data_tkeep_reg  <= {AXIS_KEEP_WIDTH{1'b0}};
         m_axis_read_data_tvalid_reg <= 1'b0;
         m_axis_read_data_tlast_reg  <= 1'b0;
-        m_axis_read_data_tid_reg    <= {AXIS_ID_WIDTH{1'b0}};
+        m_axis_read_data_tid_reg    <= AXIS_ID_WIDTH'(AXI_ID);
         m_axis_read_data_tdest_reg  <= {AXIS_DEST_WIDTH{1'b0}};
         m_axis_read_data_tuser_reg  <= {AXIS_USER_WIDTH{1'b0}};
 

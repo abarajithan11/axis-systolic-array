@@ -29,7 +29,6 @@ SOURCES_FILE = sources_$(SYS).txt
 
 XSC_FLAGS = \
 	--gcc_compile_options -DSIM \
-	--gcc_compile_options "-DDIR=$(WORK_DIR)/" \
 	--gcc_compile_options "-I$(FULL_WORK_DIR)"
 
 XVLOG_FLAGS = -sv -i $(abspath $(RUN_DIR))
@@ -38,7 +37,7 @@ XELAB_FLAGS = --snapshot $(TB_MODULE) -log elaborate.log --debug typical -sv_lib
 
 XSIM_FLAGS = --tclbatch cfg.tcl
 
-VERI_FLAGS = --binary \
+VERI_FLAGS = --binary -j 0 \
 	--Wno-BLKANDNBLK --Wno-INITIALDLY \
 	-I$(RUN_DIR) \
 	-CFLAGS -DSIM \
@@ -49,7 +48,7 @@ ifeq ($(TRACE),1)
   VERI_FLAGS += --trace-fst
 endif
 ifeq ($(OPTIMIZE),1)
-	VERI_FLAGS += -j 0 -O3
+	VERI_FLAGS += -O3
 endif
 
 XCELIUM_FLAGS = -64bit -sv -dpi -CFLAGS -DSIM -CFLAGS -I.
@@ -57,10 +56,10 @@ XCELIUM_FLAGS = -64bit -sv -dpi -CFLAGS -DSIM -CFLAGS -I.
 #----------------- COMMON SETUP ------------------
 
 $(WORK_DIR):
-	"mkdir" -p $(WORK_DIR)
+	mkdir -p $(WORK_DIR)
 
 $(DATA_DIR): | $(WORK_DIR)
-	"mkdir" -p $(DATA_DIR)
+	mkdir -p $(DATA_DIR)
 
 # Golden model
 $(DATA_DIR)/kxa.bin: $(DATA_DIR)
@@ -102,7 +101,7 @@ elab: vlog
 
 # Run simulation
 xsim: elab $(DATA_DIR)
-	echo log_wave -recursive *; run all; exit > $(WORK_DIR)/cfg.tcl
+	echo "log_wave -recursive *; run all; exit" > $(WORK_DIR)/cfg.tcl
 	cd $(WORK_DIR) && xsim $(TB_MODULE) $(XSIM_FLAGS)
 
 
@@ -151,7 +150,7 @@ iwave:
 
 # Clean work directory
 clean:
-	"rm" -rf $(WORK_DIR)*
+	rm -rf $(WORK_DIR)*
 	$(MAKE) -C ibex-soc clean
 
 #----------------- Regression ------------------

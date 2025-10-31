@@ -109,20 +109,26 @@ module top_axi_int2ram_tb #(
     wire                       m_axi_bready;
     wire                       m_axi_bready_zipcpu;
 
-    logic rand_ar;
-    logic rand_r;
-    logic rand_aw;
-    logic rand_w;
-    logic rand_b;
+    // logic rand_ar;
+    // logic rand_r;
+    // logic rand_aw;
+    // logic rand_w;
+    // logic rand_b;
 
-    // Randomizer for AXI4 requests
-    always_ff @( posedge clk ) begin
-        rand_r   <= $urandom_range(0, 1000) < VALID_PROB;
-        rand_ar  <= $urandom_range(0, 1000) < VALID_PROB;
-        rand_aw  <= $urandom_range(0, 1000) < READY_PROB;
-        rand_w   <= $urandom_range(0, 1000) < READY_PROB;
-        rand_b   <= $urandom_range(0, 1000) < READY_PROB;
-    end
+    // // Randomizer for AXI4 requests
+    // always_ff @( posedge clk ) begin
+    //     rand_r   <= $urandom_range(1000, 0) < VALID_PROB;
+    //     rand_ar  <= $urandom_range(1000, 0) < VALID_PROB;
+    //     rand_aw  <= $urandom_range(1000, 0) < READY_PROB;
+    //     rand_w   <= $urandom_range(1000, 0) < READY_PROB;
+    //     rand_b   <= $urandom_range(1000, 0) < READY_PROB;
+    // end
+
+    wire rand_ar = 1;
+    wire rand_r  = 1;
+    wire rand_aw = 1;
+    wire rand_w  = 1;
+    wire rand_b  = 1;
 
 
     assign m_axi_arvalid_zipcpu   = rand_ar & m_axi_arvalid;

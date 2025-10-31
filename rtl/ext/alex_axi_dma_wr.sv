@@ -71,7 +71,8 @@ module alex_axi_dma_wr #
     // (multiple descriptors per AXI stream frame)
     parameter ENABLE_SG = 0,
     // Enable support for unaligned transfers
-    parameter ENABLE_UNALIGNED = 1
+    parameter ENABLE_UNALIGNED = 1,
+    parameter AXI_ID = 0
 )
 (
     input  wire                       clk,
@@ -329,7 +330,7 @@ assign m_axis_write_desc_status_valid = m_axis_write_desc_status_valid_reg;
 
 assign s_axis_write_data_tready = s_axis_write_data_tready_reg;
 
-assign m_axi_awid = {AXI_ID_WIDTH{1'b0}};
+assign m_axi_awid = AXI_ID_WIDTH'(AXI_ID);
 assign m_axi_awaddr = m_axi_awaddr_reg;
 assign m_axi_awlen = m_axi_awlen_reg;
 assign m_axi_awsize = 3'(AXI_BURST_SIZE);
@@ -821,7 +822,7 @@ always @(posedge clk `OR_NEGEDGE(rstn)) begin
         bresp_reg <= AXI_RESP_OKAY;
 
         tag_reg <= {TAG_WIDTH{1'b0}};
-        axis_id_reg <= {AXIS_ID_WIDTH{1'b0}};
+        axis_id_reg <= AXIS_ID_WIDTH'(AXI_ID);
         axis_dest_reg <= {AXIS_DEST_WIDTH{1'b0}};
         axis_user_reg <= {AXIS_USER_WIDTH{1'b0}};
 
@@ -835,7 +836,7 @@ always @(posedge clk `OR_NEGEDGE(rstn)) begin
 
         m_axis_write_desc_status_len_reg <= {LEN_WIDTH{1'b0}};
         m_axis_write_desc_status_tag_reg <= {TAG_WIDTH{1'b0}};
-        m_axis_write_desc_status_id_reg <= {AXIS_ID_WIDTH{1'b0}};
+        m_axis_write_desc_status_id_reg <= AXIS_ID_WIDTH'(AXI_ID);
         m_axis_write_desc_status_dest_reg <= {AXIS_DEST_WIDTH{1'b0}};
         m_axis_write_desc_status_user_reg <= {AXIS_USER_WIDTH{1'b0}};
         m_axis_write_desc_status_error_reg <= 4'd0;
