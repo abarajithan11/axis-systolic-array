@@ -26,8 +26,7 @@ module top_axi_tb;
     AXIL_ADDR_WIDTH     = 32                 ,
     STRB_WIDTH          = 4                  ,
     DATA_WR_WIDTH       = AXIL_WIDTH         ,
-    DATA_RD_WIDTH       = AXIL_WIDTH         ,
-    LSB                 = $clog2(AXI_WIDTH)-3;
+    DATA_RD_WIDTH       = AXIL_WIDTH         ;
 
 
   // SIGNALS
@@ -52,20 +51,20 @@ module top_axi_tb;
   logic                      s_axil_rvalid;
   logic                      s_axil_rready=0;
 
-  logic                          mm2s_0_ren;
-  logic [AXI_ADDR_WIDTH-LSB-1:0] mm2s_0_addr;
-  logic [AXI_WIDTH    -1:0]      mm2s_0_data;
-  logic                          mm2s_1_ren;
-  logic [AXI_ADDR_WIDTH-LSB-1:0] mm2s_1_addr;
-  logic [AXI_WIDTH    -1:0]      mm2s_1_data;
-  logic                          mm2s_2_ren;
-  logic [AXI_ADDR_WIDTH-LSB-1:0] mm2s_2_addr;
-  logic [AXI_WIDTH    -1:0]      mm2s_2_data;
+  logic                          mm2s_0_rd_en;
+  logic [AXI_ADDR_WIDTH-1:0]     mm2s_0_rd_addr;
+  logic [AXI_WIDTH    -1:0]      mm2s_0_rd_data;
+  logic                          mm2s_1_rd_en;
+  logic [AXI_ADDR_WIDTH-1:0]     mm2s_1_rd_addr;
+  logic [AXI_WIDTH    -1:0]      mm2s_1_rd_data;
+  logic                          mm2s_2_rd_en;
+  logic [AXI_ADDR_WIDTH-1:0]     mm2s_2_rd_addr;
+  logic [AXI_WIDTH    -1:0]      mm2s_2_rd_data;
 
-  logic                          s2mm_wen;
-  logic [AXI_ADDR_WIDTH-LSB-1:0] s2mm_addr;
-  logic [AXI_WIDTH    -1:0]      s2mm_data;
-  logic [AXI_WIDTH/8  -1:0]      s2mm_strb;
+  logic                          s2mm_wr_en;
+  logic [AXI_ADDR_WIDTH-1:0]     s2mm_wr_addr;
+  logic [AXI_WIDTH    -1:0]      s2mm_wr_data;
+  logic [AXI_WIDTH/8  -1:0]      s2mm_wr_strb;
 
   top_ram #(
     .R                 (R                ), 
@@ -116,40 +115,43 @@ module top_axi_tb;
     dut.TOP.CONTROLLER.cfg [offset] <= data;
   endtask
 
-byte tmp_byte;
-int done = 0;
-logic [AXI_WIDTH-1:0] tmp_data;
+  int done = 0;
+  byte tmp_byte_0, tmp_byte_1, tmp_byte_2;
+
+  always_comb begin
+    mm2s_0_rd_data = '0;
+    tmp_byte_0     = 0;
+    if (mm2s_0_rd_en) begin
+      for (int i = 0; i < AXI_WIDTH/8; i++) begin
+        get_byte_a32((mm2s_0_rd_addr) + i, tmp_byte_0);
+        mm2s_0_rd_data[i*8 +: 8] = tmp_byte_0;
+      end
+    end
+
+    mm2s_1_rd_data = '0;
+    tmp_byte_1     = 0;
+    if (mm2s_1_rd_en) begin
+      for (int i = 0; i < AXI_WIDTH/8; i++) begin
+        get_byte_a32((mm2s_1_rd_addr) + i, tmp_byte_1);
+        mm2s_1_rd_data[i*8 +: 8] = tmp_byte_1;
+      end
+    end
+
+    mm2s_2_rd_data = '0;
+    tmp_byte_2     = 0;
+    if (mm2s_2_rd_en) begin
+      for (int i = 0; i < AXI_WIDTH/8; i++) begin
+        get_byte_a32((mm2s_2_rd_addr) + i, tmp_byte_2);
+        mm2s_2_rd_data[i*8 +: 8] = tmp_byte_2;
+      end
+    end
+  end
 
   always_ff @(posedge clk) begin : Axi_rw
-
-    if (mm2s_0_ren) begin
-      for (int i = 0; i < AXI_WIDTH/8; i++) begin
-        get_byte_a32((32'(mm2s_0_addr) << LSB) + i, tmp_byte);
-        tmp_data[i*8 +: 8] = tmp_byte;
-      end
-      mm2s_0_data <= tmp_data;
-    end
-
-    if (mm2s_1_ren) begin
-      for (int i = 0; i < AXI_WIDTH/8; i++) begin
-        get_byte_a32((32'(mm2s_1_addr) << LSB) + i, tmp_byte);
-        tmp_data[i*8 +: 8] = tmp_byte;
-      end
-      mm2s_1_data <= tmp_data;
-    end
-
-    if (mm2s_2_ren) begin
-      for (int i = 0; i < AXI_WIDTH/8; i++) begin
-        get_byte_a32((32'(mm2s_2_addr) << LSB) + i, tmp_byte);
-        tmp_data[i*8 +: 8] = tmp_byte;
-      end
-      mm2s_2_data <= tmp_data;
-    end
-
-    if (s2mm_wen) 
+    if (s2mm_wr_en) 
       for (int i = 0; i < AXI_WIDTH/8; i++) 
-        if (s2mm_strb[i]) 
-          set_byte_a32((32'(s2mm_addr) << LSB) + i, s2mm_data[i*8 +: 8]);
+        if (s2mm_wr_strb[i]) 
+          set_byte_a32(s2mm_wr_addr + i, s2mm_wr_data[i*8 +: 8]);
   end
   
   initial begin

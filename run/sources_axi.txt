@@ -16,4 +16,6 @@ config.svh
 ../../tb/top_axi_tb.sv
 ../../tb/ext/axi_addr.v
 ../../tb/ext/skidbuffer.v
-../../tb/ext/zipcpu_axi2ram.v
+../../rtl/ext/axi_axil_adapter_rd.sv
+../../rtl/ext/axi_axil_adapter_wr.sv
+../../rtl/ext/axi_axil_adapter.v
