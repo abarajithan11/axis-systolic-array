@@ -12,6 +12,7 @@ FREQ_MHZ = 100
 AXI_WIDTH = 32
 BOARD = zcu104
 TRACE = 0
+OPTIMIZE = 0
 
 SYS = axi
 TB_MODULE = top_$(SYS)_tb
@@ -36,7 +37,7 @@ XELAB_FLAGS = --snapshot $(TB_MODULE) -log elaborate.log --debug typical -sv_lib
 
 XSIM_FLAGS = --tclbatch cfg.tcl
 
-VERI_FLAGS = --binary -j 0 -O3 \
+VERI_FLAGS = --binary \
 	--Wno-BLKANDNBLK --Wno-INITIALDLY \
 	-I$(RUN_DIR) \
 	-CFLAGS -DSIM \
@@ -45,6 +46,9 @@ VERI_FLAGS = --binary -j 0 -O3 \
 
 ifeq ($(TRACE),1)
   VERI_FLAGS += --trace-fst
+endif
+ifeq ($(OPTIMIZE),1)
+	VERI_FLAGS += -j 0 -O3
 endif
 
 XCELIUM_FLAGS = -64bit -sv -dpi -CFLAGS -DSIM -CFLAGS -I.

@@ -174,6 +174,19 @@ reg [AXIL_STRB_WIDTH-1:0] m_axil_wstrb_reg = {AXIL_STRB_WIDTH{1'b0}}, m_axil_wst
 reg m_axil_wvalid_reg = 1'b0, m_axil_wvalid_next;
 reg m_axil_bready_reg = 1'b0, m_axil_bready_next;
 
+// To prevent Veri error --  [1:2] Slice range has ascending bit ordering, perhaps you wanted [2:1]
+wire [31:0] addr_reg_slice_axil2_axi, addr_reg_slice_axi2_axil;
+generate
+    if (AXIL_ADDR_BIT_OFFSET > AXI_ADDR_BIT_OFFSET) begin
+        assign addr_reg_slice_axil2_axi = addr_reg[AXIL_ADDR_BIT_OFFSET-1:AXI_ADDR_BIT_OFFSET];
+        assign addr_reg_slice_axi2_axil = addr_reg[AXI_ADDR_BIT_OFFSET-1:AXIL_ADDR_BIT_OFFSET];
+    end else begin
+        assign addr_reg_slice_axil2_axi = 32'b0;
+        assign addr_reg_slice_axi2_axil = 32'b0;
+    end
+endgenerate
+localparam CL_ADDR_WIDTH = $clog2(ADDR_WIDTH);
+
 assign s_axi_awready = s_axi_awready_reg;
 assign s_axi_wready = s_axi_wready_reg;
 assign s_axi_bid = s_axi_bid_reg;
@@ -290,6 +303,7 @@ always @* begin
                     state_next = STATE_RESP;
                 end
             end
+            default:;
         endcase
     end else if (EXPAND) begin
         // master output is wider; merge writes
@@ -310,11 +324,11 @@ always @* begin
                     addr_next = s_axi_awaddr;
                     burst_next = s_axi_awlen;
                     burst_size_next = s_axi_awsize;
-                    if (CONVERT_BURST && s_axi_awcache[1] && (CONVERT_NARROW_BURST || s_axi_awsize == AXI_BURST_SIZE)) begin
+                    if (CONVERT_BURST && s_axi_awcache[1] && (CONVERT_NARROW_BURST || 32'(s_axi_awsize) == AXI_BURST_SIZE)) begin
                         // merge writes
                         // require CONVERT_BURST and awcache[1] set
                         convert_burst_next = 1'b1;
-                        master_burst_size_next = AXIL_BURST_SIZE;
+                        master_burst_size_next = 3'(AXIL_BURST_SIZE);
                         state_next = STATE_DATA_2;
                     end else begin
                         // output narrow burst
@@ -335,7 +349,7 @@ always @* begin
 
                 if (s_axi_wready && s_axi_wvalid) begin
                     m_axil_wdata_next = {(AXIL_WORD_WIDTH/AXI_WORD_WIDTH){s_axi_wdata}};
-                    m_axil_wstrb_next = s_axi_wstrb << (addr_reg[AXIL_ADDR_BIT_OFFSET-1:AXI_ADDR_BIT_OFFSET] * AXI_STRB_WIDTH);
+                    m_axil_wstrb_next = s_axi_wstrb << (addr_reg_slice_axil2_axi * AXI_STRB_WIDTH);
                     m_axil_wvalid_next = 1'b1;
                     burst_next = burst_reg - 1;
                     burst_active_next = burst_reg != 0;
@@ -354,20 +368,20 @@ always @* begin
                     if (CONVERT_NARROW_BURST) begin
                         for (i = 0; i < AXI_WORD_WIDTH; i = i + 1) begin
                             if (s_axi_wstrb[i]) begin
-                                data_next[addr_reg[AXIL_ADDR_BIT_OFFSET-1:AXI_ADDR_BIT_OFFSET]*SEGMENT_DATA_WIDTH+i*AXIL_WORD_SIZE +: AXIL_WORD_SIZE] = s_axi_wdata[i*AXIL_WORD_SIZE +: AXIL_WORD_SIZE];
-                                strb_next[addr_reg[AXIL_ADDR_BIT_OFFSET-1:AXI_ADDR_BIT_OFFSET]*SEGMENT_STRB_WIDTH+i] = 1'b1;
+                                data_next[addr_reg_slice_axil2_axi*SEGMENT_DATA_WIDTH+i*AXIL_WORD_SIZE +: AXIL_WORD_SIZE] = s_axi_wdata[i*AXIL_WORD_SIZE +: AXIL_WORD_SIZE];
+                                strb_next[addr_reg_slice_axil2_axi*SEGMENT_STRB_WIDTH+i] = 1'b1;
                             end
                         end
                     end else begin
-                        data_next[addr_reg[AXIL_ADDR_BIT_OFFSET-1:AXI_ADDR_BIT_OFFSET]*SEGMENT_DATA_WIDTH +: SEGMENT_DATA_WIDTH] = s_axi_wdata;
-                        strb_next[addr_reg[AXIL_ADDR_BIT_OFFSET-1:AXI_ADDR_BIT_OFFSET]*SEGMENT_STRB_WIDTH +: SEGMENT_STRB_WIDTH] = s_axi_wstrb;
+                        data_next[addr_reg_slice_axil2_axi*SEGMENT_DATA_WIDTH +: SEGMENT_DATA_WIDTH] = s_axi_wdata;
+                        strb_next[addr_reg_slice_axil2_axi*SEGMENT_STRB_WIDTH +: SEGMENT_STRB_WIDTH] = s_axi_wstrb;
                     end
                     m_axil_wdata_next = data_next;
                     m_axil_wstrb_next = strb_next;
                     burst_next = burst_reg - 1;
                     burst_active_next = burst_reg != 0;
                     addr_next = addr_reg + (1 << burst_size_reg);
-                    if (burst_reg == 0 || addr_next[master_burst_size_reg] != addr_reg[master_burst_size_reg]) begin
+                    if (burst_reg == 0 || addr_next[CL_ADDR_WIDTH'(master_burst_size_reg)] != addr_reg[CL_ADDR_WIDTH'(master_burst_size_reg)]) begin
                         data_next = {DATA_WIDTH{1'b0}};
                         strb_next = {STRB_WIDTH{1'b0}};
                         m_axil_wvalid_next = 1'b1;
@@ -430,9 +444,9 @@ always @* begin
                     burst_next = s_axi_awlen;
                     burst_size_next = s_axi_awsize;
                     burst_active_next = 1'b1;
-                    if (s_axi_awsize > AXIL_BURST_SIZE) begin
+                    if (32'(s_axi_awsize) > AXIL_BURST_SIZE) begin
                         // need to adjust burst size
-                        master_burst_size_next = AXIL_BURST_SIZE;
+                        master_burst_size_next = 3'(AXIL_BURST_SIZE);
                     end else begin
                         // pass through narrow (enough) burst
                         master_burst_size_next = s_axi_awsize;
@@ -451,13 +465,13 @@ always @* begin
                 if (s_axi_wready && s_axi_wvalid) begin
                     data_next = s_axi_wdata;
                     strb_next = s_axi_wstrb;
-                    m_axil_wdata_next = s_axi_wdata >> (addr_reg[AXI_ADDR_BIT_OFFSET-1:AXIL_ADDR_BIT_OFFSET] * AXIL_DATA_WIDTH);
-                    m_axil_wstrb_next = s_axi_wstrb >> (addr_reg[AXI_ADDR_BIT_OFFSET-1:AXIL_ADDR_BIT_OFFSET] * AXIL_STRB_WIDTH);
+                    m_axil_wdata_next = s_axi_wdata >> (addr_reg_slice_axi2_axil * AXIL_DATA_WIDTH);
+                    m_axil_wstrb_next = s_axi_wstrb >> (addr_reg_slice_axi2_axil * AXIL_STRB_WIDTH);
                     m_axil_wvalid_next = 1'b1;
                     burst_next = burst_reg - 1;
                     burst_active_next = burst_reg != 0;
                     addr_next = (addr_reg + (1 << master_burst_size_reg)) & ({ADDR_WIDTH{1'b1}} << master_burst_size_reg);
-                    last_segment_next = addr_next[burst_size_reg] != addr_reg[burst_size_reg];
+                    last_segment_next = addr_next[CL_ADDR_WIDTH'(burst_size_reg)] != addr_reg[CL_ADDR_WIDTH'(burst_size_reg)];
                     s_axi_wready_next = 1'b0;
                     m_axil_bready_next = !s_axi_bvalid && !m_axil_awvalid;
                     state_next = STATE_RESP;
@@ -469,11 +483,11 @@ always @* begin
                 s_axi_wready_next = 1'b0;
 
                 if (!m_axil_wvalid || m_axil_wready) begin
-                    m_axil_wdata_next = data_reg >> (addr_reg[AXI_ADDR_BIT_OFFSET-1:AXIL_ADDR_BIT_OFFSET] * AXIL_DATA_WIDTH);
-                    m_axil_wstrb_next = strb_reg >> (addr_reg[AXI_ADDR_BIT_OFFSET-1:AXIL_ADDR_BIT_OFFSET] * AXIL_STRB_WIDTH);
+                    m_axil_wdata_next = data_reg >> (addr_reg_slice_axi2_axil * AXIL_DATA_WIDTH);
+                    m_axil_wstrb_next = strb_reg >> (addr_reg_slice_axi2_axil * AXIL_STRB_WIDTH);
                     m_axil_wvalid_next = 1'b1;
                     addr_next = (addr_reg + (1 << master_burst_size_reg)) & ({ADDR_WIDTH{1'b1}} << master_burst_size_reg);
-                    last_segment_next = addr_next[burst_size_reg] != addr_reg[burst_size_reg];
+                    last_segment_next = addr_next[CL_ADDR_WIDTH'(burst_size_reg)] != addr_reg[CL_ADDR_WIDTH'(burst_size_reg)];
                     s_axi_wready_next = 1'b0;
                     m_axil_bready_next = !s_axi_bvalid && !m_axil_awvalid;
                     state_next = STATE_RESP;

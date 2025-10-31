@@ -10,6 +10,7 @@ module top_sa_ram #(
         WX         = `WX,
         WY         = `WY,
         AXI_WIDTH  = `AXI_WIDTH,
+        TIMEOUT    = 2,
         
         WA = 32,
         LM = 1,
@@ -21,26 +22,25 @@ module top_sa_ram #(
         AXI_MAX_BURST_LEN       = 32,
         AXI_ADDR_WIDTH          = 32,
         AXIS_USER_WIDTH         = 8,         
-        LSB                     = $clog2(AXI_WIDTH)-3,
         // AXI-Lite
         AXIL_WIDTH              = 32,
         AXIL_ADDR_WIDTH         = 40,
         STRB_WIDTH              = 4,
         AXIL_BASE_ADDR          = 32'hB0000000
 
-) (
+  ) (
     // axilite interface for configuration
     input  wire                   clk,
     input  wire                   rstn,
 
     // Config port
-    input  wire [AXIL_ADDR_WIDTH-1:0]      reg_wr_addr,
-    input  wire [AXIL_WIDTH     -1:0]      reg_wr_data,
-    input  wire [STRB_WIDTH     -1:0]      reg_wr_strb,
-    input  wire                            reg_wr_en  ,
-    input  wire [AXIL_ADDR_WIDTH-1:0]      reg_rd_addr,
-    input  wire                            reg_rd_en  ,
-    output wire [AXIL_WIDTH     -1:0]      reg_rd_data,
+    input  wire [AXIL_ADDR_WIDTH-1:0] reg_wr_addr,
+    input  wire [AXIL_WIDTH     -1:0] reg_wr_data,
+    input  wire [STRB_WIDTH     -1:0] reg_wr_strb,
+    input  wire                       reg_wr_en  ,
+    input  wire [AXIL_ADDR_WIDTH-1:0] reg_rd_addr,
+    input  wire                       reg_rd_en  ,
+    output wire [AXIL_WIDTH     -1:0] reg_rd_data,
 
     // DMA ports
     output wire                       mm2s_0_rd_en  ,
@@ -235,7 +235,7 @@ axi_axil_adapter #(
   .s_axi_bid    (),
   .s_axi_bresp  (),
   .s_axi_bvalid (),
-  .s_axi_bready (),
+  .s_axi_bready (1'b0),
   .s_axi_arid   (m_axi_mm2s_0_arid   ),
   .s_axi_araddr (m_axi_mm2s_0_araddr ),
   .s_axi_arlen  (m_axi_mm2s_0_arlen  ),
@@ -255,15 +255,15 @@ axi_axil_adapter #(
 
   .m_axil_awaddr (),
   .m_axil_awprot (),
-  .m_axil_awvalid(1'b0),
-  .m_axil_awready(),
+  .m_axil_awvalid(),
+  .m_axil_awready(1'b0),
   .m_axil_wdata  (),
   .m_axil_wstrb  (),
-  .m_axil_wvalid (1'b0),
-  .m_axil_wready (),
+  .m_axil_wvalid (),
+  .m_axil_wready (1'b0),
   .m_axil_bresp  (),
-  .m_axil_bvalid (),
-  .m_axil_bready (1'b0),
+  .m_axil_bvalid (1'b0),
+  .m_axil_bready (),
   
   .m_axil_araddr (m_axil_mm2s_0_araddr ),
   .m_axil_arprot (m_axil_mm2s_0_arprot ),
@@ -279,7 +279,8 @@ alex_axilite_ram #(
   .DATA_WR_WIDTH (AXI_WIDTH),
   .DATA_RD_WIDTH (AXI_WIDTH),
   .ADDR_WIDTH    (AXI_ADDR_WIDTH),
-  .STRB_WIDTH    (AXI_STRB_WIDTH)
+  .STRB_WIDTH    (AXI_STRB_WIDTH),
+  .TIMEOUT       (TIMEOUT)
   ) AXIL_TO_RAM_0 (
   .clk            (clk),
   .rstn           (rstn),
@@ -294,14 +295,14 @@ alex_axilite_ram #(
   .s_axil_bresp   (),
   .s_axil_bvalid  (),
   .s_axil_bready  (),
-  .s_axil_araddr  (),
-  .s_axil_arprot  (),
-  .s_axil_arvalid (),
-  .s_axil_arready (),
-  .s_axil_rdata   (),
-  .s_axil_rresp   (),
-  .s_axil_rvalid  (),
-  .s_axil_rready  (),
+  .s_axil_araddr  (m_axil_mm2s_0_araddr ),
+  .s_axil_arprot  (m_axil_mm2s_0_arprot ),
+  .s_axil_arvalid (m_axil_mm2s_0_arvalid),
+  .s_axil_arready (m_axil_mm2s_0_arready),
+  .s_axil_rdata   (m_axil_mm2s_0_rdata  ),
+  .s_axil_rresp   (m_axil_mm2s_0_rresp  ),
+  .s_axil_rvalid  (m_axil_mm2s_0_rvalid ),
+  .s_axil_rready  (m_axil_mm2s_0_rready ),
 
   .reg_wr_en      (),
   .reg_wr_addr    (),
@@ -344,7 +345,7 @@ axi_axil_adapter #(
   .s_axi_bid    (),
   .s_axi_bresp  (),
   .s_axi_bvalid (),
-  .s_axi_bready (),
+  .s_axi_bready (1'b0),
   .s_axi_arid   (m_axi_mm2s_1_arid   ),
   .s_axi_araddr (m_axi_mm2s_1_araddr ),
   .s_axi_arlen  (m_axi_mm2s_1_arlen  ),
@@ -364,15 +365,15 @@ axi_axil_adapter #(
 
   .m_axil_awaddr (),
   .m_axil_awprot (),
-  .m_axil_awvalid(1'b0),
-  .m_axil_awready(),
+  .m_axil_awvalid(),
+  .m_axil_awready(1'b0),
   .m_axil_wdata  (),
   .m_axil_wstrb  (),
-  .m_axil_wvalid (1'b0),
-  .m_axil_wready (),
+  .m_axil_wvalid (),
+  .m_axil_wready (1'b0),
   .m_axil_bresp  (),
-  .m_axil_bvalid (),
-  .m_axil_bready (1'b0),
+  .m_axil_bvalid (1'b0),
+  .m_axil_bready (),
   
   .m_axil_araddr (m_axil_mm2s_1_araddr ),
   .m_axil_arprot (m_axil_mm2s_1_arprot ),
@@ -388,7 +389,8 @@ alex_axilite_ram #(
   .DATA_WR_WIDTH (AXI_WIDTH),
   .DATA_RD_WIDTH (AXI_WIDTH),
   .ADDR_WIDTH    (AXI_ADDR_WIDTH),
-  .STRB_WIDTH    (AXI_STRB_WIDTH)
+  .STRB_WIDTH    (AXI_STRB_WIDTH),
+  .TIMEOUT       (TIMEOUT)
   ) AXIL_TO_RAM_1 (
   .clk            (clk),
   .rstn           (rstn),
@@ -403,14 +405,14 @@ alex_axilite_ram #(
   .s_axil_bresp   (),
   .s_axil_bvalid  (),
   .s_axil_bready  (),
-  .s_axil_araddr  (),
-  .s_axil_arprot  (),
-  .s_axil_arvalid (),
-  .s_axil_arready (),
-  .s_axil_rdata   (),
-  .s_axil_rresp   (),
-  .s_axil_rvalid  (),
-  .s_axil_rready  (),
+  .s_axil_araddr  (m_axil_mm2s_1_araddr ),
+  .s_axil_arprot  (m_axil_mm2s_1_arprot ),
+  .s_axil_arvalid (m_axil_mm2s_1_arvalid),
+  .s_axil_arready (m_axil_mm2s_1_arready),
+  .s_axil_rdata   (m_axil_mm2s_1_rdata  ),
+  .s_axil_rresp   (m_axil_mm2s_1_rresp  ),
+  .s_axil_rvalid  (m_axil_mm2s_1_rvalid ),
+  .s_axil_rready  (m_axil_mm2s_1_rready ),
 
   .reg_wr_en      (),
   .reg_wr_addr    (),
@@ -453,7 +455,7 @@ axi_axil_adapter #(
   .s_axi_bid    (),
   .s_axi_bresp  (),
   .s_axi_bvalid (),
-  .s_axi_bready (),
+  .s_axi_bready (1'b0),
   .s_axi_arid   (m_axi_mm2s_2_arid   ),
   .s_axi_araddr (m_axi_mm2s_2_araddr ),
   .s_axi_arlen  (m_axi_mm2s_2_arlen  ),
@@ -473,15 +475,15 @@ axi_axil_adapter #(
 
   .m_axil_awaddr (),
   .m_axil_awprot (),
-  .m_axil_awvalid(1'b0),
-  .m_axil_awready(),
+  .m_axil_awvalid(),
+  .m_axil_awready(1'b0),
   .m_axil_wdata  (),
   .m_axil_wstrb  (),
-  .m_axil_wvalid (1'b0),
-  .m_axil_wready (),
+  .m_axil_wvalid (),
+  .m_axil_wready (1'b0),
   .m_axil_bresp  (),
-  .m_axil_bvalid (),
-  .m_axil_bready (1'b0),
+  .m_axil_bvalid (1'b0),
+  .m_axil_bready (),
   
   .m_axil_araddr (m_axil_mm2s_2_araddr ),
   .m_axil_arprot (m_axil_mm2s_2_arprot ),
@@ -497,7 +499,8 @@ alex_axilite_ram #(
   .DATA_WR_WIDTH (AXI_WIDTH),
   .DATA_RD_WIDTH (AXI_WIDTH),
   .ADDR_WIDTH    (AXI_ADDR_WIDTH),
-  .STRB_WIDTH    (AXI_STRB_WIDTH)
+  .STRB_WIDTH    (AXI_STRB_WIDTH),
+  .TIMEOUT       (TIMEOUT)
   ) AXIL_TO_RAM_2 (
   .clk            (clk),
   .rstn           (rstn),
@@ -512,14 +515,14 @@ alex_axilite_ram #(
   .s_axil_bresp   (),
   .s_axil_bvalid  (),
   .s_axil_bready  (),
-  .s_axil_araddr  (),
-  .s_axil_arprot  (),
-  .s_axil_arvalid (),
-  .s_axil_arready (),
-  .s_axil_rdata   (),
-  .s_axil_rresp   (),
-  .s_axil_rvalid  (),
-  .s_axil_rready  (),
+  .s_axil_araddr  (m_axil_mm2s_2_araddr ),
+  .s_axil_arprot  (m_axil_mm2s_2_arprot ),
+  .s_axil_arvalid (m_axil_mm2s_2_arvalid),
+  .s_axil_arready (m_axil_mm2s_2_arready),
+  .s_axil_rdata   (m_axil_mm2s_2_rdata  ),
+  .s_axil_rresp   (m_axil_mm2s_2_rresp  ),
+  .s_axil_rvalid  (m_axil_mm2s_2_rvalid ),
+  .s_axil_rready  (m_axil_mm2s_2_rready ),
 
   .reg_wr_en      (),
   .reg_wr_addr    (),
@@ -608,7 +611,8 @@ alex_axilite_ram #(
   .DATA_WR_WIDTH (AXI_WIDTH),
   .DATA_RD_WIDTH (AXI_WIDTH),
   .ADDR_WIDTH    (AXI_ADDR_WIDTH),
-  .STRB_WIDTH    (AXI_STRB_WIDTH)
+  .STRB_WIDTH    (AXI_STRB_WIDTH),
+  .TIMEOUT       (TIMEOUT)
   ) AXIL_TO_RAM_3 (
   .clk            (clk),
   .rstn           (rstn),
@@ -789,15 +793,7 @@ alex_axis_adapter_any #(
 );
 
 
-// Veriltor width mismatch bullshit
-localparam AXIL_ADDR_EXTRA = AXIL_ADDR_WIDTH - 32;
-wire [AXIL_ADDR_EXTRA -1:0] axil_addr_zeros = 0;
-wire [AXIL_ADDR_WIDTH-1:0] reg_wr_addr_ctrl = (reg_wr_addr-{axil_addr_zeros, AXIL_BASE_ADDR}) >> 2;
-wire [AXIL_ADDR_WIDTH-1:0] reg_rd_addr_ctrl = (reg_rd_addr-{axil_addr_zeros,AXIL_BASE_ADDR})  >> 2;
-
-
 localparam      AXI_LEN_WIDTH           = 32,
-                TIMEOUT                 = 2, // since 0 gives error
 
     // Alex AXI DMA RD                
                 AXIS_ID_WIDTH           = AXI_ID_WIDTH,
@@ -854,10 +850,10 @@ dma_controller #(
     .rstn(rstn),
 
     .reg_wr_en  (reg_wr_en),
-    .reg_wr_addr(reg_wr_addr_ctrl[AXI_ADDR_WIDTH-1:0]),
+    .reg_wr_addr(reg_wr_addr[AXI_ADDR_WIDTH-1:0]),
     .reg_wr_data(reg_wr_data),
     .reg_rd_en  (reg_rd_en),
-    .reg_rd_addr(reg_rd_addr_ctrl[AXI_ADDR_WIDTH-1:0]),
+    .reg_rd_addr(reg_rd_addr[AXI_ADDR_WIDTH-1:0]),
     .reg_rd_data(reg_rd_data),
 
     .s2mm_desc        (s2mm_desc_tdata  ),

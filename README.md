@@ -55,7 +55,7 @@ Where:
 * `<CFG>`
   * `axi` - 5 AXI ports. One S_AXIL and four M_AXI. Full-throughput 
   * `axi_int` - 2 AXI ports. 4xM_AXI merged into one via interconnect
-  * `ram` - simplified RAM ports x 5 (Known issues)
+  * `ram` - 5 x simplified RAM ports
 
 Examples
 ```

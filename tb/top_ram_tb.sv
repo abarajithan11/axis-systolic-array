@@ -107,42 +107,45 @@ module top_ram_tb;
     dut.CONTROLLER.cfg [offset] <= data;
   endtask
 
-byte tmp_byte;
-int done = 0;
-logic [AXI_WIDTH-1:0] tmp_data;
+  int done = 0;
+  byte tmp_byte_0, tmp_byte_1, tmp_byte_2;
 
-  always_ff @(posedge clk) begin : Axi_rw
-
-    mm2s_0_rd_wait <= 0;
-    mm2s_0_rd_ack  <= mm2s_0_rd_en;
+  always_comb begin
+    mm2s_0_rd_wait = 0;
+    mm2s_0_rd_ack  = 1;
+    mm2s_0_rd_data = '0;
+    tmp_byte_0     = 0;
     if (mm2s_0_rd_en) begin
       for (int i = 0; i < AXI_WIDTH/8; i++) begin
-        get_byte_a32((32'(mm2s_0_rd_addr)) + i, tmp_byte);
-        tmp_data[i*8 +: 8] = tmp_byte;
+        get_byte_a32((mm2s_0_rd_addr) + i, tmp_byte_0);
+        mm2s_0_rd_data[i*8 +: 8] = tmp_byte_0;
       end
-      mm2s_0_rd_data <= tmp_data;
     end
 
-    mm2s_1_rd_wait <= 0;
-    mm2s_1_rd_ack  <= mm2s_1_rd_en;
+    mm2s_1_rd_wait = 0;
+    mm2s_1_rd_ack  = 1;
+    mm2s_1_rd_data = '0;
+    tmp_byte_1     = 0;
     if (mm2s_1_rd_en) begin
       for (int i = 0; i < AXI_WIDTH/8; i++) begin
-        get_byte_a32((32'(mm2s_1_rd_addr)) + i, tmp_byte);
-        tmp_data[i*8 +: 8] = tmp_byte;
+        get_byte_a32((mm2s_1_rd_addr) + i, tmp_byte_1);
+        mm2s_1_rd_data[i*8 +: 8] = tmp_byte_1;
       end
-      mm2s_1_rd_data <= tmp_data;
     end
 
-    mm2s_2_rd_wait <= 0;
-    mm2s_2_rd_ack  <= mm2s_2_rd_en;
+    mm2s_2_rd_wait = 0;
+    mm2s_2_rd_ack  = 1;
+    mm2s_2_rd_data = '0;
+    tmp_byte_2     = 0;
     if (mm2s_2_rd_en) begin
       for (int i = 0; i < AXI_WIDTH/8; i++) begin
-        get_byte_a32((32'(mm2s_2_rd_addr)) + i, tmp_byte);
-        tmp_data[i*8 +: 8] = tmp_byte;
+        get_byte_a32((32'(mm2s_2_rd_addr)) + i, tmp_byte_2);
+        mm2s_2_rd_data[i*8 +: 8] = tmp_byte_2;
       end
-      mm2s_2_rd_data <= tmp_data;
     end
+  end
 
+  always_ff @(posedge clk) begin : Axi_rw
     s2mm_wr_wait <= 0;
     s2mm_wr_ack  <= s2mm_wr_en;
     if (s2mm_wr_en) 
@@ -152,10 +155,10 @@ logic [AXI_WIDTH-1:0] tmp_data;
   end
   
   initial begin
-    $dumpfile("top_axi_tb.vcd");
+    $dumpfile("top_tb.vcd");
     $dumpvars();
     #1000us;
-    $fatal(1, "Error: Timeout.");
+    $fatal(1, "\n\nError: Timeout \n\n");
   end
 
   int file_out, file_exp, status, error=0, i=0;

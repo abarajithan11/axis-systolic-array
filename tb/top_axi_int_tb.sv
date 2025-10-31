@@ -26,8 +26,7 @@ module top_axi_int_tb;
     AXIL_ADDR_WIDTH     = 32                 ,
     STRB_WIDTH          = 4                  ,
     DATA_WR_WIDTH       = AXIL_WIDTH         ,
-    DATA_RD_WIDTH       = AXIL_WIDTH         ,
-    LSB                 = $clog2(AXI_WIDTH)-3;
+    DATA_RD_WIDTH       = AXIL_WIDTH         ;
 
 
   // SIGNALS
@@ -53,10 +52,10 @@ module top_axi_int_tb;
   logic                      s_axil_rready=0;
 
   logic                          ren;
-  logic [AXI_ADDR_WIDTH-LSB-1:0] raddr;
+  logic [AXI_ADDR_WIDTH-1:0]     raddr;
   logic [AXI_WIDTH    -1:0]      rdata;
   logic                          wen;
-  logic [AXI_ADDR_WIDTH-LSB-1:0] waddr;
+  logic [AXI_ADDR_WIDTH-1:0]     waddr;
   logic [AXI_WIDTH    -1:0]      wdata;
   logic [AXI_WIDTH/8  -1:0]      wstrb;
 
@@ -109,30 +108,32 @@ module top_axi_int_tb;
     dut.TOP.CONTROLLER.cfg [offset] <= data;
   endtask
 
-byte tmp_byte;
-int done = 0;
-logic [AXI_WIDTH-1:0] tmp_data;
+  byte tmp_byte;
+  int done = 0;
+  logic [AXI_WIDTH-1:0] tmp_data;
 
-  always_ff @(posedge clk) begin : Axi_rw
-
+  always_comb begin
     if (ren) begin
       for (int i = 0; i < AXI_WIDTH/8; i++) begin
-        get_byte_a32((32'(raddr) << LSB) + i, tmp_byte);
+        get_byte_a32(raddr + i, tmp_byte);
         tmp_data[i*8 +: 8] = tmp_byte;
       end
-      rdata <= tmp_data;
-    end
+      rdata = tmp_data;
+    end 
+    else {rdata, tmp_data, tmp_byte} = '0;
+  end
 
+  always_ff @(posedge clk) begin : Axi_rw
     if (wen) 
       for (int i = 0; i < AXI_WIDTH/8; i++) 
         if (wstrb[i]) 
-          set_byte_a32((32'(waddr) << LSB) + i, wdata[i*8 +: 8]);
+          set_byte_a32(waddr + i, wdata[i*8 +: 8]);
   end
   
   initial begin
     $dumpfile("top_tb.vcd");
     $dumpvars();
-    #1000000us;
+    #1000us;
     $fatal(1, "Error: Timeout.");
   end
 

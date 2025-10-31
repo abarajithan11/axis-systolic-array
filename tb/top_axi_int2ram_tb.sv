@@ -21,14 +21,9 @@ module top_axi_int2ram_tb #(
         AXIL_ADDR_WIDTH   = 32,
         STRB_WIDTH        = 4,
         AXIL_BASE_ADDR    = 32'hA0000000,
-        OPT_LOCK          = 1'b0,
-        OPT_LOCKID        = 1'b1,
-        OPT_LOWPOWER      = 1'b0,
     // Randomizer for AXI4 requests
         VALID_PROB        = 1000,
-        READY_PROB        = 1000,
-
-    localparam  LSB = $clog2(AXI_WIDTH)-3
+        READY_PROB        = 1000
 )(
     // axilite interface for configuration
     input  wire                   clk,
@@ -57,10 +52,10 @@ module top_axi_int2ram_tb #(
     
     // ram rw interface for interacting with DDR in sim
     output wire                            ren,
-    output wire  [AXI_ADDR_WIDTH-LSB-1:0]  raddr,
+    output wire  [AXI_ADDR_WIDTH-1:0]      raddr,
     input  wire  [AXI_WIDTH-1:0]           rdata,
     output wire                            wen,
-    output wire  [AXI_ADDR_WIDTH-LSB-1:0]  waddr,
+    output wire  [AXI_ADDR_WIDTH-1:0]      waddr,
     output wire  [AXI_WIDTH-1:0]           wdata,
     output wire  [AXI_WIDTH/8-1:0]         wstrb
 );
@@ -142,84 +137,156 @@ module top_axi_int2ram_tb #(
     assign m_axi_bvalid           = rand_b  & m_axi_bvalid_zipcpu;
     assign m_axi_bready_zipcpu    = rand_b  & m_axi_bready;
 
+    wire [AXI_ADDR_WIDTH-1:0]  axil_araddr ;
+    wire [2:0]                 axil_arprot ;
+    wire                       axil_arvalid;
+    wire                       axil_arready;
+    wire [AXI_WIDTH   -1:0]    axil_rdata  ;
+    wire [1:0]                 axil_rresp  ;
+    wire                       axil_rvalid ;
+    wire                       axil_rready ;
+    wire [AXI_ADDR_WIDTH-1:0]  axil_awaddr ;
+    wire [2:0]                 axil_awprot ;
+    wire                       axil_awvalid;
+    wire                       axil_awready;
+    wire [AXI_WIDTH   -1:0]    axil_wdata  ;
+    wire [AXI_STRB_WIDTH-1:0]  axil_wstrb  ;
+    wire                       axil_wvalid ;
+    wire                       axil_wready ;
+    wire [1:0]                 axil_bresp  ;
+    wire                       axil_bvalid ;
+    wire                       axil_bready ;
 
-zipcpu_axi2ram #(
-    .C_S_AXI_ID_WIDTH(AXI_ID_WIDTH),
-    .C_S_AXI_DATA_WIDTH(AXI_WIDTH),
-    .C_S_AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
-    .OPT_LOCK(OPT_LOCK),
-    .OPT_LOCKID(OPT_LOCKID),
-    .OPT_LOWPOWER(OPT_LOWPOWER)
-) ZIP (
-    .o_we   (wen  ),
-    .o_waddr(waddr),
-    .o_wdata(wdata),
-    .o_wstrb(wstrb),
-    .o_rd   (ren  ),
-    .o_raddr(raddr),
-    .i_rdata(rdata),
 
-    .S_AXI_ACLK    (clk),
-    .S_AXI_ARESETN (rstn),
-    .S_AXI_AWID    (m_axi_awid),
-    .S_AXI_AWADDR  (m_axi_awaddr),
-    .S_AXI_AWLEN   (m_axi_awlen),
-    .S_AXI_AWSIZE  (m_axi_awsize),
-    .S_AXI_AWBURST (m_axi_awburst),
-    .S_AXI_AWLOCK  (m_axi_awlock),
-    .S_AXI_AWCACHE (m_axi_awcache),
-    .S_AXI_AWPROT  (m_axi_awprot),
-    .S_AXI_AWQOS   (),
-    .S_AXI_AWVALID (m_axi_awvalid_zipcpu),
-    .S_AXI_AWREADY (m_axi_awready_zipcpu),
-    .S_AXI_WDATA   (m_axi_wdata),
-    .S_AXI_WSTRB   (m_axi_wstrb),
-    .S_AXI_WLAST   (m_axi_wlast),
-    .S_AXI_WVALID  (m_axi_wvalid_zipcpu),
-    .S_AXI_WREADY  (m_axi_wready_zipcpu),
-    .S_AXI_BID     (m_axi_bid),
-    .S_AXI_BRESP   (m_axi_bresp),
-    .S_AXI_BVALID  (m_axi_bvalid_zipcpu),
-    .S_AXI_BREADY  (m_axi_bready_zipcpu),
-    .S_AXI_ARID    (m_axi_arid),
-    .S_AXI_ARADDR  (m_axi_araddr),
-    .S_AXI_ARLEN   (m_axi_arlen),
-    .S_AXI_ARSIZE  (m_axi_arsize),
-    .S_AXI_ARBURST (m_axi_arburst),
-    .S_AXI_ARLOCK  (m_axi_arlock),
-    .S_AXI_ARCACHE (m_axi_arcache),
-    .S_AXI_ARPROT  (m_axi_arprot),
-    .S_AXI_ARQOS   (),
-    .S_AXI_ARVALID (m_axi_arvalid_zipcpu),
-    .S_AXI_ARREADY (m_axi_arready_zipcpu),
-    .S_AXI_RID     (m_axi_rid),
-    .S_AXI_RDATA   (m_axi_rdata),
-    .S_AXI_RRESP   (m_axi_rresp),
-    .S_AXI_RLAST   (m_axi_rlast),
-    .S_AXI_RVALID  (m_axi_rvalid_zipcpu),
-    .S_AXI_RREADY  (m_axi_rready_zipcpu)
-);
+    axi_axil_adapter #(
+    .ADDR_WIDTH           (AXI_ADDR_WIDTH),
+    .AXI_DATA_WIDTH       (AXI_WIDTH),
+    .AXI_STRB_WIDTH       (AXI_STRB_WIDTH),
+    .AXI_ID_WIDTH         (AXI_ID_WIDTH),
+    .AXIL_DATA_WIDTH      (AXI_WIDTH),
+    .AXIL_STRB_WIDTH      (AXI_STRB_WIDTH)
+    ) AXI2AXIL (
+    .clk          (clk                 ),
+    .rst          (!rstn               ),
+    .s_axi_awid   (m_axi_awid          ),
+    .s_axi_awaddr (m_axi_awaddr        ),
+    .s_axi_awlen  (m_axi_awlen         ),
+    .s_axi_awsize (m_axi_awsize        ),
+    .s_axi_awburst(m_axi_awburst       ),
+    .s_axi_awlock (m_axi_awlock        ),
+    .s_axi_awcache(m_axi_awcache       ),
+    .s_axi_awprot (m_axi_awprot        ),
+    .s_axi_awvalid(m_axi_awvalid_zipcpu),
+    .s_axi_awready(m_axi_awready_zipcpu),
+    .s_axi_wdata  (m_axi_wdata         ),
+    .s_axi_wstrb  (m_axi_wstrb         ),
+    .s_axi_wlast  (m_axi_wlast         ),
+    .s_axi_wvalid (m_axi_wvalid_zipcpu ),
+    .s_axi_wready (m_axi_wready_zipcpu ),
+    .s_axi_bid    (m_axi_bid           ),
+    .s_axi_bresp  (m_axi_bresp         ),
+    .s_axi_bvalid (m_axi_bvalid_zipcpu ),
+    .s_axi_bready (m_axi_bready_zipcpu ),
+    .s_axi_arid   (m_axi_arid          ),
+    .s_axi_araddr (m_axi_araddr        ),
+    .s_axi_arlen  (m_axi_arlen         ),
+    .s_axi_arsize (m_axi_arsize        ),
+    .s_axi_arburst(m_axi_arburst       ),
+    .s_axi_arlock (m_axi_arlock        ),
+    .s_axi_arcache(m_axi_arcache       ),
+    .s_axi_arprot (m_axi_arprot        ),
+    .s_axi_arvalid(m_axi_arvalid_zipcpu),
+    .s_axi_arready(m_axi_arready_zipcpu),
+    .s_axi_rid    (m_axi_rid           ),
+    .s_axi_rdata  (m_axi_rdata         ),
+    .s_axi_rresp  (m_axi_rresp         ),
+    .s_axi_rlast  (m_axi_rlast         ),
+    .s_axi_rvalid (m_axi_rvalid_zipcpu ),
+    .s_axi_rready (m_axi_rready_zipcpu ),
 
-top_axi_int #(
-    .R (R ),
-    .C (C ),
-    .WK(WK),
-    .WX(WX),
-    .WA(WA),
-    .WY(WY),
-    .LM(LM),
-    .LA(LA),
-    .AXI_WIDTH        (AXI_WIDTH        ),
-    .AXI_ID_WIDTH     (AXI_ID_WIDTH     ),
-    .AXI_STRB_WIDTH   (AXI_STRB_WIDTH   ),
-    .AXI_MAX_BURST_LEN(AXI_MAX_BURST_LEN),
-    .AXI_ADDR_WIDTH   (AXI_ADDR_WIDTH   ),
-    .AXIL_WIDTH       (AXIL_WIDTH       ),
-    .AXIL_ADDR_WIDTH  (AXIL_ADDR_WIDTH  ),
-    .STRB_WIDTH       (STRB_WIDTH       ),
-    .AXIL_BASE_ADDR   (AXIL_BASE_ADDR   )
-) TOP (
-    .*
-);
+    .m_axil_awaddr (axil_awaddr ),
+    .m_axil_awprot (axil_awprot ),
+    .m_axil_awvalid(axil_awvalid),
+    .m_axil_awready(axil_awready),
+    .m_axil_wdata  (axil_wdata  ),
+    .m_axil_wstrb  (axil_wstrb  ),
+    .m_axil_wvalid (axil_wvalid ),
+    .m_axil_wready (axil_wready ),
+    .m_axil_bresp  (axil_bresp  ),
+    .m_axil_bvalid (axil_bvalid ),
+    .m_axil_bready (axil_bready ),
+    .m_axil_araddr (axil_araddr ),
+    .m_axil_arprot (axil_arprot ),
+    .m_axil_arvalid(axil_arvalid),
+    .m_axil_arready(axil_arready),
+    .m_axil_rdata  (axil_rdata  ),
+    .m_axil_rresp  (axil_rresp  ),
+    .m_axil_rvalid (axil_rvalid ),
+    .m_axil_rready (axil_rready )
+    );
+
+    alex_axilite_ram #(
+    .DATA_WR_WIDTH (AXI_WIDTH),
+    .DATA_RD_WIDTH (AXI_WIDTH),
+    .ADDR_WIDTH    (AXI_ADDR_WIDTH),
+    .STRB_WIDTH    (AXI_STRB_WIDTH),
+    .TIMEOUT       (2)
+    ) AXIL2RAM (
+    .clk            (clk),
+    .rstn           (rstn),
+    .s_axil_awaddr  (axil_awaddr ),
+    .s_axil_awprot  (axil_awprot ),
+    .s_axil_awvalid (axil_awvalid),
+    .s_axil_awready (axil_awready),
+    .s_axil_wdata   (axil_wdata  ),
+    .s_axil_wstrb   (axil_wstrb  ),
+    .s_axil_wvalid  (axil_wvalid ),
+    .s_axil_wready  (axil_wready ),
+    .s_axil_bresp   (axil_bresp  ),
+    .s_axil_bvalid  (axil_bvalid ),
+    .s_axil_bready  (axil_bready ),
+    .s_axil_araddr  (axil_araddr ),
+    .s_axil_arprot  (axil_arprot ),
+    .s_axil_arvalid (axil_arvalid),
+    .s_axil_arready (axil_arready),
+    .s_axil_rdata   (axil_rdata  ),
+    .s_axil_rresp   (axil_rresp  ),
+    .s_axil_rvalid  (axil_rvalid ),
+    .s_axil_rready  (axil_rready ),
+
+    .reg_wr_en      (wen    ),
+    .reg_wr_addr    (waddr  ),
+    .reg_wr_data    (wdata  ),
+    .reg_wr_strb    (wstrb  ),
+    .reg_rd_en      (ren    ),
+    .reg_rd_addr    (raddr  ),
+    .reg_rd_data    (rdata  ),
+    .reg_rd_wait    (1'b0   ),
+    .reg_rd_ack     (1'b1   ),
+    .reg_wr_wait    (1'b0   ),
+    .reg_wr_ack     (1'b1   )
+    );
+
+    top_axi_int #(
+        .R (R ),
+        .C (C ),
+        .WK(WK),
+        .WX(WX),
+        .WA(WA),
+        .WY(WY),
+        .LM(LM),
+        .LA(LA),
+        .AXI_WIDTH        (AXI_WIDTH        ),
+        .AXI_ID_WIDTH     (AXI_ID_WIDTH     ),
+        .AXI_STRB_WIDTH   (AXI_STRB_WIDTH   ),
+        .AXI_MAX_BURST_LEN(AXI_MAX_BURST_LEN),
+        .AXI_ADDR_WIDTH   (AXI_ADDR_WIDTH   ),
+        .AXIL_WIDTH       (AXIL_WIDTH       ),
+        .AXIL_ADDR_WIDTH  (AXIL_ADDR_WIDTH  ),
+        .STRB_WIDTH       (STRB_WIDTH       ),
+        .AXIL_BASE_ADDR   (AXIL_BASE_ADDR   )
+    ) TOP (
+        .*
+    );
 
 endmodule
