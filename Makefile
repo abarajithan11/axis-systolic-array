@@ -37,7 +37,7 @@ XELAB_FLAGS = --snapshot $(TB_MODULE) -log elaborate.log --debug typical -sv_lib
 
 XSIM_FLAGS = --tclbatch cfg.tcl
 
-VERI_FLAGS = --cc --exe --build -j 0 -O3 \
+VERI_FLAGS = --cc --exe --build -j 0 \
 	--Wno-BLKANDNBLK --Wno-INITIALDLY \
 	-I$(RUN_DIR) \
 	-CFLAGS -DTB_MODULE=$(TB_MODULE) \

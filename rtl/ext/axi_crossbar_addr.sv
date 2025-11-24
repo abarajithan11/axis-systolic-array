@@ -277,17 +277,12 @@ wire [S_INT_THREADS-1:0] thread_trans_complete;
 
 
 // ChatGPT written function to avoid combinational loop in  assign thread_trans_start[n]
-function automatic logic [S_INT_THREADS-1:0]
-lsb_onehot(input logic [S_INT_THREADS-1:0] v);
-  // Isolate least-significant 1: v & (~v + 1)
-  lsb_onehot = v & ((~v) + 1'b1);
-endfunction
 
 logic [S_INT_THREADS-1:0] choose_match, choose_free, pick;
 
 always_comb begin
-  choose_match = lsb_onehot(thread_match);
-  choose_free  = lsb_onehot(~thread_active);
+  choose_match = thread_match & ((~thread_match) + 1'b1);
+  choose_free  = (~thread_active) & (thread_active + 1'b1);
   pick         = (choose_match != '0) ? choose_match : choose_free;
 
   thread_trans_start = trans_start ? pick : '0;

@@ -21,10 +21,11 @@ config.svh
 ../../rtl/ext/axi_register_rd.sv
 ../../rtl/ext/axi_register_wr.sv
 ../../rtl/ext/priority_encoder.sv
-../../tb/top_axi_int2ram_tb.sv
 ../../tb/top_axi_int_tb.sv
 ../../tb/ext/axi_addr.v
 ../../tb/ext/skidbuffer.v
 ../../rtl/ext/axi_axil_adapter_rd.sv
 ../../rtl/ext/axi_axil_adapter_wr.sv
 ../../rtl/ext/axi_axil_adapter.v
+../../tb/firebridge_axi.sv
+../../rtl/ext/zipcpu_axi2ram.v

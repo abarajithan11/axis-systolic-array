@@ -25,7 +25,7 @@ module top_axi_int #(
         // AXI-Lite
         AXIL_WIDTH              = 32,
         AXIL_ADDR_WIDTH         = 32,
-        STRB_WIDTH              = 4,
+        AXIL_STRB_WIDTH         = (AXIL_WIDTH/8),
         AXIL_BASE_ADDR          = 32'hB0000000
 
 ) (
@@ -39,7 +39,7 @@ module top_axi_int #(
     input  wire                   s_axil_awvalid,
     output wire                   s_axil_awready,
     input  wire [AXIL_WIDTH-1:0]  s_axil_wdata,
-    input  wire [STRB_WIDTH-1:0]  s_axil_wstrb,
+    input  wire [AXIL_STRB_WIDTH-1:0]  s_axil_wstrb,
     input  wire                   s_axil_wvalid,
     output wire                   s_axil_wready,
     output wire [1:0]             s_axil_bresp,
@@ -414,7 +414,7 @@ alex_axis_adapter_any #(
 // Wires connecting AXIL2RAM to CONTROLLER
 wire [AXIL_ADDR_WIDTH-1:0] reg_wr_addr;
 wire [AXIL_WIDTH-1:0] reg_wr_data;
-wire [STRB_WIDTH-1:0] reg_wr_strb;
+wire [AXIL_STRB_WIDTH-1:0] reg_wr_strb;
 wire reg_wr_en;
 wire [AXIL_ADDR_WIDTH-1:0] reg_rd_addr;
 wire reg_rd_en;
@@ -475,7 +475,7 @@ alex_axilite_ram #(
     .DATA_WR_WIDTH(AXIL_WIDTH),
     .DATA_RD_WIDTH(AXIL_WIDTH),
     .ADDR_WIDTH(AXIL_ADDR_WIDTH),
-    .STRB_WIDTH(STRB_WIDTH),
+    .STRB_WIDTH(AXIL_STRB_WIDTH),
     .TIMEOUT(TIMEOUT)
 ) AXIL2RAM (
     .clk(clk),
@@ -900,7 +900,7 @@ axi_crossbar #(
   .M_B_REG_TYPE    ({M_COUNT{2'd2}}               ),
   .M_AR_REG_TYPE   ({M_COUNT{2'd2}}               ),
   .M_R_REG_TYPE    ({M_COUNT{2'd2}}               )
-) AXI_INTC (
+) CROSSBAR (
   .clk           (clk),
   .rstn          (rstn),
   
