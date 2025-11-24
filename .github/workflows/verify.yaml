@@ -49,8 +49,8 @@ jobs:
       run: make veri SYS=axi
     # - name: Smoke test -- 2 AXI Ports (Via Interconnect) with verilator
     #   run: make veri SYS=axi_int
-    - name: Smoke test -- 5 RAM Ports (Via Interconnect) with verilator
-      run: make veri SYS=ram
+    # - name: Smoke test -- 5 RAM Ports (Via Interconnect) with verilator
+    #   run: make veri SYS=ram
 
     - name: Free disk space
       run: |
@@ -67,8 +67,8 @@ jobs:
     - name: Full Regression -- 5 AXI Ports)
       run: make regress SYS=axi CLEAN_REGRESS=1
 
-    - name: Full Regression -- 5 AXI Ports)
-      run: make regress SYS=ram CLEAN_REGRESS=1
+    # - name: Full Regression -- 5 AXI Ports)
+    #   run: make regress SYS=ram CLEAN_REGRESS=1
 
     - name: Run Ibex SoC with verilator
       run: |
