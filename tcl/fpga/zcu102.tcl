@@ -19,11 +19,18 @@ set_property -dict [list \
   CONFIG.PSU__SAXIGP3__DATA_WIDTH $AXI_WIDTH \
   ] [get_bd_cells zynq_ultra_ps_e_0]
 
-set PS_IRQ     "zynq_ultra_ps_e_0/pl_ps_irq0"
-set PS_M_AXI_0 "/zynq_ultra_ps_e_0/M_AXI_HPM1_FPD"
+set ZYNQ_PS    "zynq_ultra_ps_e_0"
+set PS_IRQ     "$ZYNQ_PS/pl_ps_irq0"
+set PS_CLK           "/$ZYNQ_PS/pl_clk0"
 
-set PS_S_AXI_0 "/zynq_ultra_ps_e_0/S_AXI_HPC0_FPD"
-set PS_S_AXI_1 "/zynq_ultra_ps_e_0/S_AXI_HPC1_FPD"
-set PS_S_AXI_2 "/zynq_ultra_ps_e_0/S_AXI_HP0_FPD"
-set PS_S_AXI_3 "/zynq_ultra_ps_e_0/S_AXI_HP1_FPD"
-set PS_CLK     "/zynq_ultra_ps_e_0/pl_clk0"
+set PS_M_AXI_0       "/$ZYNQ_PS/M_AXI_HPM1_FPD"
+
+set PS_S_AXI_0 "/$ZYNQ_PS/S_AXI_HPC0_FPD"
+set PS_S_AXI_1 "/$ZYNQ_PS/S_AXI_HPC1_FPD"
+set PS_S_AXI_2 "/$ZYNQ_PS/S_AXI_HP0_FPD"
+set PS_S_AXI_3 "/$ZYNQ_PS/S_AXI_HP1_FPD"
+
+set CLK_0 "$ZYNQ_PS/saxihpc0_fpd_aclk"
+set CLK_1 "$ZYNQ_PS/saxihpc1_fpd_aclk"
+set CLK_2 "$ZYNQ_PS/saxihp0_fpd_aclk" 
+set CLK_3 "$ZYNQ_PS/saxihp1_fpd_aclk" 

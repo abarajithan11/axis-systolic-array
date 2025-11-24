@@ -5,18 +5,40 @@ update_compile_order -fileset sources_1
 set_property top top [current_fileset]
 create_bd_cell -type module -reference top top_0
 
-# Connect full AXI ports
-connect_bd_intf_net [get_bd_intf_pins top_0/m_axi_mm2s_0] [get_bd_intf_pins $PS_S_AXI_0]
-connect_bd_intf_net [get_bd_intf_pins top_0/m_axi_mm2s_1] [get_bd_intf_pins $PS_S_AXI_1]
-connect_bd_intf_net [get_bd_intf_pins top_0/m_axi_mm2s_2] [get_bd_intf_pins $PS_S_AXI_2]
-connect_bd_intf_net [get_bd_intf_pins top_0/m_axi_s2mm  ] [get_bd_intf_pins $PS_S_AXI_3]
+# Connect AXI Lite
+apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config " Clk_master {Auto} Clk_slave {Auto} Clk_xbar {Auto} Master $PS_M_AXI_0 Slave {/top_0/s_axi} ddr_seg {Auto} intc_ip {New AXI SmartConnect} master_apm {0}"  [get_bd_intf_pins top_0/s_axi]
 
-# Automations
-apply_bd_automation -rule xilinx.com:bd_rule:axi4   -config { Clk_master {Auto} Clk_slave {Auto} Clk_xbar {Auto} Master "/zynq_ultra_ps_e_0/M_AXI_HPM1_FPD" Slave {/top_0/s_axil} ddr_seg {Auto} intc_ip {New AXI Interconnect} master_apm {0}}  [get_bd_intf_pins top_0/s_axil]
-apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config { Clk {/zynq_ultra_ps_e_0/pl_clk0 (100 MHz)} Freq 100 Ref_Clk0 {} Ref_Clk1 {} Ref_Clk2 {}}  [get_bd_pins zynq_ultra_ps_e_0/saxihp0_fpd_aclk]
-apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config { Clk {/zynq_ultra_ps_e_0/pl_clk0 (100 MHz)} Freq 100 Ref_Clk0 {} Ref_Clk1 {} Ref_Clk2 {}}  [get_bd_pins zynq_ultra_ps_e_0/saxihp1_fpd_aclk]
-apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config { Clk {/zynq_ultra_ps_e_0/pl_clk0 (100 MHz)} Freq 100 Ref_Clk0 {} Ref_Clk1 {} Ref_Clk2 {}}  [get_bd_pins zynq_ultra_ps_e_0/saxihpc0_fpd_aclk]
-apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config { Clk {/zynq_ultra_ps_e_0/pl_clk0 (100 MHz)} Freq 100 Ref_Clk0 {} Ref_Clk1 {} Ref_Clk2 {}}  [get_bd_pins zynq_ultra_ps_e_0/saxihpc1_fpd_aclk]
+# Connect full AXI ports. Try connecting directly first, if that fails use automation
+if {[catch {
+  connect_bd_intf_net [get_bd_intf_pins top_0/m_axi_mm2s_0] [get_bd_intf_pins $PS_S_AXI_0]
+  apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config "Clk {$PS_CLK (250 MHz)} Freq {100} Ref_Clk0 {} Ref_Clk1 {} Ref_Clk2 {}"  [get_bd_pins $CLK_0]
+} errmsg]} {
+  puts "INFO: Direct connection for m_axi_mm2s_0 failed, using automation: $errmsg"
+  apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config " Clk_master {$PS_CLK (150 MHz)} Clk_slave {Auto} Clk_xbar {Auto} Master {/top_0/m_axi_mm2s_0} Slave $PS_S_AXI_0 ddr_seg {Auto} intc_ip {New AXI Interconnect} master_apm {0}"  [get_bd_intf_pins $PS_S_AXI_0]
+}
+if {[catch {
+  connect_bd_intf_net [get_bd_intf_pins top_0/m_axi_mm2s_1] [get_bd_intf_pins $PS_S_AXI_1]
+  apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config "Clk {$PS_CLK (250 MHz)} Freq {100} Ref_Clk0 {} Ref_Clk1 {} Ref_Clk2 {}"  [get_bd_pins $CLK_1]
+} errmsg]} {
+  puts "INFO: Direct connection for m_axi_mm2s_1 failed, using automation: $errmsg"
+  apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config " Clk_master {$PS_CLK (150 MHz)} Clk_slave {Auto} Clk_xbar {Auto} Master {/top_0/m_axi_mm2s_1} Slave $PS_S_AXI_1 ddr_seg {Auto} intc_ip {New AXI Interconnect} master_apm {0}"  [get_bd_intf_pins $PS_S_AXI_1]
+}
+if {[catch {
+  connect_bd_intf_net [get_bd_intf_pins top_0/m_axi_mm2s_2] [get_bd_intf_pins $PS_S_AXI_2]
+  apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config "Clk {$PS_CLK (250 MHz)} Freq {100} Ref_Clk0 {} Ref_Clk1 {} Ref_Clk2 {}"  [get_bd_pins $CLK_2]
+} errmsg]} {
+  puts "INFO: Direct connection for m_axi_mm2s_2 failed, using automation: $errmsg"
+  apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config " Clk_master {$PS_CLK (150 MHz)} Clk_slave {Auto} Clk_xbar {Auto} Master {/top_0/m_axi_mm2s_2} Slave $PS_S_AXI_2 ddr_seg {Auto} intc_ip {New AXI Interconnect} master_apm {0}"  [get_bd_intf_pins $PS_S_AXI_2]
+}
+if {[catch {
+  connect_bd_intf_net [get_bd_intf_pins top_0/m_axi_s2mm] [get_bd_intf_pins $PS_S_AXI_3]
+  apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config "Clk {$PS_CLK (250 MHz)} Freq {100} Ref_Clk0 {} Ref_Clk1 {} Ref_Clk2 {}"  [get_bd_pins $CLK_3]
+} errmsg]} {
+  puts "INFO: Direct connection for m_axi_s2mm failed, using automation: $errmsg"
+  apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config " Clk_master {$PS_CLK (150 MHz)} Clk_slave {Auto} Clk_xbar {Auto} Master {/top_0/m_axi_s2mm} Slave $PS_S_AXI_3 ddr_seg {Auto} intc_ip {New AXI Interconnect} master_apm {0}"  [get_bd_intf_pins $PS_S_AXI_3]
+}
+
+
 
 generate_target all [get_files ./${PROJECT_NAME}/${PROJECT_NAME}.srcs/sources_1/bd/design_1/design_1.bd]
 make_wrapper -files [get_files ./${PROJECT_NAME}/${PROJECT_NAME}.srcs/sources_1/bd/design_1/design_1.bd] -top
@@ -25,8 +47,8 @@ set_property top design_1_wrapper [current_fileset]
 update_compile_order -fileset sources_1
 
 # Set AXl-lite and full_AXI addresses
-set_property range 256M [get_bd_addr_segs {zynq_ultra_ps_e_0/Data/SEG_top_0_reg0}]
-set_property offset ${CONFIG_BASEADDR} [get_bd_addr_segs {zynq_ultra_ps_e_0/Data/SEG_top_0_reg0}]
+set_property range 256M [get_bd_addr_segs $ZYNQ_PS/Data/SEG_top_0_reg0]
+set_property offset ${CONFIG_BASEADDR} [get_bd_addr_segs $ZYNQ_PS/Data/SEG_top_0_reg0]
 assign_bd_address
 save_bd_design
 
