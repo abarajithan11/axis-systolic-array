@@ -37,12 +37,14 @@ XELAB_FLAGS = --snapshot $(TB_MODULE) -log elaborate.log --debug typical -sv_lib
 
 XSIM_FLAGS = --tclbatch cfg.tcl
 
-VERI_FLAGS = --binary -j 0 \
+VERI_FLAGS = --cc --exe --build -j 0 -O3 \
 	--Wno-BLKANDNBLK --Wno-INITIALDLY \
 	-I$(RUN_DIR) \
 	-CFLAGS -DSIM \
 	-CFLAGS -g --Mdir ../$(WORK_DIR) \
-	-CFLAGS -I$(WORK_DIR) 
+	-CFLAGS -I$(WORK_DIR) \
+	--timing \
+	../tb/top_axi_tb_wrap.cpp
 
 ifeq ($(TRACE),1)
   VERI_FLAGS += --trace-fst -CFLAGS -g
@@ -52,7 +54,7 @@ ifeq ($(OPTIMIZE),1)
 endif
 
 XCELIUM_FLAGS = -64bit -sv -dpi -CFLAGS -DSIM -CFLAGS -I.
-
+# GCC_FLAGS = -std=gnu99 -fPIC -g -O2 -DSIM "-DDIR=$(WORK_DIR)/" "-I$(FULL_WORK_DIR)" -shared
 #----------------- COMMON SETUP ------------------
 
 $(WORK_DIR):
@@ -112,8 +114,11 @@ vivado: $(WORK_DIR) $(WORK_DIR)/config.svh $(WORK_DIR)/config.tcl
 
 #----------------- XCELIUM --------------------
 
-xrun: $(WORK_DIR) $(DATA_DIR)/kxa.bin $(WORK_DIR)/config.svh $(WORK_DIR)/config.h
-	cd $(WORK_DIR) && xrun $(XCELIUM_FLAGS) -f ../$(SOURCES_FILE) $(C_SOURCE)
+$(WORK_DIR)/fw.so: $(WORK_DIR)
+	cd $(WORK_DIR) && gcc $(GCC_FLAGS) -o fw.so $(C_SOURCE)
+
+xrun: $(WORK_DIR) $(DATA_DIR)/kxa.bin $(WORK_DIR)/config.svh $(WORK_DIR)/config.h $(WORK_DIR)/fw.so
+	cd $(WORK_DIR) && xrun $(XCELIUM_FLAGS) -f ../$(SOURCES_FILE)
 
 
 #----------------- VERILATOR ------------------

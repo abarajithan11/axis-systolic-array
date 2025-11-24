@@ -24,138 +24,235 @@ module top_axi_tb;
     AXI_ADDR_WIDTH      = 32                 ,
     AXIL_WIDTH          = 32                 ,
     AXIL_ADDR_WIDTH     = 32                 ,
-    STRB_WIDTH          = 4                  ,
+    AXIL_STRB_WIDTH     = (AXIL_WIDTH/8)     ,
     DATA_WR_WIDTH       = AXIL_WIDTH         ,
     DATA_RD_WIDTH       = AXIL_WIDTH         ;
 
-
-  // SIGNALS
-  logic rstn = 0;
-  logic [AXIL_ADDR_WIDTH-1:0]s_axil_awaddr =0;
-  logic [2:0]                s_axil_awprot =0;
-  logic                      s_axil_awvalid=0;
-  logic                      s_axil_awready;
-  logic [DATA_WR_WIDTH-1:0]  s_axil_wdata =0;
-  logic [STRB_WIDTH-1:0]     s_axil_wstrb =0;
-  logic                      s_axil_wvalid=0;
-  logic                      s_axil_wready;
-  logic [1:0]                s_axil_bresp;
-  logic                      s_axil_bvalid;
-  logic                      s_axil_bready =0;
-  logic [AXIL_ADDR_WIDTH-1:0]s_axil_araddr =0;
-  logic [2:0]                s_axil_arprot =0;
-  logic                      s_axil_arvalid=0;
-  logic                      s_axil_arready;
-  logic [DATA_RD_WIDTH-1:0]  s_axil_rdata;
-  logic [1:0]                s_axil_rresp;
-  logic                      s_axil_rvalid;
-  logic                      s_axil_rready=0;
-
-  logic                          mm2s_0_rd_en;
-  logic [AXI_ADDR_WIDTH-1:0]     mm2s_0_rd_addr;
-  logic [AXI_WIDTH    -1:0]      mm2s_0_rd_data;
-  logic                          mm2s_1_rd_en;
-  logic [AXI_ADDR_WIDTH-1:0]     mm2s_1_rd_addr;
-  logic [AXI_WIDTH    -1:0]      mm2s_1_rd_data;
-  logic                          mm2s_2_rd_en;
-  logic [AXI_ADDR_WIDTH-1:0]     mm2s_2_rd_addr;
-  logic [AXI_WIDTH    -1:0]      mm2s_2_rd_data;
-
-  logic                          s2mm_wr_en;
-  logic [AXI_ADDR_WIDTH-1:0]     s2mm_wr_addr;
-  logic [AXI_WIDTH    -1:0]      s2mm_wr_data;
-  logic [AXI_WIDTH/8  -1:0]      s2mm_wr_strb;
-
-  top_ram #(
-    .R                 (R                ), 
-    .C                 (C                ), 
-    .WK                (WK               ), 
-    .WX                (WX               ), 
-    .WA                (WA               ), 
-    .WY                (WY               ), 
-    .LM                (LM               ), 
-    .LA                (LA               ), 
-    .VALID_PROB        (VALID_PROB       ),
-    .READY_PROB        (READY_PROB       ),
-    .AXI_WIDTH         (AXI_WIDTH        ), 
-    .AXI_ID_WIDTH      (AXI_ID_WIDTH     ), 
-    .AXI_STRB_WIDTH    (AXI_STRB_WIDTH   ), 
-    .AXI_MAX_BURST_LEN (AXI_MAX_BURST_LEN), 
-    .AXI_ADDR_WIDTH    (AXI_ADDR_WIDTH   ), 
-    .AXIL_WIDTH        (AXIL_WIDTH       ), 
-    .AXIL_ADDR_WIDTH   (AXIL_ADDR_WIDTH  ), 
-    .STRB_WIDTH        (STRB_WIDTH       ), 
-    .AXIL_BASE_ADDR    (AXIL_BASE_ADDR   ) 
-  ) dut(.*);
-
-  logic clk = 0;
+  logic clk /* verilator public */ = 0, rstn, firebridge_done;
   initial forever #(CLK_PERIOD/2) clk = ~clk;
 
-`ifdef VERILATOR
-  `define AUTOMATIC
-`else
-  `define AUTOMATIC automatic
-`endif
+  localparam S_COUNT = 1;
+  localparam M_COUNT = 4;
 
-  export "DPI-C" task _get_config;
-  export "DPI-C" task set_config;
-  import "DPI-C" context task get_byte_a32 (input int unsigned addr, output byte data);
-  import "DPI-C" context task set_byte_a32 (input int unsigned addr, input byte data);
-  import "DPI-C" context function chandle get_mp ();
-  // import "DPI-C" context task void print_output (chandle mem_ptr_virtual);
-  import "DPI-C" context task `AUTOMATIC run(input chandle mem_ptr_virtual, input chandle p_config, ref int done);
+  wire [S_COUNT-1:0][AXI_ID_WIDTH   -1:0]   s_axi_awid   ;
+  wire [S_COUNT-1:0][AXIL_ADDR_WIDTH-1:0]   s_axi_awaddr ;
+  wire [S_COUNT-1:0][7:0]                   s_axi_awlen  ;
+  wire [S_COUNT-1:0][2:0]                   s_axi_awsize ;
+  wire [S_COUNT-1:0][1:0]                   s_axi_awburst;
+  wire [S_COUNT-1:0]                        s_axi_awlock ;
+  wire [S_COUNT-1:0][3:0]                   s_axi_awcache;
+  wire [S_COUNT-1:0][2:0]                   s_axi_awprot ;
+  wire [S_COUNT-1:0]                        s_axi_awvalid;
+  wire [S_COUNT-1:0]                        s_axi_awready;
+  wire [S_COUNT-1:0][AXIL_WIDTH-1:0]        s_axi_wdata  ;
+  wire [S_COUNT-1:0][AXIL_STRB_WIDTH-1:0]   s_axi_wstrb  ;
+  wire [S_COUNT-1:0]                        s_axi_wlast  ;
+  wire [S_COUNT-1:0]                        s_axi_wvalid ;
+  wire [S_COUNT-1:0]                        s_axi_wready ;
+  wire [S_COUNT-1:0][AXI_ID_WIDTH-1:0]      s_axi_bid    ;
+  wire [S_COUNT-1:0][1:0]                   s_axi_bresp  ;
+  wire [S_COUNT-1:0]                        s_axi_bvalid ;
+  wire [S_COUNT-1:0]                        s_axi_bready ;
+  wire [S_COUNT-1:0][AXI_ID_WIDTH-1:0]      s_axi_arid   ;
+  wire [S_COUNT-1:0][AXIL_ADDR_WIDTH-1:0]   s_axi_araddr ;
+  wire [S_COUNT-1:0][7:0]                   s_axi_arlen  ;
+  wire [S_COUNT-1:0][2:0]                   s_axi_arsize ;
+  wire [S_COUNT-1:0][1:0]                   s_axi_arburst;
+  wire [S_COUNT-1:0]                        s_axi_arlock ;
+  wire [S_COUNT-1:0][3:0]                   s_axi_arcache;
+  wire [S_COUNT-1:0][2:0]                   s_axi_arprot ;
+  wire [S_COUNT-1:0]                        s_axi_arvalid;
+  wire [S_COUNT-1:0]                        s_axi_arready;
+  wire [S_COUNT-1:0][AXI_ID_WIDTH-1:0]      s_axi_rid    ;
+  wire [S_COUNT-1:0][AXIL_WIDTH-1:0]        s_axi_rdata  ;
+  wire [S_COUNT-1:0][1:0]                   s_axi_rresp  ;
+  wire [S_COUNT-1:0]                        s_axi_rlast  ;
+  wire [S_COUNT-1:0]                        s_axi_rvalid ;
+  wire [S_COUNT-1:0]                        s_axi_rready ;
+  wire [M_COUNT-1:0][AXI_ID_WIDTH-1:0]      m_axi_awid   ;
+  wire [M_COUNT-1:0][AXI_ADDR_WIDTH-1:0]    m_axi_awaddr ;
+  wire [M_COUNT-1:0][7:0]                   m_axi_awlen  ;
+  wire [M_COUNT-1:0][2:0]                   m_axi_awsize ;
+  wire [M_COUNT-1:0][1:0]                   m_axi_awburst;
+  wire [M_COUNT-1:0]                        m_axi_awlock ;
+  wire [M_COUNT-1:0][3:0]                   m_axi_awcache;
+  wire [M_COUNT-1:0][2:0]                   m_axi_awprot ;
+  wire [M_COUNT-1:0]                        m_axi_awvalid;
+  wire [M_COUNT-1:0]                        m_axi_awready;
+  wire [M_COUNT-1:0][AXI_WIDTH-1:0]         m_axi_wdata  ;
+  wire [M_COUNT-1:0][AXI_STRB_WIDTH-1:0]    m_axi_wstrb  ;
+  wire [M_COUNT-1:0]                        m_axi_wlast  ;
+  wire [M_COUNT-1:0]                        m_axi_wvalid ;
+  wire [M_COUNT-1:0]                        m_axi_wready ;
+  wire [M_COUNT-1:0][AXI_ID_WIDTH-1:0]      m_axi_bid    ;
+  wire [M_COUNT-1:0][1:0]                   m_axi_bresp  ;
+  wire [M_COUNT-1:0]                        m_axi_bvalid ;
+  wire [M_COUNT-1:0]                        m_axi_bready ;
+  wire [M_COUNT-1:0][AXI_ID_WIDTH-1:0]      m_axi_arid   ;
+  wire [M_COUNT-1:0][AXI_ADDR_WIDTH-1:0]    m_axi_araddr ;
+  wire [M_COUNT-1:0][7:0]                   m_axi_arlen  ;
+  wire [M_COUNT-1:0][2:0]                   m_axi_arsize ;
+  wire [M_COUNT-1:0][1:0]                   m_axi_arburst;
+  wire [M_COUNT-1:0]                        m_axi_arlock ;
+  wire [M_COUNT-1:0][3:0]                   m_axi_arcache;
+  wire [M_COUNT-1:0][2:0]                   m_axi_arprot ;
+  wire [M_COUNT-1:0]                        m_axi_arvalid;
+  wire [M_COUNT-1:0]                        m_axi_arready;
+  wire [M_COUNT-1:0][AXI_ID_WIDTH-1:0]      m_axi_rid    ;
+  wire [M_COUNT-1:0][AXI_WIDTH-1:0]         m_axi_rdata  ;
+  wire [M_COUNT-1:0][1:0]                   m_axi_rresp  ;
+  wire [M_COUNT-1:0]                        m_axi_rlast  ;
+  wire [M_COUNT-1:0]                        m_axi_rvalid ;
+  wire [M_COUNT-1:0]                        m_axi_rready ;
+
+  firebridge_axi #(
+    .S_COUNT           (S_COUNT          ),
+    .M_COUNT           (M_COUNT          ),
+    .M_AXI_DATA_WIDTH  (AXI_WIDTH        ), 
+    .M_AXI_ADDR_WIDTH  (AXI_ADDR_WIDTH   ), 
+    .M_AXI_ID_WIDTH    (AXI_ID_WIDTH     ), 
+    .M_AXI_STRB_WIDTH  (AXI_STRB_WIDTH   ), 
+    .S_AXI_DATA_WIDTH  (AXIL_WIDTH       ), 
+    .S_AXI_ADDR_WIDTH  (AXIL_ADDR_WIDTH  ), 
+    .S_AXI_STRB_WIDTH  (AXIL_STRB_WIDTH  ), 
+    .S_AXI_BASE_ADDR   (AXIL_BASE_ADDR   ),
+    .VALID_PROB        (VALID_PROB       ),
+    .READY_PROB        (READY_PROB       )
+  ) FB (.*);
 
 
-  task automatic _get_config(input chandle config_base, input int offset, output int data);
-    data = dut.TOP.CONTROLLER.cfg [offset];
-  endtask
+  top #(
+      .R (R ),
+      .C (C ),
+      .WK(WK),
+      .WX(WX),
+      .WA(WA),
+      .WY(WY),
+      .LM(LM),
+      .LA(LA),
+      .AXI_WIDTH        (AXI_WIDTH        ),
+      .AXI_ID_WIDTH     (AXI_ID_WIDTH     ),
+      .AXI_STRB_WIDTH   (AXI_STRB_WIDTH   ),
+      .AXI_MAX_BURST_LEN(AXI_MAX_BURST_LEN),
+      .AXI_ADDR_WIDTH   (AXI_ADDR_WIDTH   ),
+      .AXIL_WIDTH       (AXIL_WIDTH       ),
+      .AXIL_ADDR_WIDTH  (AXIL_ADDR_WIDTH  ),
+      .AXIL_STRB_WIDTH  (AXIL_STRB_WIDTH  ),
+      .AXIL_BASE_ADDR   (AXIL_BASE_ADDR   )
+  ) TOP (
+  .clk (clk), 
+  .rstn(rstn),
 
+  .s_axi_awid    (s_axi_awid   ),
+  .s_axi_awaddr  (s_axi_awaddr ),
+  .s_axi_awlen   (s_axi_awlen  ),
+  .s_axi_awsize  (s_axi_awsize ),
+  .s_axi_awburst (s_axi_awburst),
+  .s_axi_awlock  (s_axi_awlock ),
+  .s_axi_awcache (s_axi_awcache),
+  .s_axi_awprot  (s_axi_awprot ),
+  .s_axi_awvalid (s_axi_awvalid),
+  .s_axi_awready (s_axi_awready),
+  .s_axi_wdata   (s_axi_wdata  ),
+  .s_axi_wstrb   (s_axi_wstrb  ),
+  .s_axi_wlast   (s_axi_wlast  ),
+  .s_axi_wvalid  (s_axi_wvalid ),
+  .s_axi_wready  (s_axi_wready ),
+  .s_axi_bid     (s_axi_bid    ),
+  .s_axi_bresp   (s_axi_bresp  ),
+  .s_axi_bvalid  (s_axi_bvalid ),
+  .s_axi_bready  (s_axi_bready ),
+  .s_axi_arid    (s_axi_arid   ),
+  .s_axi_araddr  (s_axi_araddr ),
+  .s_axi_arlen   (s_axi_arlen  ),
+  .s_axi_arsize  (s_axi_arsize ),
+  .s_axi_arburst (s_axi_arburst),
+  .s_axi_arlock  (s_axi_arlock ),
+  .s_axi_arcache (s_axi_arcache),
+  .s_axi_arprot  (s_axi_arprot ),
+  .s_axi_arvalid (s_axi_arvalid),
+  .s_axi_arready (s_axi_arready),
+  .s_axi_rid     (s_axi_rid    ),
+  .s_axi_rdata   (s_axi_rdata  ),
+  .s_axi_rresp   (s_axi_rresp  ),
+  .s_axi_rlast   (s_axi_rlast  ),
+  .s_axi_rvalid  (s_axi_rvalid ),
+  .s_axi_rready  (s_axi_rready ),
+  // Weights
+  .m_axi_mm2s_0_arid   (m_axi_arid   [0]),
+  .m_axi_mm2s_0_araddr (m_axi_araddr [0]),
+  .m_axi_mm2s_0_arlen  (m_axi_arlen  [0]),
+  .m_axi_mm2s_0_arsize (m_axi_arsize [0]),
+  .m_axi_mm2s_0_arburst(m_axi_arburst[0]),
+  .m_axi_mm2s_0_arlock (m_axi_arlock [0]),
+  .m_axi_mm2s_0_arcache(m_axi_arcache[0]),
+  .m_axi_mm2s_0_arprot (m_axi_arprot [0]),
+  .m_axi_mm2s_0_arvalid(m_axi_arvalid[0]),
+  .m_axi_mm2s_0_arready(m_axi_arready[0]),
+  .m_axi_mm2s_0_rid    (m_axi_rid    [0]),
+  .m_axi_mm2s_0_rdata  (m_axi_rdata  [0]),
+  .m_axi_mm2s_0_rresp  (m_axi_rresp  [0]),
+  .m_axi_mm2s_0_rlast  (m_axi_rlast  [0]),
+  .m_axi_mm2s_0_rvalid (m_axi_rvalid [0]),
+  .m_axi_mm2s_0_rready (m_axi_rready [0]),
 
-  task automatic set_config(input chandle config_base, input int offset, input int data);
-    dut.TOP.CONTROLLER.cfg [offset] <= data;
-  endtask
+  .m_axi_mm2s_1_arid   (m_axi_arid   [1]),
+  .m_axi_mm2s_1_araddr (m_axi_araddr [1]),
+  .m_axi_mm2s_1_arlen  (m_axi_arlen  [1]),
+  .m_axi_mm2s_1_arsize (m_axi_arsize [1]),
+  .m_axi_mm2s_1_arburst(m_axi_arburst[1]),
+  .m_axi_mm2s_1_arlock (m_axi_arlock [1]),
+  .m_axi_mm2s_1_arcache(m_axi_arcache[1]),
+  .m_axi_mm2s_1_arprot (m_axi_arprot [1]),
+  .m_axi_mm2s_1_arvalid(m_axi_arvalid[1]),
+  .m_axi_mm2s_1_arready(m_axi_arready[1]),
+  .m_axi_mm2s_1_rid    (m_axi_rid    [1]),
+  .m_axi_mm2s_1_rdata  (m_axi_rdata  [1]),
+  .m_axi_mm2s_1_rresp  (m_axi_rresp  [1]),
+  .m_axi_mm2s_1_rlast  (m_axi_rlast  [1]),
+  .m_axi_mm2s_1_rvalid (m_axi_rvalid [1]),
+  .m_axi_mm2s_1_rready (m_axi_rready [1]),
 
-  int done = 0;
-  byte tmp_byte_0, tmp_byte_1, tmp_byte_2;
+  .m_axi_mm2s_2_arid   (m_axi_arid   [2]),
+  .m_axi_mm2s_2_araddr (m_axi_araddr [2]),
+  .m_axi_mm2s_2_arlen  (m_axi_arlen  [2]),
+  .m_axi_mm2s_2_arsize (m_axi_arsize [2]),
+  .m_axi_mm2s_2_arburst(m_axi_arburst[2]),
+  .m_axi_mm2s_2_arlock (m_axi_arlock [2]),
+  .m_axi_mm2s_2_arcache(m_axi_arcache[2]),
+  .m_axi_mm2s_2_arprot (m_axi_arprot [2]),
+  .m_axi_mm2s_2_arvalid(m_axi_arvalid[2]),
+  .m_axi_mm2s_2_arready(m_axi_arready[2]),
+  .m_axi_mm2s_2_rid    (m_axi_rid    [2]),
+  .m_axi_mm2s_2_rdata  (m_axi_rdata  [2]),
+  .m_axi_mm2s_2_rresp  (m_axi_rresp  [2]),
+  .m_axi_mm2s_2_rlast  (m_axi_rlast  [2]),
+  .m_axi_mm2s_2_rvalid (m_axi_rvalid [2]),
+  .m_axi_mm2s_2_rready (m_axi_rready [2]),
 
-  always_comb begin
-    mm2s_0_rd_data = '0;
-    tmp_byte_0     = 0;
-    if (mm2s_0_rd_en) begin
-      for (int i = 0; i < AXI_WIDTH/8; i++) begin
-        get_byte_a32((mm2s_0_rd_addr) + i, tmp_byte_0);
-        mm2s_0_rd_data[i*8 +: 8] = tmp_byte_0;
-      end
-    end
+  .m_axi_s2mm_awid     (m_axi_awid   [3]),
+  .m_axi_s2mm_awaddr   (m_axi_awaddr [3]),
+  .m_axi_s2mm_awlen    (m_axi_awlen  [3]),
+  .m_axi_s2mm_awsize   (m_axi_awsize [3]),
+  .m_axi_s2mm_awburst  (m_axi_awburst[3]),
+  .m_axi_s2mm_awlock   (m_axi_awlock [3]),
+  .m_axi_s2mm_awcache  (m_axi_awcache[3]),
+  .m_axi_s2mm_awprot   (m_axi_awprot [3]),
+  .m_axi_s2mm_awvalid  (m_axi_awvalid[3]),
+  .m_axi_s2mm_awready  (m_axi_awready[3]),
+  .m_axi_s2mm_wdata    (m_axi_wdata  [3]),
+  .m_axi_s2mm_wstrb    (m_axi_wstrb  [3]),
+  .m_axi_s2mm_wlast    (m_axi_wlast  [3]),
+  .m_axi_s2mm_wvalid   (m_axi_wvalid [3]),
+  .m_axi_s2mm_wready   (m_axi_wready [3]),
+  .m_axi_s2mm_bid      (m_axi_bid    [3]),
+  .m_axi_s2mm_bresp    (m_axi_bresp  [3]),
+  .m_axi_s2mm_bvalid   (m_axi_bvalid [3]),
+  .m_axi_s2mm_bready   (m_axi_bready [3])
+  );
 
-    mm2s_1_rd_data = '0;
-    tmp_byte_1     = 0;
-    if (mm2s_1_rd_en) begin
-      for (int i = 0; i < AXI_WIDTH/8; i++) begin
-        get_byte_a32((mm2s_1_rd_addr) + i, tmp_byte_1);
-        mm2s_1_rd_data[i*8 +: 8] = tmp_byte_1;
-      end
-    end
-
-    mm2s_2_rd_data = '0;
-    tmp_byte_2     = 0;
-    if (mm2s_2_rd_en) begin
-      for (int i = 0; i < AXI_WIDTH/8; i++) begin
-        get_byte_a32((mm2s_2_rd_addr) + i, tmp_byte_2);
-        mm2s_2_rd_data[i*8 +: 8] = tmp_byte_2;
-      end
-    end
-  end
-
-  always_ff @(posedge clk) begin : Axi_rw
-    if (s2mm_wr_en) 
-      for (int i = 0; i < AXI_WIDTH/8; i++) 
-        if (s2mm_wr_strb[i]) 
-          set_byte_a32(s2mm_wr_addr + i, s2mm_wr_data[i*8 +: 8]);
-  end
-  
   initial begin
-    $dumpfile("top_axi_tb.vcd");
+    $dumpfile("top_tb.vcd");
     $dumpvars();
     #1000000us;
     $fatal(1, "Error: Timeout.");
@@ -164,19 +261,12 @@ module top_axi_tb;
   int file_out, file_exp, status, error=0, i=0;
   byte out_byte, exp_byte;
 
-  chandle mem_ptr_virtual, cfg_ptr_virtual;
   initial begin
     rstn <= 0;
     repeat(2) @(posedge clk) #10ps;
     rstn <= 1;
-    mem_ptr_virtual = get_mp();
     
-    while (done == 0) begin
-      run(mem_ptr_virtual, cfg_ptr_virtual, done);
-      @(posedge clk) #10ps;
-    end
-    done = 0;
-
+    wait(firebridge_done);
 
     // Read from output & expected and compare
     file_out = $fopen({DIR, "/y.bin"}, "rb");
@@ -201,6 +291,7 @@ module top_axi_tb;
     
     if (error==0) $display("\n\nVerification successful: Output matches Expected data. \nError count: %0d\n\n", error);
     else          $fatal (0, "\n\nERROR: Output data does not match Expected data.\n\n");
+
     $finish;
   end
 

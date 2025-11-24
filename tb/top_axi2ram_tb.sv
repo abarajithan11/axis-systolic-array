@@ -241,7 +241,7 @@ module top_ram #(
     .AXIL_STRB_WIDTH      (AXI_STRB_WIDTH)
     ) AXI_TO_AXIL_0 (
     .clk          (clk ),
-    .rst          (!rstn),
+    .rstn         (rstn),
     .s_axi_awid   (),
     .s_axi_awaddr (),
     .s_axi_awlen  (),
@@ -351,7 +351,7 @@ module top_ram #(
     .AXIL_STRB_WIDTH      (AXI_STRB_WIDTH)
     ) AXI_TO_AXIL_1 (
     .clk          (clk ),
-    .rst          (!rstn),
+    .rstn         (rstn),
     .s_axi_awid   (),
     .s_axi_awaddr (),
     .s_axi_awlen  (),
@@ -461,7 +461,7 @@ module top_ram #(
     .AXIL_STRB_WIDTH      (AXI_STRB_WIDTH)
     ) AXI_TO_AXIL_2 (
     .clk          (clk ),
-    .rst          (!rstn),
+    .rstn         (rstn),
     .s_axi_awid   (),
     .s_axi_awaddr (),
     .s_axi_awlen  (),
@@ -572,7 +572,7 @@ module top_ram #(
     .AXIL_STRB_WIDTH      (AXI_STRB_WIDTH)
     ) AXI_TO_AXIL_3 (
     .clk          (clk ),
-    .rst          (!rstn),
+    .rstn         (rstn),
     .s_axi_awid   (m_axi_s2mm_awid          ),
     .s_axi_awaddr (m_axi_s2mm_awaddr        ),
     .s_axi_awlen  (m_axi_s2mm_awlen         ),
