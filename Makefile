@@ -40,11 +40,12 @@ XSIM_FLAGS = --tclbatch cfg.tcl
 VERI_FLAGS = --cc --exe --build -j 0 -O3 \
 	--Wno-BLKANDNBLK --Wno-INITIALDLY \
 	-I$(RUN_DIR) \
+	-CFLAGS -DTB_MODULE=$(TB_MODULE) \
 	-CFLAGS -DSIM \
 	-CFLAGS -g --Mdir ../$(WORK_DIR) \
 	-CFLAGS -I$(WORK_DIR) \
 	--timing \
-	../tb/top_axi_tb_wrap.cpp
+	../tb/firebridge_axi_wrap.cpp
 
 ifeq ($(TRACE),1)
   VERI_FLAGS += --trace-fst -CFLAGS -g
