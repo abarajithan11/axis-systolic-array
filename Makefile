@@ -17,6 +17,7 @@ CLEAN_REGRESS = 0
 
 SYS = axi
 TB_MODULE = top_$(SYS)_tb
+FB_MODULE = firebridge_axi
 RUN_DIR = run
 WORK_DIR = run/work
 DATA_DIR = $(WORK_DIR)/data
@@ -41,11 +42,12 @@ VERI_FLAGS = --cc --exe --build -j 0 \
 	--Wno-BLKANDNBLK --Wno-INITIALDLY \
 	-I$(RUN_DIR) \
 	-CFLAGS -DTB_MODULE=$(TB_MODULE) \
+	-CFLAGS -DFB_MODULE=$(FB_MODULE) \
 	-CFLAGS -DSIM \
 	-CFLAGS -g --Mdir ../$(WORK_DIR) \
 	-CFLAGS -I$(WORK_DIR) \
 	--timing \
-	../tb/firebridge_axi_wrap.cpp
+	../tb/firebridge_wrap.cpp
 
 ifeq ($(TRACE),1)
   VERI_FLAGS += --trace-fst -CFLAGS -g

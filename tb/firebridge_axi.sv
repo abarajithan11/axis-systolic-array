@@ -125,26 +125,20 @@ module firebridge_axi #(
   endfunction
 
 `ifdef VERILATOR
-  import "DPI-C" context function void at_posedge_clk();
-  import "DPI-C" context function void wait_s_axi_awready(input int i);
-  import "DPI-C" context function void wait_s_axi_wready(input int i);
-  import "DPI-C" context function void wait_s_axi_bvalid(input int i);
-`else
+  function byte get_clk();
+    get_clk = 8'(clk);        // or clk_tmp, or whatever you want C++ to see
+  endfunction
+  export "DPI-C" function get_clk;
 
+  import "DPI-C" context function void at_posedge_clk();
+  import "DPI-C" context function void step_cycle();
+`else
   task at_posedge_clk();
     @(posedge clk) #10ps;
   endtask
 
-  task wait_s_axi_awready(input int i);
-    wait (s_axi_awready[i]);
-  endtask
-
-  task wait_s_axi_wready(input int i);
-    wait (s_axi_wready[i]);
-  endtask
-
-  task wait_s_axi_bvalid(input int i);
-    wait (s_axi_bvalid[i]);
+  task step_cycle();
+    #1ps;
   endtask
 `endif
 
@@ -164,9 +158,7 @@ module firebridge_axi #(
     s_axi_awprot [i]  <= 0;
     s_axi_awvalid[i]  <= 1;
 
-    // wait (s_axi_awready[i]);
-    // @(posedge clk) #10ps;
-    wait_s_axi_awready(i);
+    while (!s_axi_awready[i]) step_cycle();
     at_posedge_clk();
     s_axi_awvalid[i]  <= 0;
     s_axi_wdata  [i]  <= data;
@@ -174,31 +166,17 @@ module firebridge_axi #(
     s_axi_wlast  [i]  <= 1;
     s_axi_wvalid [i]  <= 1;
 
-    // wait (s_axi_wready[i]);
-    // @(posedge clk) #10ps;
-    wait_s_axi_wready(i);
+
+    while (!s_axi_wready[i]) step_cycle();
     at_posedge_clk();
     s_axi_wvalid [i] <= 0;
     s_axi_bready [i] <= 1;
 
-    // wait (s_axi_bvalid[i]);
-    // @(posedge clk) #10ps;
-    wait_s_axi_bvalid(i);
+    while (!s_axi_bvalid[i]) step_cycle();
     at_posedge_clk();
-    s_axi_bready[i] <= 0;
+    s_axi_bready[i]  <= 0;
   endtask
 
-`ifdef VERILATOR
-  import "DPI-C" context function void wait_s_axi_arready(input int i);
-  import "DPI-C" context function void wait_s_axi_rvalid(input int i);
-`else
-  task wait_s_axi_arready(input int i);
-    wait (s_axi_arready[i]);
-  endtask
-  task wait_s_axi_rvalid(input int i);
-    wait (s_axi_rvalid[i]);
-  endtask
-`endif
 
   task axi_read(input logic [S_AXI_ADDR_WIDTH-1:0] addr, output logic [S_AXI_DATA_WIDTH-1:0] rdata);
 
@@ -216,18 +194,14 @@ module firebridge_axi #(
     s_axi_arprot [i]  <= 0;
     s_axi_arvalid[i]  <= 1;
 
-    // wait (s_axi_arready[i]);
-    // @(posedge clk) #10ps;
-    wait_s_axi_arready(i);
+    while (!s_axi_arready[i]) step_cycle();
     at_posedge_clk();
     s_axi_arvalid[i] <= 0;
     s_axi_rready [i] <= 1;
 
-    // wait (s_axi_rvalid [i]);
-    wait_s_axi_rvalid(i);
+    while (!s_axi_rvalid[i]) step_cycle();
     rdata = s_axi_rdata[i];
 
-    // @(posedge clk) #10ps;
     at_posedge_clk();
     s_axi_rready[i] <= 0;
   endtask
