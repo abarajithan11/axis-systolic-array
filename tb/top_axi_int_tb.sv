@@ -204,8 +204,8 @@ module top_axi_int_tb;
   initial begin
     $dumpfile("top_tb.vcd");
     $dumpvars();
-    #1000000us;
-    $fatal(1, "Error: Timeout.");
+    #1000us;
+    $fatal(1, "\n\nERROR: Timeout.\n\n");
   end
 
   int file_out, file_exp, status, error=0, i=0;

@@ -19,82 +19,82 @@ module firebridge_axi #(
   VALID_PROB        = 1000,
   READY_PROB        = 1000
 )(
-  input  logic clk,
-  input  logic rstn,
-  output logic firebridge_done,
+  input  bit clk,
+  input  bit rstn,
+  output bit firebridge_done,
 
   // AXI Slave
-  output logic [S_COUNT-1:0][S_AXI_ID_WIDTH -1:0]   s_axi_awid   ,
-  output logic [S_COUNT-1:0][S_AXI_ADDR_WIDTH-1:0]  s_axi_awaddr ,
-  output logic [S_COUNT-1:0][7:0]                   s_axi_awlen  ,
-  output logic [S_COUNT-1:0][2:0]                   s_axi_awsize ,
-  output logic [S_COUNT-1:0][1:0]                   s_axi_awburst,
-  output logic [S_COUNT-1:0]                        s_axi_awlock ,
-  output logic [S_COUNT-1:0][3:0]                   s_axi_awcache,
-  output logic [S_COUNT-1:0][2:0]                   s_axi_awprot ,
-  output logic [S_COUNT-1:0]                        s_axi_awvalid,
-  input  logic [S_COUNT-1:0]                        s_axi_awready /* verilator public */,
-  output logic [S_COUNT-1:0][S_AXI_DATA_WIDTH-1:0]  s_axi_wdata  ,
-  output logic [S_COUNT-1:0][S_AXI_STRB_WIDTH-1:0]  s_axi_wstrb  ,
-  output logic [S_COUNT-1:0]                        s_axi_wlast  ,
-  output logic [S_COUNT-1:0]                        s_axi_wvalid ,
-  input  logic [S_COUNT-1:0]                        s_axi_wready /* verilator public */,
-  input  logic [S_COUNT-1:0][S_AXI_ID_WIDTH-1:0]    s_axi_bid    ,
-  input  logic [S_COUNT-1:0][1:0]                   s_axi_bresp  ,
-  input  logic [S_COUNT-1:0]                        s_axi_bvalid /* verilator public */,
-  output logic [S_COUNT-1:0]                        s_axi_bready ,
-  output logic [S_COUNT-1:0][S_AXI_ID_WIDTH-1:0]    s_axi_arid   ,
-  output logic [S_COUNT-1:0][S_AXI_ADDR_WIDTH-1:0]  s_axi_araddr ,
-  output logic [S_COUNT-1:0][7:0]                   s_axi_arlen  ,
-  output logic [S_COUNT-1:0][2:0]                   s_axi_arsize ,
-  output logic [S_COUNT-1:0][1:0]                   s_axi_arburst,
-  output logic [S_COUNT-1:0]                        s_axi_arlock ,
-  output logic [S_COUNT-1:0][3:0]                   s_axi_arcache,
-  output logic [S_COUNT-1:0][2:0]                   s_axi_arprot ,
-  output logic [S_COUNT-1:0]                        s_axi_arvalid,
-  input  logic [S_COUNT-1:0]                        s_axi_arready /* verilator public */,
-  input  logic [S_COUNT-1:0][S_AXI_ID_WIDTH-1:0]    s_axi_rid    ,
-  input  logic [S_COUNT-1:0][S_AXI_DATA_WIDTH-1:0]  s_axi_rdata  ,
-  input  logic [S_COUNT-1:0][1:0]                   s_axi_rresp  ,
-  input  logic [S_COUNT-1:0]                        s_axi_rlast  ,
-  input  logic [S_COUNT-1:0]                        s_axi_rvalid /* verilator public */,
-  output logic [S_COUNT-1:0]                        s_axi_rready ,
+  output bit [S_COUNT-1:0][S_AXI_ID_WIDTH -1:0]   s_axi_awid   ,
+  output bit [S_COUNT-1:0][S_AXI_ADDR_WIDTH-1:0]  s_axi_awaddr ,
+  output bit [S_COUNT-1:0][7:0]                   s_axi_awlen  ,
+  output bit [S_COUNT-1:0][2:0]                   s_axi_awsize ,
+  output bit [S_COUNT-1:0][1:0]                   s_axi_awburst,
+  output bit [S_COUNT-1:0]                        s_axi_awlock ,
+  output bit [S_COUNT-1:0][3:0]                   s_axi_awcache,
+  output bit [S_COUNT-1:0][2:0]                   s_axi_awprot ,
+  output bit [S_COUNT-1:0]                        s_axi_awvalid,
+  input  bit [S_COUNT-1:0]                        s_axi_awready /* verilator public */,
+  output bit [S_COUNT-1:0][S_AXI_DATA_WIDTH-1:0]  s_axi_wdata  ,
+  output bit [S_COUNT-1:0][S_AXI_STRB_WIDTH-1:0]  s_axi_wstrb  ,
+  output bit [S_COUNT-1:0]                        s_axi_wlast  ,
+  output bit [S_COUNT-1:0]                        s_axi_wvalid ,
+  input  bit [S_COUNT-1:0]                        s_axi_wready /* verilator public */,
+  input  bit [S_COUNT-1:0][S_AXI_ID_WIDTH-1:0]    s_axi_bid    ,
+  input  bit [S_COUNT-1:0][1:0]                   s_axi_bresp  ,
+  input  bit [S_COUNT-1:0]                        s_axi_bvalid /* verilator public */,
+  output bit [S_COUNT-1:0]                        s_axi_bready ,
+  output bit [S_COUNT-1:0][S_AXI_ID_WIDTH-1:0]    s_axi_arid   ,
+  output bit [S_COUNT-1:0][S_AXI_ADDR_WIDTH-1:0]  s_axi_araddr ,
+  output bit [S_COUNT-1:0][7:0]                   s_axi_arlen  ,
+  output bit [S_COUNT-1:0][2:0]                   s_axi_arsize ,
+  output bit [S_COUNT-1:0][1:0]                   s_axi_arburst,
+  output bit [S_COUNT-1:0]                        s_axi_arlock ,
+  output bit [S_COUNT-1:0][3:0]                   s_axi_arcache,
+  output bit [S_COUNT-1:0][2:0]                   s_axi_arprot ,
+  output bit [S_COUNT-1:0]                        s_axi_arvalid,
+  input  bit [S_COUNT-1:0]                        s_axi_arready /* verilator public */,
+  input  bit [S_COUNT-1:0][S_AXI_ID_WIDTH-1:0]    s_axi_rid    ,
+  input  bit [S_COUNT-1:0][S_AXI_DATA_WIDTH-1:0]  s_axi_rdata  ,
+  input  bit [S_COUNT-1:0][1:0]                   s_axi_rresp  ,
+  input  bit [S_COUNT-1:0]                        s_axi_rlast  ,
+  input  bit [S_COUNT-1:0]                        s_axi_rvalid /* verilator public */,
+  output bit [S_COUNT-1:0]                        s_axi_rready ,
   // AXI Masters
-  input  logic [M_COUNT-1:0][M_AXI_ID_WIDTH-1:0]    m_axi_awid   ,
-  input  logic [M_COUNT-1:0][M_AXI_ADDR_WIDTH-1:0]  m_axi_awaddr ,
-  input  logic [M_COUNT-1:0][7:0]                   m_axi_awlen  ,
-  input  logic [M_COUNT-1:0][2:0]                   m_axi_awsize ,
-  input  logic [M_COUNT-1:0][1:0]                   m_axi_awburst,
-  input  logic [M_COUNT-1:0]                        m_axi_awlock ,
-  input  logic [M_COUNT-1:0][3:0]                   m_axi_awcache,
-  input  logic [M_COUNT-1:0][2:0]                   m_axi_awprot ,
-  input  logic [M_COUNT-1:0]                        m_axi_awvalid,
-  output logic [M_COUNT-1:0]                        m_axi_awready,
-  input  logic [M_COUNT-1:0][M_AXI_DATA_WIDTH-1:0]  m_axi_wdata  ,
-  input  logic [M_COUNT-1:0][M_AXI_STRB_WIDTH-1:0]  m_axi_wstrb  ,
-  input  logic [M_COUNT-1:0]                        m_axi_wlast  ,
-  input  logic [M_COUNT-1:0]                        m_axi_wvalid ,
-  output logic [M_COUNT-1:0]                        m_axi_wready ,
-  output logic [M_COUNT-1:0][M_AXI_ID_WIDTH-1:0]    m_axi_bid    ,
-  output logic [M_COUNT-1:0][1:0]                   m_axi_bresp  ,
-  output logic [M_COUNT-1:0]                        m_axi_bvalid ,
-  input  logic [M_COUNT-1:0]                        m_axi_bready ,
-  input  logic [M_COUNT-1:0][M_AXI_ID_WIDTH-1:0]    m_axi_arid   ,
-  input  logic [M_COUNT-1:0][M_AXI_ADDR_WIDTH-1:0]  m_axi_araddr ,
-  input  logic [M_COUNT-1:0][7:0]                   m_axi_arlen  ,
-  input  logic [M_COUNT-1:0][2:0]                   m_axi_arsize ,
-  input  logic [M_COUNT-1:0][1:0]                   m_axi_arburst,
-  input  logic [M_COUNT-1:0]                        m_axi_arlock ,
-  input  logic [M_COUNT-1:0][3:0]                   m_axi_arcache,
-  input  logic [M_COUNT-1:0][2:0]                   m_axi_arprot ,
-  input  logic [M_COUNT-1:0]                        m_axi_arvalid,
-  output logic [M_COUNT-1:0]                        m_axi_arready,
-  output logic [M_COUNT-1:0][M_AXI_ID_WIDTH-1:0]    m_axi_rid    ,
-  output logic [M_COUNT-1:0][M_AXI_DATA_WIDTH-1:0]  m_axi_rdata  ,
-  output logic [M_COUNT-1:0][1:0]                   m_axi_rresp  ,
-  output logic [M_COUNT-1:0]                        m_axi_rlast  ,
-  output logic [M_COUNT-1:0]                        m_axi_rvalid ,
-  input  logic [M_COUNT-1:0]                        m_axi_rready  
+  input  bit [M_COUNT-1:0][M_AXI_ID_WIDTH-1:0]    m_axi_awid   ,
+  input  bit [M_COUNT-1:0][M_AXI_ADDR_WIDTH-1:0]  m_axi_awaddr ,
+  input  bit [M_COUNT-1:0][7:0]                   m_axi_awlen  ,
+  input  bit [M_COUNT-1:0][2:0]                   m_axi_awsize ,
+  input  bit [M_COUNT-1:0][1:0]                   m_axi_awburst,
+  input  bit [M_COUNT-1:0]                        m_axi_awlock ,
+  input  bit [M_COUNT-1:0][3:0]                   m_axi_awcache,
+  input  bit [M_COUNT-1:0][2:0]                   m_axi_awprot ,
+  input  bit [M_COUNT-1:0]                        m_axi_awvalid,
+  output bit [M_COUNT-1:0]                        m_axi_awready,
+  input  bit [M_COUNT-1:0][M_AXI_DATA_WIDTH-1:0]  m_axi_wdata  ,
+  input  bit [M_COUNT-1:0][M_AXI_STRB_WIDTH-1:0]  m_axi_wstrb  ,
+  input  bit [M_COUNT-1:0]                        m_axi_wlast  ,
+  input  bit [M_COUNT-1:0]                        m_axi_wvalid ,
+  output bit [M_COUNT-1:0]                        m_axi_wready ,
+  output bit [M_COUNT-1:0][M_AXI_ID_WIDTH-1:0]    m_axi_bid    ,
+  output bit [M_COUNT-1:0][1:0]                   m_axi_bresp  ,
+  output bit [M_COUNT-1:0]                        m_axi_bvalid ,
+  input  bit [M_COUNT-1:0]                        m_axi_bready ,
+  input  bit [M_COUNT-1:0][M_AXI_ID_WIDTH-1:0]    m_axi_arid   ,
+  input  bit [M_COUNT-1:0][M_AXI_ADDR_WIDTH-1:0]  m_axi_araddr ,
+  input  bit [M_COUNT-1:0][7:0]                   m_axi_arlen  ,
+  input  bit [M_COUNT-1:0][2:0]                   m_axi_arsize ,
+  input  bit [M_COUNT-1:0][1:0]                   m_axi_arburst,
+  input  bit [M_COUNT-1:0]                        m_axi_arlock ,
+  input  bit [M_COUNT-1:0][3:0]                   m_axi_arcache,
+  input  bit [M_COUNT-1:0][2:0]                   m_axi_arprot ,
+  input  bit [M_COUNT-1:0]                        m_axi_arvalid,
+  output bit [M_COUNT-1:0]                        m_axi_arready,
+  output bit [M_COUNT-1:0][M_AXI_ID_WIDTH-1:0]    m_axi_rid    ,
+  output bit [M_COUNT-1:0][M_AXI_DATA_WIDTH-1:0]  m_axi_rdata  ,
+  output bit [M_COUNT-1:0][1:0]                   m_axi_rresp  ,
+  output bit [M_COUNT-1:0]                        m_axi_rlast  ,
+  output bit [M_COUNT-1:0]                        m_axi_rvalid ,
+  input  bit [M_COUNT-1:0]                        m_axi_rready  
 );
 
   genvar m;
@@ -104,13 +104,13 @@ module firebridge_axi #(
     OPT_LOCKID        = 1'b1,
     OPT_LOWPOWER      = 1'b0;
 
-  logic  [M_COUNT-1:0]                            ren;
-  logic  [M_COUNT-1:0][M_AXI_ADDR_WIDTH-LSB-1:0]  raddr;
-  logic  [M_COUNT-1:0][M_AXI_DATA_WIDTH-1:0]      rdata;
-  logic  [M_COUNT-1:0]                            wen;
-  logic  [M_COUNT-1:0][M_AXI_ADDR_WIDTH-LSB-1:0]  waddr;
-  logic  [M_COUNT-1:0][M_AXI_DATA_WIDTH-1:0]      wdata;
-  logic  [M_COUNT-1:0][M_AXI_DATA_WIDTH/8-1:0]    wstrb;
+  bit  [M_COUNT-1:0]                            ren;
+  bit  [M_COUNT-1:0][M_AXI_ADDR_WIDTH-LSB-1:0]  raddr;
+  bit  [M_COUNT-1:0][M_AXI_DATA_WIDTH-1:0]      rdata;
+  bit  [M_COUNT-1:0]                            wen;
+  bit  [M_COUNT-1:0][M_AXI_ADDR_WIDTH-LSB-1:0]  waddr;
+  bit  [M_COUNT-1:0][M_AXI_DATA_WIDTH-1:0]      wdata;
+  bit  [M_COUNT-1:0][M_AXI_DATA_WIDTH/8-1:0]    wstrb;
 
   function automatic int get_s_index(int addr);
     int index = -1;
@@ -126,23 +126,24 @@ module firebridge_axi #(
 
 `ifdef VERILATOR
   function byte get_clk();
-    get_clk = 8'(clk);        // or clk_tmp, or whatever you want C++ to see
+    get_clk = 8'(clk);
   endfunction
   export "DPI-C" function get_clk;
 
   import "DPI-C" context function void at_posedge_clk();
   import "DPI-C" context function void step_cycle();
+
+  `define FB_WAIT(expr) while (expr) step_cycle()
+
 `else
   task at_posedge_clk();
     @(posedge clk) #10ps;
   endtask
 
-  task step_cycle();
-    #1ps;
-  endtask
+  `define FB_WAIT(expr) wait (expr)
 `endif
 
-  task axi_write(input logic [S_AXI_ADDR_WIDTH-1:0] addr, input logic [S_AXI_DATA_WIDTH-1:0] data);
+  task axi_write(input bit [S_AXI_ADDR_WIDTH-1:0] addr, input bit [S_AXI_DATA_WIDTH-1:0] data);
 
     automatic int i = get_s_index(addr);
 
@@ -158,7 +159,7 @@ module firebridge_axi #(
     s_axi_awprot [i]  <= 0;
     s_axi_awvalid[i]  <= 1;
 
-    while (!s_axi_awready[i]) step_cycle();
+    `FB_WAIT(!s_axi_awready[i]);
     at_posedge_clk();
     s_axi_awvalid[i]  <= 0;
     s_axi_wdata  [i]  <= data;
@@ -167,18 +168,18 @@ module firebridge_axi #(
     s_axi_wvalid [i]  <= 1;
 
 
-    while (!s_axi_wready[i]) step_cycle();
+    `FB_WAIT(!s_axi_wready[i]);
     at_posedge_clk();
     s_axi_wvalid [i] <= 0;
     s_axi_bready [i] <= 1;
 
-    while (!s_axi_bvalid[i]) step_cycle();
+    `FB_WAIT(!s_axi_bvalid[i]);
     at_posedge_clk();
     s_axi_bready[i]  <= 0;
   endtask
 
 
-  task axi_read(input logic [S_AXI_ADDR_WIDTH-1:0] addr, output logic [S_AXI_DATA_WIDTH-1:0] rdata);
+  task axi_read(input bit [S_AXI_ADDR_WIDTH-1:0] addr, output bit [S_AXI_DATA_WIDTH-1:0] rdata);
 
     automatic int i = get_s_index(addr);
 
@@ -194,12 +195,12 @@ module firebridge_axi #(
     s_axi_arprot [i]  <= 0;
     s_axi_arvalid[i]  <= 1;
 
-    while (!s_axi_arready[i]) step_cycle();
+    `FB_WAIT(!s_axi_arready[i]);
     at_posedge_clk();
     s_axi_arvalid[i] <= 0;
     s_axi_rready [i] <= 1;
 
-    while (!s_axi_rvalid[i]) step_cycle();
+    `FB_WAIT(!s_axi_rvalid[i]);
     rdata = s_axi_rdata[i];
 
     at_posedge_clk();
@@ -226,21 +227,21 @@ module firebridge_axi #(
 
   // Memory Congestion Emulation
 
-  logic [M_COUNT-1:0] m_axi_arvalid_zipcpu;
-  logic [M_COUNT-1:0] m_axi_arready_zipcpu;
-  logic [M_COUNT-1:0] m_axi_rvalid_zipcpu;
-  logic [M_COUNT-1:0] m_axi_rready_zipcpu;
-  logic [M_COUNT-1:0] m_axi_awvalid_zipcpu;
-  logic [M_COUNT-1:0] m_axi_awready_zipcpu;
-  logic [M_COUNT-1:0] m_axi_wvalid_zipcpu;
-  logic [M_COUNT-1:0] m_axi_wready_zipcpu;
-  logic [M_COUNT-1:0] m_axi_bvalid_zipcpu;
-  logic [M_COUNT-1:0] m_axi_bready_zipcpu;
-  logic [M_COUNT-1:0] rand_ar;
-  logic [M_COUNT-1:0] rand_r;
-  logic [M_COUNT-1:0] rand_aw;
-  logic [M_COUNT-1:0] rand_w;
-  logic [M_COUNT-1:0] rand_b;
+  bit [M_COUNT-1:0] m_axi_arvalid_zipcpu;
+  bit [M_COUNT-1:0] m_axi_arready_zipcpu;
+  bit [M_COUNT-1:0] m_axi_rvalid_zipcpu;
+  bit [M_COUNT-1:0] m_axi_rready_zipcpu;
+  bit [M_COUNT-1:0] m_axi_awvalid_zipcpu;
+  bit [M_COUNT-1:0] m_axi_awready_zipcpu;
+  bit [M_COUNT-1:0] m_axi_wvalid_zipcpu;
+  bit [M_COUNT-1:0] m_axi_wready_zipcpu;
+  bit [M_COUNT-1:0] m_axi_bvalid_zipcpu;
+  bit [M_COUNT-1:0] m_axi_bready_zipcpu;
+  bit [M_COUNT-1:0] rand_ar;
+  bit [M_COUNT-1:0] rand_r;
+  bit [M_COUNT-1:0] rand_aw;
+  bit [M_COUNT-1:0] rand_w;
+  bit [M_COUNT-1:0] rand_b;
 
   assign m_axi_arvalid_zipcpu = rand_ar & m_axi_arvalid       ;
   assign m_axi_arready        = rand_ar & m_axi_arready_zipcpu;
@@ -260,12 +261,20 @@ module firebridge_axi #(
 
   for (m=0; m< M_COUNT; m++) begin
 
-    always_ff @( posedge clk ) begin
-      rand_r  [m]  <= $urandom_range(0, 1000) < VALID_PROB;
-      rand_ar [m]  <= $urandom_range(0, 1000) < VALID_PROB;
-      rand_aw [m]  <= $urandom_range(0, 1000) < READY_PROB;
-      rand_w  [m]  <= $urandom_range(0, 1000) < READY_PROB;
-      rand_b  [m]  <= $urandom_range(0, 1000) < READY_PROB;
+    always_ff @(posedge clk or negedge rstn) begin
+      if (!rstn) begin
+        rand_r [m]  <= 1;
+        rand_ar[m]  <= 1;
+        rand_aw[m]  <= 1;
+        rand_w [m]  <= 1;
+        rand_b [m]  <= 1;
+      end else begin
+        rand_r  [m]  <= $urandom_range(0, 1000) < VALID_PROB;
+        rand_ar [m]  <= $urandom_range(0, 1000) < VALID_PROB;
+        rand_aw [m]  <= $urandom_range(0, 1000) < READY_PROB;
+        rand_w  [m]  <= $urandom_range(0, 1000) < READY_PROB;
+        rand_b  [m]  <= $urandom_range(0, 1000) < READY_PROB;
+      end
     end
 
     zipcpu_axi2ram #(
@@ -330,20 +339,25 @@ module firebridge_axi #(
     // DDR Read & Write
 
     byte tmp_byte;
-    logic [M_AXI_DATA_WIDTH-1:0] tmp_data;
+    bit [M_AXI_DATA_WIDTH-1:0] tmp_data;
 
-    always_ff @(posedge clk) begin
-      if (ren[m]) begin
-        for (int i = 0; i < M_AXI_DATA_WIDTH/8; i++) begin
-          tmp_data[i*8 +: 8] = fb_c_read_ddr8_addr32((32'(raddr[m]) << LSB) + i);
+    always_ff @(posedge clk or negedge rstn) begin
+      if (!rstn) begin
+        tmp_data <= '0;
+        rdata <= '0;
+      end else begin
+        if (ren[m]) begin
+          for (int i = 0; i < M_AXI_DATA_WIDTH/8; i++) begin
+            tmp_data[i*8 +: 8] = fb_c_read_ddr8_addr32((32'(raddr[m]) << LSB) + i);
+          end
+          rdata[m] <= tmp_data;
         end
-        rdata[m] <= tmp_data;
+        if (wen[m]) 
+          for (int i = 0; i < M_AXI_DATA_WIDTH/8; i++) 
+            if (wstrb[m][i]) 
+              fb_c_write_ddr8_addr32((32'(waddr[m]) << LSB) + i, wdata[m][i*8 +: 8]);
       end
-      if (wen[m]) 
-        for (int i = 0; i < M_AXI_DATA_WIDTH/8; i++) 
-          if (wstrb[m][i]) 
-            fb_c_write_ddr8_addr32((32'(waddr[m]) << LSB) + i, wdata[m][i*8 +: 8]);
-    end
+      end
   end
 
 
