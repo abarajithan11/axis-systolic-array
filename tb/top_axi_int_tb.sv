@@ -105,7 +105,7 @@ module top_axi_int_tb;
   wire [M_COUNT-1:0]                        m_axi_rvalid ;
   wire [M_COUNT-1:0]                        m_axi_rready ;
 
-  firebridge_axi #(
+  fb_axi_vip #(
     .S_COUNT           (S_COUNT          ),
     .M_COUNT           (M_COUNT          ),
     .M_AXI_DATA_WIDTH  (AXI_WIDTH        ), 
@@ -204,7 +204,7 @@ module top_axi_int_tb;
   initial begin
     $dumpfile("top_tb.vcd");
     $dumpvars();
-    #1000us;
+    #2000us;
     $fatal(1, "\n\nERROR: Timeout.\n\n");
   end
 

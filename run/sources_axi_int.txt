@@ -27,5 +27,5 @@ config.svh
 ../../rtl/ext/axi_axil_adapter_rd.sv
 ../../rtl/ext/axi_axil_adapter_wr.sv
 ../../rtl/ext/axi_axil_adapter.v
-../../tb/firebridge_axi.sv
+../../firebridge/fb_axi_vip.sv
 ../../rtl/ext/zipcpu_axi2ram.v

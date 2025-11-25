@@ -17,20 +17,25 @@ CLEAN_REGRESS = 0
 
 SYS = axi
 TB_MODULE = top_$(SYS)_tb
-FB_MODULE = firebridge_axi
+FB_MODULE = fb_axi_vip
 RUN_DIR = run
 WORK_DIR = run/work
+FB_DIR = firebridge
 DATA_DIR = $(WORK_DIR)/data
-FULL_DATA_DIR = $(subst \,\\,$(abspath $(DATA_DIR)))
-FULL_WORK_DIR = $(subst \,\\,$(abspath $(WORK_DIR)))
 C_SOURCE = ../../c/sim.c
 SOURCES_FILE = sources_$(SYS).txt
+
+
+FULL_DATA_DIR = $(subst \,\\,$(abspath $(DATA_DIR)))
+FULL_WORK_DIR = $(subst \,\\,$(abspath $(WORK_DIR)))
+FULL_FB_DIR = $(subst \,\\,$(abspath $(FB_DIR)))
 
 #-----------------COMPILER OPTIONS ------------------
 
 XSC_FLAGS = \
 	--gcc_compile_options -DSIM \
-	--gcc_compile_options "-I$(FULL_WORK_DIR)"
+	--gcc_compile_options "-I$(FULL_WORK_DIR)" \
+	--gcc_compile_options "-I$(FULL_FB_DIR)"
 
 XVLOG_FLAGS = -sv -i $(abspath $(RUN_DIR))
 
@@ -46,8 +51,9 @@ VERI_FLAGS = --cc --exe --build -j 0 \
 	-CFLAGS -DSIM \
 	-CFLAGS -g --Mdir ../$(WORK_DIR) \
 	-CFLAGS -I$(WORK_DIR) \
+	-CFLAGS -I$(FULL_FB_DIR) \
 	--timing \
-	../tb/firebridge_wrap.cpp
+	$(FULL_FB_DIR)/fb_top_verilator_wrap.cpp
 
 ifeq ($(TRACE),1)
   VERI_FLAGS += --trace-fst -CFLAGS -g

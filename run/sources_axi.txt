@@ -17,6 +17,6 @@ config.svh
 ../../rtl/ext/axi_axil_adapter_rd.sv
 ../../rtl/ext/axi_axil_adapter_wr.sv
 ../../rtl/ext/axi_axil_adapter.sv
-../../tb/firebridge_axi.sv
+../../firebridge/fb_axi_vip.sv
 ../../tb/ext/axi_addr.v
 ../../tb/ext/skidbuffer.v

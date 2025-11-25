@@ -1,7 +1,7 @@
 
 `timescale 1ns/1ps
 
-module firebridge_axi #(
+module fb_axi_vip #(
   parameter
   S_COUNT          = 1,
   M_COUNT          = 1,

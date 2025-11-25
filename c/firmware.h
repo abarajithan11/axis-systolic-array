@@ -28,7 +28,7 @@ int *config_base = (int *)CONFIG_BASEADDR;
 #define A_S2MM_ADDR     0xE
 #define A_S2MM_BYTES    0xF
 
-#include "wrapper.h"
+#include "fb_fw_wrap.h"
 
 extern EXT_C void run(Memory_st *restrict mp) {
  
