@@ -46,8 +46,8 @@ add_files -norecurse ./${PROJECT_NAME}/${PROJECT_NAME}.srcs/sources_1/bd/design_
 set_property top design_1_wrapper [current_fileset]
 update_compile_order -fileset sources_1
 
-# Set AXl-lite and full_AXI addresses
-set_property range 256M [get_bd_addr_segs $ZYNQ_PS/Data/SEG_top_0_reg0]
+# Set Config Base Address
+set_property range 1G [get_bd_addr_segs $ZYNQ_PS/Data/SEG_top_0_reg0]
 set_property offset ${CONFIG_BASEADDR} [get_bd_addr_segs $ZYNQ_PS/Data/SEG_top_0_reg0]
 assign_bd_address
 save_bd_design
