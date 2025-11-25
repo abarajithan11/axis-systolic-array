@@ -1,5 +1,7 @@
 set BOARD pynq_z2
 
+set_param board.repoPaths "../XilinxBoardStore"
+
 create_project ${PROJECT_NAME} ${PROJECT_NAME} -part xc7z020clg400-1 -force
 set_property board_part tul.com.tw:pynq-z2:part0:* [current_project]
 

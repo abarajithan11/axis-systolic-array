@@ -9,7 +9,6 @@ if __name__ == "__main__":
     parser.add_argument('--WK', default=8, type=int)
     parser.add_argument('--WX', default=8, type=int)
     parser.add_argument('--WY', default=32, type=int)
-    parser.add_argument('--CONFIG_BASEADDR', default="B0000000", type=str)
     parser.add_argument('--VALID_PROB', default=1000, type=int)
     parser.add_argument('--READY_PROB', default=1000, type=int)
     parser.add_argument('--DATA_DIR', required=True, type=str)
@@ -19,6 +18,20 @@ if __name__ == "__main__":
     parser.add_argument('--WORK_DIR', default='work', type=str)
 
     args = parser.parse_args()
+
+    '''
+    Each FPGA board allows a specific AXI base address and range.
+    '''
+    if args.BOARD == "pynq_z2":
+        config_baseaddr, config_range = "40000000", "1G"
+    elif args.BOARD == "zcu104":
+        config_baseaddr, config_range = "B0000000", "256M"
+    elif args.BOARD == "zcu102":
+        config_baseaddr, config_range = "B0000000", "256M"
+    else:
+        config_baseaddr, config_range = "40000000", "256M"
+
+
 
     # Ensure the working directory exists
     os.makedirs(args.WORK_DIR, exist_ok=True)
@@ -35,7 +48,7 @@ if __name__ == "__main__":
 `define WK             {args.WK}
 `define WX             {args.WX}
 `define WY             {args.WY}
-`define AXIL_BASE_ADDR 32'h{args.CONFIG_BASEADDR}
+`define AXIL_BASE_ADDR 32'h{config_baseaddr}
 `define VALID_PROB     {args.VALID_PROB}
 `define READY_PROB     {args.READY_PROB}
 `define CLK_PERIOD     {int(1000.0 / args.FREQ_MHZ)}
@@ -52,14 +65,15 @@ if __name__ == "__main__":
 #define TK              int{args.WK}_t
 #define TX              int{args.WX}_t
 #define TY              int{args.WY}_t
-#define CONFIG_BASEADDR 0x{args.CONFIG_BASEADDR}
+#define CONFIG_BASEADDR 0x{config_baseaddr}
 #define DIR             "{args.DATA_DIR}"
 """)
 
     # Generate config.tcl
     with open(tcl_path, 'w') as f:
         f.write(f"""
-set CONFIG_BASEADDR 0x{args.CONFIG_BASEADDR.zfill(8)}
+set CONFIG_BASEADDR     0x{config_baseaddr.zfill(8)}
+set CONFIG_RANGE        {config_range}
 set FREQ_MHZ            {args.FREQ_MHZ}
 set AXI_WIDTH           {args.AXI_WIDTH}
 set BOARD               {args.BOARD}

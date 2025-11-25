@@ -1,6 +1,7 @@
 run/build
 run/work*
 run/*.gtkw
+run/XilinxBoardStore
 vivado
 .vscode
 docs

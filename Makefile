@@ -5,7 +5,6 @@ K = 16
 WK = 8
 WX = 8
 WY = 32
-CONFIG_BASEADDR = 40000000
 VALID_PROB = 1
 READY_PROB = 50
 FREQ_MHZ = 100
@@ -24,6 +23,10 @@ FB_DIR = firebridge
 DATA_DIR = $(WORK_DIR)/data
 C_SOURCE = ../../c/sim.c
 SOURCES_FILE = sources_$(SYS).txt
+
+BOARDSTORE_REPO  := https://github.com/Xilinx/XilinxBoardStore.git
+BOARDSTORE_BRANCH:= 2024.2
+BOARDSTORE       := $(RUN_DIR)/XilinxBoardStore
 
 
 FULL_DATA_DIR = $(subst \,\\,$(abspath $(DATA_DIR)))
@@ -84,7 +87,6 @@ $(WORK_DIR)/config.svh $(WORK_DIR)/config.h $(WORK_DIR)/config.tcl: $(RUN_DIR)/c
 		--WK $(WK) \
 		--WX $(WX) \
 		--WY $(WY) \
-		--CONFIG_BASEADDR $(CONFIG_BASEADDR) \
 		--VALID_PROB $(VALID_PROB) \
 		--READY_PROB $(READY_PROB) \
 		--DATA_DIR $(FULL_DATA_DIR) \
@@ -118,7 +120,10 @@ xsim: elab $(DATA_DIR)
 
 #----------------- FPGA FLOW ------------------
 
-vivado: $(WORK_DIR) $(WORK_DIR)/config.svh $(WORK_DIR)/config.tcl
+$(BOARDSTORE):
+	@git clone --branch $(BOARDSTORE_BRANCH) --depth 1 "$(BOARDSTORE_REPO)" "$(BOARDSTORE)"
+
+vivado: $(WORK_DIR) $(WORK_DIR)/config.svh $(WORK_DIR)/config.tcl $(BOARDSTORE)
 	cd $(WORK_DIR) && vivado -mode batch -source $(subst \,\\,$(abspath $(RUN_DIR)))/vivado_flow.tcl
 
 #----------------- XCELIUM --------------------
@@ -162,7 +167,6 @@ ibuild: $(WORK_DIR)/config.svh
 iwave:
 	$(MAKE) -C ibex-soc wave
 
-# Clean work directory
 clean:
 	rm -rf $(WORK_DIR)*
 	$(MAKE) -C ibex-soc clean
