@@ -1,4 +1,18 @@
-# AXI Stream Systolic Array
+# An Open & Minimal AXI SoC Subsystem Testbed in SystemVerilog + C + TCL
+
+This repository serves as a testbed for the following:
+
+* **AXI-Stream Systolic Array** - A minimal, yet useful accelerator, complete with DMA controller and firmware.
+* **Firebridge Verification System** - that allows the user to do randomized transactional verification an SoC with real firmware without simulating a whole CPU.
+* **Ibex Integration** - Full integration with Ibex SoC platform with RISC-V toolchain.
+* **Xilinx Baremetal** - TCL flows to implement a SystemVerilog based AXI subsystem with custom DMAs on Xilinx boards with baremetal firmware.
+
+Next steps:
+
+* **Xilinx PYNQ** - PYNQ firmware for the above SV-based AXI subsystem.
+* **Hammer VLSI flow** - Open source ASIC flows for PDKs such as ASAP7 (7nm) and Skywater 130
+
+## AXI Stream Systolic Array
 
 ```
 # Matrices:
