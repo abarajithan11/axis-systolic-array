@@ -80,24 +80,31 @@ make xrun SYS=ram       # Xcelium, simplified RAM ports
 
 ## Build and Simulate a Full SoC (System on Chip) with Ibex RISC-V processor
 
-This is only supported in Linux (Tested on Ubuntu 22.04).
-Check the [GitHub Actions workflow](https://github.com/abarajithan11/axis-systolic-array/blob/aba-ibex-soc/.github/workflows/verify.yaml) for more details.
-
-1. Install Python dependencies `pip3 install -U -r ibex-soc/python-requirements.txt`
-2. Get the latest RISC-V toolchain supported by lowRISC [from here](https://github.com/lowRISC/lowrisc-toolchains/releases)
-3. [Optional] Add symlinks mapping `riscv64` to `riscv32` using 
-  ```
-  for t in g++ gcc ld objcopy objdump; do sudo ln -sf "$(command -v riscv64-unknown-elf-$t)" "/usr/local/bin/riscv32-unknown-elf-$t"; done
-  ```
-4. Add Systolic Array to FuseSoC `fusesoc library add sa_ip "$(pwd -P)"`
-5. Use the following commands:
+First, generate the required files.
 
 ```
-make ibuild      # Build hardware (takes a few minutes)
-make irun        # Build software, run simulation and print console output
-make iprint      # Print output
-make iclean      # Clean build & run
-make irun-clean  # Clean only run
+make veri        # generate .h, .bin ...etc
+```
+
+Start and enter the docker container
+
+```
+cd ibex-soc
+make image       # Build docker image with ibex dependencies
+make start       # Start container
+make enter       # Enter the container
+# make kill      # Kill and delete the container if needed
+```
+
+Work with Ibex System
+
+
+```
+make build      # Build hardware (takes a few minutes)
+make run        # Build software, run simulation and print console output
+make print      # Print output
+make clean      # Clean build & run
+make run-clean  # Clean only run
 ```
 
 Key files:

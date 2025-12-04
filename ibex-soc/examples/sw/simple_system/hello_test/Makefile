@@ -16,4 +16,5 @@ include ${PROGRAM_DIR}/../common/common.mk
 
 INCS += -I${SA_ROOT}/c
 INCS += -I${SA_ROOT}/run/work
+INCS += -I${SA_ROOT}/firebridge
 CFLAGS += -DRISCV

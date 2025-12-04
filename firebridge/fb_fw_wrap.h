@@ -100,7 +100,7 @@ extern EXT_C void *fb_get_mp(){
 }
 #else
 
-u32 addr_64to32 (void* addr){
+u32 fb_addr_64to32 (void* addr){
   return (u32)((uintptr_t)addr);
 }
 #endif

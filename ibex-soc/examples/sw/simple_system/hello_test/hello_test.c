@@ -14,7 +14,6 @@ int main(int argc, char **argv) {
   pcount_reset();
   pcount_enable(1);
 
-  int done;
   volatile uint32_t * const cfg = (volatile uint32_t *)CONFIG_BASEADDR;
   Memory_st *p_mem = &mem_phy;
   
@@ -29,7 +28,7 @@ int main(int argc, char **argv) {
 
   // Run the test
   randomize_inputs(p_mem, 500);
-  run(p_mem, (void*)cfg, &done);
+  run(p_mem);
   check_output(p_mem);
 
   pcount_enable(0);
