@@ -5,16 +5,77 @@ on:
 
 permissions:
   contents: read
-  packages: read   # needed to pull from GHCR with GITHUB_TOKEN
+  packages: write
 
 env:
   GHCR_IMAGE: ghcr.io/${{ github.repository_owner }}/sa-ibex
-  IMAGE_TAG: latest   # image tag that build-image.yml pushes
+  IMAGE_TAG: latest
 
 jobs:
-  # Quick sanity check
+  build-and-push-image:
+    runs-on: ubuntu-22.04
+
+    outputs:
+      docker_changed: ${{ steps.check-changes.outputs.docker_changed }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+
+      - id: check-changes
+        name: Detect Dockerfile / requirements changes
+        shell: bash
+        run: |
+          set -e
+
+          BEFORE="${{ github.event.before }}"
+          SHA="${{ github.sha }}"
+
+          # First push to branch (no "before" commit)? Force rebuild.
+          if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            echo "First push on this branch -> rebuild image"
+            echo "docker_changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Diffing $BEFORE..$SHA"
+          files="$(git diff --name-only "$BEFORE" "$SHA" || true)"
+          echo "Changed files:"
+          echo "$files"
+
+          if echo "$files" | grep -E '^(Dockerfile|ibex-soc/python-requirements.txt|ibex-soc/vendor/google_riscv-dv/requirements.txt)$' >/dev/null; then
+            echo "Docker image inputs changed -> rebuild"
+            echo "docker_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No Dockerfile/requirements changes -> reuse existing image"
+            echo "docker_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Log in to GHCR
+        if: steps.check-changes.outputs.docker_changed == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Docker image via Makefile
+        if: steps.check-changes.outputs.docker_changed == 'true'
+        shell: bash
+        run: |
+          make IMAGE="${GHCR_IMAGE}:dev" image
+          docker tag "${GHCR_IMAGE}:dev" "${GHCR_IMAGE}:${IMAGE_TAG}"
+
+      - name: Push image to GHCR
+        if: steps.check-changes.outputs.docker_changed == 'true'
+        shell: bash
+        run: docker push "${GHCR_IMAGE}:${IMAGE_TAG}"
+
   smoke-verilator:
     runs-on: ubuntu-22.04
+    needs: build-and-push-image
 
     steps:
       - name: Checkout code
@@ -32,13 +93,12 @@ jobs:
 
       - name: Smoke test -- 5 AXI Ports with verilator
         run: |
-          docker run --rm -v "$PWD":/repo -w /repo "${IMAGE_NAME}:${IMAGE_TAG}" \
+          docker run --rm -v "$PWD":/repo -w /repo "${GHCR_IMAGE}:${IMAGE_TAG}" \
             make veri SYS=axi
 
-  # Full regression: 2 AXI ports
   regress-axi-int:
     runs-on: ubuntu-22.04
-    needs: smoke-verilator   # drop this if you want everything fully parallel
+    needs: smoke-verilator   # or needs: build-and-push-image if you don't want gating
 
     steps:
       - name: Checkout code
@@ -56,13 +116,12 @@ jobs:
 
       - name: Full Regression -- 2 AXI Ports
         run: |
-          docker run --rm -v "$PWD":/repo -w /repo "${IMAGE_NAME}:${IMAGE_TAG}" \
+          docker run --rm -v "$PWD":/repo -w /repo "${GHCR_IMAGE}:${IMAGE_TAG}" \
             make regress SYS=axi_int CLEAN_REGRESS=1
 
-  # Full regression: 5 AXI ports
   regress-axi:
     runs-on: ubuntu-22.04
-    needs: smoke-verilator   # or build directly on push by removing this
+    needs: smoke-verilator
 
     steps:
       - name: Checkout code
@@ -80,13 +139,15 @@ jobs:
 
       - name: Full Regression -- 5 AXI Ports
         run: |
-          docker run --rm -v "$PWD":/repo -w /repo "${IMAGE_NAME}:${IMAGE_TAG}" \
+          docker run --rm \
+            -v "$PWD":/repo \
+            -w /repo \
+            "${GHCR_IMAGE}:${IMAGE_TAG}" \
             make regress SYS=axi CLEAN_REGRESS=1
 
-  # Ibex SoC run
   ibex-soc-verilator:
     runs-on: ubuntu-22.04
-    needs: smoke-verilator   # can also depend on regress-* if you want
+    needs: smoke-verilator
 
     steps:
       - name: Checkout code
@@ -104,7 +165,7 @@ jobs:
 
       - name: Run Ibex SoC with verilator
         run: |
-          docker run --rm -v "$PWD":/repo -w /repo "${IMAGE_NAME}:${IMAGE_TAG}" \
+          docker run --rm -v "$PWD":/repo -w /repo "${GHCR_IMAGE}:${IMAGE_TAG}" \
             bash -lc '
               fusesoc library add sa_ip "$(pwd -P)" || true
               make ibuild
