@@ -73,7 +73,7 @@ jobs:
         shell: bash
         run: docker push "${GHCR_IMAGE}:${IMAGE_TAG}"
 
-  smoke-verilator:
+  smoke-test-axi-subsystem:
     runs-on: ubuntu-22.04
     needs: build-and-push-image
 
@@ -98,7 +98,7 @@ jobs:
 
   regress-axi-int:
     runs-on: ubuntu-22.04
-    needs: smoke-verilator   # or needs: build-and-push-image if you don't want gating
+    needs: smoke-test-axi-subsystem   # or needs: build-and-push-image if you don't want gating
 
     steps:
       - name: Checkout code
@@ -121,7 +121,7 @@ jobs:
 
   regress-axi:
     runs-on: ubuntu-22.04
-    needs: smoke-verilator
+    needs: smoke-test-axi-subsystem
 
     steps:
       - name: Checkout code
@@ -145,9 +145,9 @@ jobs:
             "${GHCR_IMAGE}:${IMAGE_TAG}" \
             make regress SYS=axi CLEAN_REGRESS=1
 
-  ibex-soc-verilator:
+  smoke-test-ibex-soc:
     runs-on: ubuntu-22.04
-    needs: smoke-verilator
+    needs: smoke-test-axi-subsystem
 
     steps:
       - name: Checkout code
@@ -168,6 +168,37 @@ jobs:
           docker run --rm -v "$PWD":/repo -w /repo "${GHCR_IMAGE}:${IMAGE_TAG}" \
             bash -lc '
               fusesoc library add sa_ip "$(pwd -P)" || true
-              make ibuild
-              make irun
+              make ibuild irun
             '
+
+  regress-ibex-soc:
+    runs-on: ubuntu-22.04
+    needs: smoke-test-ibex-soc
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull CI image
+        run: docker pull "${GHCR_IMAGE}:${IMAGE_TAG}"
+
+      - name: Regress Ibex SoC with verilator
+        run: |
+          docker run --rm \
+            -v "$PWD":/repo \
+            -w /repo \
+            -e CMD="veri ibuild irun" \
+            "${GHCR_IMAGE}:${IMAGE_TAG}" \
+            bash -lc '
+              fusesoc library add sa_ip "$(pwd -P)" || true
+              make regress
+            '
+
+  

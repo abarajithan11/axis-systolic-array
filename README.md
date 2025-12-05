@@ -1,4 +1,4 @@
-# An Open & Minimal AXI SoC Subsystem Testbed in SystemVerilog + C + TCL
+# An AXI Subsystem Testbed in SystemVerilog + C + TCL
 
 This repository serves as a testbed for the following:
 
@@ -6,6 +6,8 @@ This repository serves as a testbed for the following:
 * **Firebridge Verification System** - that allows the user to do randomized transactional verification an SoC with real firmware without simulating a whole CPU.
 * **Ibex Integration** - Full integration with Ibex SoC platform with RISC-V toolchain.
 * **Xilinx Baremetal** - TCL flows to implement a SystemVerilog based AXI subsystem with custom DMAs on Xilinx boards with baremetal firmware.
+* **Docker setup** - Minimal Dockerfile + Make setup with GUI
+* **GitHub Actions** - A hierarchical CI/CD workflow based on Docker and GHCR. Smoke tests -> Regression test for different flavors of the AXI subsystem, and full Ibex SoC
 
 Next steps:
 
@@ -89,22 +91,23 @@ make veri        # generate .h, .bin ...etc
 Start and enter the docker container
 
 ```
-cd ibex-soc
-make image       # Build docker image with ibex dependencies
-make start       # Start container
-make enter       # Enter the container
-# make kill      # Kill and delete the container if needed
+make kill image start enter    # Rebuild docker and enter
+
+# make image    # Build docker image with ibex dependencies
+# make start    # Start container
+# make enter    # Enter the container
+# make kill     # Kill and delete the container if needed
 ```
 
 Work with Ibex System
 
 
 ```
-make build      # Build hardware (takes a few minutes)
-make run        # Build software, run simulation and print console output
-make print      # Print output
-make clean      # Clean build & run
-make run-clean  # Clean only run
+make ibuild      # Build hardware (takes a few minutes)
+make irun        # Build software, run simulation and print console output
+make iprint      # Print output
+make iclean      # Clean build & run
+make irun-clean  # Clean only run
 ```
 
 Key files:
