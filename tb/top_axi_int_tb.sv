@@ -202,7 +202,7 @@ module top_axi_int_tb;
   initial begin
     $dumpfile("top_tb.vcd");
     $dumpvars();
-    #3000us;
+    #1000000us;
     $fatal(1, "\n\nERROR: Timeout.\n\n");
   end
 

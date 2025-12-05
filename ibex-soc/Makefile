@@ -119,37 +119,3 @@ python-lint:
 clean:
 	rm -rf build
 	$(MAKE) -C examples/sw/simple_system/hello_test clean
-
-
-.PHONY: image start kill enter
-
-USR       := $(shell id -un)
-UID       := $(shell id -u)
-GID       := $(shell id -g)
-IMAGE     := $(USR)/sa-ibex:dev
-CONTAINER := sa-ibex-$(USR)
-HOSTNAME  := saibex
-SHORTUSR  := $(shell id -un | cut -c1-4)
-
-image:
-	docker build \
-                -f Dockerfile \
-                --build-arg UID=$(UID) \
-                --build-arg GID=$(GID) \
-                --build-arg USERNAME=$(SHORTUSR) \
-                -t $(IMAGE) .
-
-start:
-	docker run -d --name $(CONTAINER) \
-                -h $(HOSTNAME) \
-                --tty --interactive \
-                -v $(PWD)/../:/work \
-                -w /work/ibex-soc \
-                $(IMAGE) bash -lc 'fusesoc library add sa_ip /work || true; tail -f /dev/null'
-
-enter:
-	docker exec -it $(CONTAINER) bash
-
-kill:
-	docker kill $(CONTAINER) || true
-	docker rm   $(CONTAINER) || true

@@ -191,5 +191,39 @@ regress:
 	  done; \
 	done
 
+#----------------- Docker Setup ------------------
+USR       := $(shell id -un)
+UID       := $(shell id -u)
+GID       := $(shell id -g)
+SHORTUSR  := $(shell id -un | cut -c1-4)
 
-.PHONY: sim vlog elab run clean vivado regress veri xrun ibuild irun iprint iwave irun-clean veri_axis veri_smoke regress
+IMAGE     := $(USR)/sa-ibex:dev
+CONTAINER := sa-ibex-$(USR)
+HOSTNAME  := saibex
+
+image:
+	docker build \
+		-f Dockerfile \
+		--build-arg UID=$(UID) \
+		--build-arg GID=$(GID) \
+		--build-arg USERNAME=$(SHORTUSR) \
+		-t $(IMAGE) .
+
+start:
+	- xhost +local:docker
+	docker run -d --name $(CONTAINER) \
+		-h $(HOSTNAME) \
+		-e DISPLAY=$$DISPLAY \
+		-v /tmp/.X11-unix:/tmp/.X11-unix \
+		--tty --interactive \
+		-v $(PWD):/repo \
+		$(IMAGE) bash -lc 'fusesoc library add sa_ip /repo || true; tail -f /dev/null'
+
+enter:
+	docker exec -it $(CONTAINER) bash
+
+kill:
+	docker kill $(CONTAINER) || true
+	docker rm   $(CONTAINER) || true
+
+.PHONY: sim vlog elab run clean vivado regress veri xrun ibuild irun iprint iwave irun-clean veri_axis veri_smoke regress image start enter kill wave clean

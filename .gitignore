@@ -5,3 +5,4 @@ run/XilinxBoardStore
 vivado
 .vscode
 docs
+fusesoc.conf
