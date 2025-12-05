@@ -1,79 +1,120 @@
-
 name: Verify
 
 on: [push]
 
+env:
+  IMAGE_NAME: runner/sa-ibex
+  IMAGE_TAG: ${{ github.sha }}   # per-commit tag, same in all jobs
+
 jobs:
-  verify-with-verilator:
+  # Build the Docker image once and share it
+  build-image:
     runs-on: ubuntu-22.04
 
     steps:
-    - uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Cache modules
-      id: cache-verify
-      uses: actions/cache@v3
-      env:
-        cache-name: cache-verify
-      with:
-        path: ~/.verify
-        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-build-${{ env.cache-name }}-
-          ${{ runner.os }}-build-
-          ${{ runner.os }}-
+      - name: Build Docker image via Makefile
+        run: |
+          make image
+          docker tag "${IMAGE_NAME}:latest" "${IMAGE_NAME}:${IMAGE_TAG}"
+          docker save "${IMAGE_NAME}:${IMAGE_TAG}" -o image.tar
 
-    - name: Install Python Packages
-      run: |
-        python3 -m pip install --upgrade pip
-        pip install numpy
+      - name: Upload Docker image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image
+          path: image.tar
 
-    - name: Install Fusoc
-      run: |
-        sudo apt install libelf-dev srecord
-        sudo apt install gcc-riscv64-unknown-elf
-        pip3 install --user -r ibex-soc/python-requirements.txt
-        for t in g++ gcc ld objcopy objdump; do sudo ln -sf "$(command -v riscv64-unknown-elf-$t)" "/usr/local/bin/riscv32-unknown-elf-$t"; done
+  # Smoke test
+  smoke-verilator:
+    runs-on: ubuntu-22.04
+    needs: build-image
 
-    - name: Install Verilator
-      run: |
-        sudo apt-get install --only-upgrade python3 --fix-missing
-        sudo apt-get install  --fix-missing --fix-broken git help2man perl python3 make autoconf g++ flex bison ccache liblzma-dev libunwind-dev libgoogle-perftools-dev numactl libfl2 libfl-dev
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-        git clone https://github.com/abarajithan11/verilator-compiled
-        cd verilator-compiled
-        tar -C ${HOME} -xzf verilator.tar.gz
-        echo "$HOME/verilator/bin" >> "$GITHUB_PATH"
+      - name: Download Docker image
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-image
 
-    - name: Smoke test -- 5 AXI Ports with verilator
-      run: make veri SYS=axi
-    # - name: Smoke test -- 2 AXI Ports (Via Interconnect) with verilator
-    #   run: make veri SYS=axi_int
-    # - name: Smoke test -- 5 RAM Ports (Via Interconnect) with verilator
-    #   run: make veri SYS=ram
+      - name: Load Docker image
+        run: docker load -i image.tar
 
-    - name: Free disk space
-      run: |
-        echo "Before cleanup:"; df -h
-        sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /opt/hostedtoolcache/CodeQL || true
-        sudo apt-get clean || true
-        sudo rm -rf /var/lib/apt/lists/* || true
-        docker system prune -af || true
-        echo "After cleanup:"; df -h
-        
-    - name: Full Regression -- 2 AXI Ports)
-      run: make regress SYS=axi_int CLEAN_REGRESS=1
+      - name: Smoke test -- 5 AXI Ports with verilator
+        run: |
+          docker run --rm -v "$PWD":/repo -w /repo "${IMAGE_NAME}:${IMAGE_TAG}" \
+            make veri SYS=axi
 
-    - name: Full Regression -- 5 AXI Ports)
-      run: make regress SYS=axi CLEAN_REGRESS=1
+  # Full regression: 2 AXI ports
+  regress-axi-int:
+    runs-on: ubuntu-22.04
+    needs: build-image    # or needs: smoke-verilator if you want to gate on smoke
 
-    # - name: Full Regression -- 5 AXI Ports)
-    #   run: make regress SYS=ram CLEAN_REGRESS=1
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Run Ibex SoC with verilator
-      run: |
-        fusesoc library add sa_ip "$(pwd -P)"
+      - name: Download Docker image
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-image
 
-        make ibuild
-        make irun
+      - name: Load Docker image
+        run: docker load -i image.tar
 
+      - name: Full Regression -- 2 AXI Ports
+        run: |
+          docker run --rm -v "$PWD":/repo -w /repo "${IMAGE_NAME}:${IMAGE_TAG}" \
+            make regress SYS=axi_int CLEAN_REGRESS=1
+
+  # Full regression: 5 AXI ports
+  regress-axi:
+    runs-on: ubuntu-22.04
+    needs: build-image    # or needs: smoke-verilator
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Docker image
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-image
+
+      - name: Load Docker image
+        run: docker load -i image.tar
+
+      - name: Full Regression -- 5 AXI Ports
+        run: |
+          docker run --rm -v "$PWD":/repo -w /repo "${IMAGE_NAME}:${IMAGE_TAG}" \
+            make regress SYS=axi CLEAN_REGRESS=1
+
+  # Ibex SoC run
+  ibex-soc-verilator:
+    runs-on: ubuntu-22.04
+    needs: build-image    # or needs: smoke-verilator
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Docker image
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-image
+
+      - name: Load Docker image
+        run: docker load -i image.tar
+
+      - name: Run Ibex SoC with verilator
+        run: |
+          docker run --rm -v "$PWD":/repo -w /repo "${IMAGE_NAME}:${IMAGE_TAG}" \
+            bash -lc '
+              fusesoc library add sa_ip "$(pwd -P)"
+              make ibuild
+              make irun
+            '
