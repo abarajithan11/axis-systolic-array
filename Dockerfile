@@ -37,7 +37,7 @@ RUN for t in g++ gcc ld objcopy objdump; do \
     done
 
 # Verilator
-ARG VERILATOR_VERSION=v5.024
+ARG VERILATOR_VERSION=v5.042
 RUN git clone https://github.com/verilator/verilator.git \
     && cd verilator && git checkout "${VERILATOR_VERSION}" \
     && autoconf && ./configure \
