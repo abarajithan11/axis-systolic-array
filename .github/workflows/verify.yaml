@@ -1,48 +1,34 @@
 name: Verify
 
-on: [push]
+on:
+  push:
+
+permissions:
+  contents: read
+  packages: read   # needed to pull from GHCR with GITHUB_TOKEN
 
 env:
-  IMAGE_NAME: runner/sa-ibex
-  IMAGE_TAG: ${{ github.sha }}   # per-commit tag, same in all jobs
+  GHCR_IMAGE: ghcr.io/${{ github.repository_owner }}/sa-ibex
+  IMAGE_TAG: latest   # image tag that build-image.yml pushes
 
 jobs:
-  # Build the Docker image once and share it
-  build-image:
-    runs-on: ubuntu-22.04
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Build Docker image via Makefile
-        run: |
-          make image
-          docker tag "${IMAGE_NAME}:latest" "${IMAGE_NAME}:${IMAGE_TAG}"
-          docker save "${IMAGE_NAME}:${IMAGE_TAG}" -o image.tar
-
-      - name: Upload Docker image artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: docker-image
-          path: image.tar
-
-  # Smoke test
+  # Quick sanity check
   smoke-verilator:
     runs-on: ubuntu-22.04
-    needs: build-image
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download Docker image
-        uses: actions/download-artifact@v4
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
         with:
-          name: docker-image
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Load Docker image
-        run: docker load -i image.tar
+      - name: Pull CI image
+        run: docker pull "${GHCR_IMAGE}:${IMAGE_TAG}"
 
       - name: Smoke test -- 5 AXI Ports with verilator
         run: |
@@ -52,19 +38,21 @@ jobs:
   # Full regression: 2 AXI ports
   regress-axi-int:
     runs-on: ubuntu-22.04
-    needs: build-image    # or needs: smoke-verilator if you want to gate on smoke
+    needs: smoke-verilator   # drop this if you want everything fully parallel
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download Docker image
-        uses: actions/download-artifact@v4
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
         with:
-          name: docker-image
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Load Docker image
-        run: docker load -i image.tar
+      - name: Pull CI image
+        run: docker pull "${GHCR_IMAGE}:${IMAGE_TAG}"
 
       - name: Full Regression -- 2 AXI Ports
         run: |
@@ -74,19 +62,21 @@ jobs:
   # Full regression: 5 AXI ports
   regress-axi:
     runs-on: ubuntu-22.04
-    needs: build-image    # or needs: smoke-verilator
+    needs: smoke-verilator   # or build directly on push by removing this
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download Docker image
-        uses: actions/download-artifact@v4
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
         with:
-          name: docker-image
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Load Docker image
-        run: docker load -i image.tar
+      - name: Pull CI image
+        run: docker pull "${GHCR_IMAGE}:${IMAGE_TAG}"
 
       - name: Full Regression -- 5 AXI Ports
         run: |
@@ -96,25 +86,27 @@ jobs:
   # Ibex SoC run
   ibex-soc-verilator:
     runs-on: ubuntu-22.04
-    needs: build-image    # or needs: smoke-verilator
+    needs: smoke-verilator   # can also depend on regress-* if you want
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download Docker image
-        uses: actions/download-artifact@v4
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
         with:
-          name: docker-image
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Load Docker image
-        run: docker load -i image.tar
+      - name: Pull CI image
+        run: docker pull "${GHCR_IMAGE}:${IMAGE_TAG}"
 
       - name: Run Ibex SoC with verilator
         run: |
           docker run --rm -v "$PWD":/repo -w /repo "${IMAGE_NAME}:${IMAGE_TAG}" \
             bash -lc '
-              fusesoc library add sa_ip "$(pwd -P)"
+              fusesoc library add sa_ip "$(pwd -P)" || true
               make ibuild
               make irun
             '

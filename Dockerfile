@@ -1,6 +1,6 @@
 FROM ubuntu:22.04
 
-ARG DEBIAN_FRONTEND=noninteractive
+ARG DEBIAN_FRONTEND=noninteractive 
 
 # Base tools + RISC-V + Verilator deps + minimal X11 tools for GUI
 RUN apt-get update && apt-get install -y \
