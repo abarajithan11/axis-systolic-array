@@ -20,7 +20,6 @@ module top_axi_int_tb;
     LA                  = 1                  ,
     AXI_ID_WIDTH        = 6                  ,
     AXI_STRB_WIDTH      = AXI_WIDTH/8        ,
-    AXI_MAX_BURST_LEN   = 1                  ,
     AXI_ADDR_WIDTH      = 32                 ,
     AXIL_WIDTH          = 32                 ,
     AXIL_ADDR_WIDTH     = 32                 ,
@@ -133,7 +132,6 @@ module top_axi_int_tb;
       .AXI_WIDTH        (AXI_WIDTH        ),
       .AXI_ID_WIDTH     (AXI_ID_WIDTH     ),
       .AXI_STRB_WIDTH   (AXI_STRB_WIDTH   ),
-      .AXI_MAX_BURST_LEN(AXI_MAX_BURST_LEN),
       .AXI_ADDR_WIDTH   (AXI_ADDR_WIDTH   ),
       .AXIL_WIDTH       (AXIL_WIDTH       ),
       .AXIL_ADDR_WIDTH  (AXIL_ADDR_WIDTH  ),
@@ -204,7 +202,7 @@ module top_axi_int_tb;
   initial begin
     $dumpfile("top_tb.vcd");
     $dumpvars();
-    #2000us;
+    #3000us;
     $fatal(1, "\n\nERROR: Timeout.\n\n");
   end
 

@@ -19,7 +19,6 @@ module top_axi_int #(
         AXI_ID_WIDTH            = 6,
         DMA_ID_WIDTH            = 6-$clog2(4),
         AXI_STRB_WIDTH          = (AXI_WIDTH/8),
-        AXI_MAX_BURST_LEN       = 1,
         AXI_ADDR_WIDTH          = 32,
         AXIS_USER_WIDTH         = 8,         
         // AXI-Lite
@@ -91,6 +90,8 @@ module top_axi_int #(
     input  wire                       m_axi_rvalid ,
     output wire                       m_axi_rready 
 );
+
+localparam AXI_MAX_BURST_LEN = 1;
 
 // AXI Master Interfaces
 wire [DMA_ID_WIDTH-1:0]    m_axi_s2mm_awid   , m_axi_mm2s_2_awid   , m_axi_mm2s_1_awid   , m_axi_mm2s_0_awid   ;
