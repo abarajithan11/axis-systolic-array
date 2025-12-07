@@ -66,22 +66,16 @@ module axis_sa #(
           else if (en_mac) ki[r][c] <= ki[r-1][c];
     end
 
-  // Multipliers
-  for (r=0; r<R; r=r+1) begin: MR
-    for (c=0; c<C; c=c+1) begin: MC    
-      mul #(.WX(WX),.WK(WK),.L(LM)) MUL (.clk(clk), .rstn(rstn), .en(en_mac),.x(xi[r][c]),.k(ki[r][c]),.y(mo[r][c]));
-  end end
-
-  // Accumulators
+  // MAC Units
   for (d=0; d<D; d=d+1)
     always_ff @(posedge clk)
       if (!rstn)            m_first[d] <= 1'b1;
       else if (valid[LM+d]) m_first[d] <= vlast[LM+d];
-
+  
   for (r=0; r<R; r=r+1) begin: AR
     for (c=0; c<C; c=c+1) begin: AC
-      localparam d = `DIAG(r,c);
-      acc #(.WX(WM),.WY(WY),.L(LA)) ACC (.clk(clk), .rstn(rstn), .en(en_mac), .x_valid(valid[LM+d]), .first(m_first[d]), .x(mo[r][c]), .y(ao[r][c]));
+      localparam d2 = `DIAG(r,c);
+      mac #(.WX(WX),.WK(WK),.WY(WY),.LM(LM),.LA(LA)) MAC (.clk(clk), .rstn(rstn), .en(en_mac), .m_valid(valid[LM+d2]), .m_first(m_first[d2]), .x(xi[r][c]), .k(ki[r][c]), .y(ao[r][c]));
   end end
 
   // Output Register Control

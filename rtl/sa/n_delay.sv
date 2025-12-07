@@ -10,24 +10,25 @@ module n_delay #(
   output logic    [W-1:0] o,
   output logic [NO*W-1:0] d
 );
-  logic [(N+1)-1:0][W-1:0]  data;
-
-  always_comb data [0] = i;
-  assign o = data[(N+1)-1];
+  logic [W-1:0] o_temp;
 
   genvar n;
-  generate 
-  for (n=0 ; n < N; n++) begin : n_dat
-    always_ff @(posedge c or negedge rng)
-      if (!rng)      data [n+1] <= 0;
-      else if (!rnl) data [n+1] <= 0;
-      else if (e)    data [n+1] <= data [n];
+  generate
+  if (N == 0) begin 
+    assign d = i;
+    assign o = i;
+  end 
+  else begin
+    logic [(N+1)-1:0][W-1:0]  data;
+    assign data [0] = i;
+    for (n=0 ; n < N; n++)
+      always_ff @(posedge c or negedge rng)
+        if (!rng)      data [n+1] <= 0;
+        else if (!rnl) data [n+1] <= 0;
+        else if (e)    data [n+1] <= data [n];
+    assign d = data[N-1:0];
+    assign o = data[N];
   end
   endgenerate
-
-  // To satisfy verilator warnings
-  if      (N == 0) assign d = i;
-  else if (N == 1) assign d = data[0];
-  else             assign d = data[N-1:0];
 
 endmodule
