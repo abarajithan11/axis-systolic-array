@@ -21,10 +21,6 @@ module axis_sa #(
 
   logic [R-1:0][WX-1:0] xi_delayed;
   logic [C-1:0][WK-1:0] ki_delayed, sk_reversed;
-  logic [R-1:0][C-1:0][WX-1:0] xi;
-  logic [R-1:0][C-1:0][WK-1:0] ki;
-  logic [R-1:0][C-1:0][WM-1:0] mo;
-  logic [R-1:0][C-1:0][WY-1:0] ao, ro;
 
   // Control Signals are passed diagonally through the array
   logic [D-1:0] r_valid, r_last, r_copy, r_clear, conflict, a_valid, m_first;
@@ -47,39 +43,12 @@ module axis_sa #(
   n_delay #(.N(LM+LA+D), .W(1)) VALID (.c(clk), .e(en_mac), .rng(rstn), .rnl(rstn), .i(s_valid           ), .o(), .d(valid));
   n_delay #(.N(LM+LA+D), .W(1)) VLAST (.c(clk), .e(en_mac), .rng(rstn), .rnl(rstn), .i(s_valid && s_last ), .o(), .d(vlast));
 
-  // Propagate x and k through the array
-  for (r=0; r<R; r=r+1)
-    for (c=0; c<C; c=c+1) begin
+  // Output Register Control
+  for (d=0; d<D; d=d+1) begin
 
-      if (c==0) 
-        assign xi[r][c] = xi_delayed[r];  
-      else // move x through cols
-        always_ff @(posedge clk)
-          if (!rstn)       xi[r][c] <= '0;
-          else if (en_mac) xi[r][c] <= xi[r][c-1];
-      
-      if (r==0)
-        assign ki[r][c] = ki_delayed[c];
-      else // move k through rows
-        always_ff @(posedge clk)
-          if (!rstn)       ki[r][c] <= '0;
-          else if (en_mac) ki[r][c] <= ki[r-1][c];
-    end
-
-  // MAC Units
-  for (d=0; d<D; d=d+1)
     always_ff @(posedge clk)
       if (!rstn)            m_first[d] <= 1'b1;
       else if (valid[LM+d]) m_first[d] <= vlast[LM+d];
-  
-  for (r=0; r<R; r=r+1) begin: AR
-    for (c=0; c<C; c=c+1) begin: AC
-      localparam d2 = `DIAG(r,c);
-      mac #(.WX(WX),.WK(WK),.WY(WY),.LM(LM),.LA(LA)) MAC (.clk(clk), .rstn(rstn), .en(en_mac), .m_valid(valid[LM+d2]), .m_first(m_first[d2]), .x(xi[r][c]), .k(ki[r][c]), .y(ao[r][c]));
-  end end
-
-  // Output Register Control
-  for (d=0; d<D; d=d+1) begin
 
     if (d==0)
       assign r_last[0] = r_valid[0];
@@ -105,23 +74,36 @@ module axis_sa #(
       else if (r_clear[d])                     r_valid[d] <= 0;
   end
 
-  // Output Register Data
-  for (r=0; r<R; r=r+1)
-    for (c=0; c<C; c=c+1)
-      if (c==0) begin
-        always_ff @(posedge clk)
-          if (!rstn)                   ro[r][0] <= '0;
-          else if (r_copy[`DIAG(r,0)]) ro[r][0] <= ao[r][0];
-      end else begin
-        always_ff @(posedge clk)
-          if (!rstn)                   ro[r][c] <= '0;
-          else if (r_copy[`DIAG(r,c)]) ro[r][c] <= ao[r][c];
-          else if (en_shift)           ro[r][c] <= ro[r][c-1];
-      end
-
-  // Outputs
   assign m_valid = r_valid[D-1];
   assign m_last  = r_last [D-1];
+
+  logic [R-1:0][C-1:0][WX-1:0] xo;
+  logic [R-1:0][C-1:0][WK-1:0] ko;
+  logic [R-1:0][C-1:0][WY-1:0] ro;
+
+  for (r=0; r<R; r=r+1) begin:PER
+    for (c=0; c<C; c=c+1) begin:PEC
+
+      wire [WX-1:0] xi = c == 0 ? xi_delayed[r] : xo[r][c-1];
+      wire [WK-1:0] ki = r == 0 ? ki_delayed[c] : ko[r-1][c];
+      wire [WY-1:0] ri = c == 0 ? WY'(0) : ro[r][c-1];
+
+      pe #(.WX(WX),.WK(WK),.WY(WY),.LM(LM),.LA(LA)) PE (
+        .clk     (clk),
+        .rstn    (rstn),
+        .en_mac  (en_mac),
+        .en_shift(en_shift),
+        .m_first (m_first[`DIAG(r,c)]),
+        .m_valid (valid[LM+`DIAG(r,c)]),
+        .r_copy  (r_copy[`DIAG(r,c)]),
+        .ki      (ki),
+        .xi      (xi),
+        .ri      (ri),
+        .ko      (ko[r][c]),
+        .xo      (xo[r][c]),
+        .ro      (ro[r][c])
+      );
+  end end
 
   for (r=0; r<R; r=r+1)
     assign m_data[r] = ro[r][C-1];

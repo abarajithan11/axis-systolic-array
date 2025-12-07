@@ -1,6 +1,7 @@
 config.svh
 ../../rtl/sa/axis_sa.sv
 ../../rtl/sa/mac.sv
+../../rtl/sa/pe.sv
 ../../rtl/sa/n_delay.sv
 ../../rtl/sa/tri_buffer.sv
 ../../rtl/sys/top_axi_int.v
