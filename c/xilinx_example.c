@@ -20,7 +20,6 @@ static inline void flush_cache(void *addr, uint32_t bytes) {
 
 #include "firmware.h"
 
-int done;
 XTime time_start, time_end;
 #define NUM_EXP 100
 
@@ -43,7 +42,7 @@ int main()
 
   for (int i=0; i<NUM_EXP; i++){
     flush_cache(p_mem->k, sizeof(p_mem->k)+sizeof(p_mem->x)+sizeof(p_mem->a));
-    run(p_mem, p_config, &done);
+    run(p_mem);
     flush_cache(p_mem->y, sizeof(p_mem->y));
     usleep(0);
   }

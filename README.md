@@ -31,7 +31,7 @@ The system performs:
 Note that the weights k[K,C] needs to be transposed as k.T[C,K] and stored in the memory
 ```
 
-![Full System](docs/sys.png)
+![Full System](docs/ibex-sys.png)
 
 ## Key files
 
