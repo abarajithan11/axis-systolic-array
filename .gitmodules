@@ -1,3 +1,7 @@
 [submodule "tb/axis_vip"]
 	path = tb/axis_vip
 	url = https://github.com/abarajithan11/axis_vip.git
+[submodule "soc/chipyard/chipyard-docker"]
+	path = soc/chipyard/chipyard-docker
+	url = https://github.com/KastnerRG/chipyard-docker.git
+	branch = master
