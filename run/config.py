@@ -14,6 +14,8 @@ if __name__ == "__main__":
     parser.add_argument('--DATA_DIR', required=True, type=str)
     parser.add_argument('--FREQ_MHZ', default=100, type=int)
     parser.add_argument('--AXI_WIDTH', default=128, type=int)
+    parser.add_argument('--AXIL_WIDTH', default=32, type=int)
+    parser.add_argument('--ADDR_WIDTH', default=32, type=int)
     parser.add_argument('--BOARD', default="zcu104", type=str)
     parser.add_argument('--WORK_DIR', default='work', type=str)
 
@@ -53,6 +55,8 @@ if __name__ == "__main__":
 `define READY_PROB     {args.READY_PROB}
 `define CLK_PERIOD     {int(1000.0 / args.FREQ_MHZ)}
 `define AXI_WIDTH      {args.AXI_WIDTH}
+`define AXIL_WIDTH     {args.AXIL_WIDTH}
+`define ADDR_WIDTH     {args.ADDR_WIDTH}
 `define DIR            "{args.DATA_DIR}"
 """)
 

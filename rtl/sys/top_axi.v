@@ -10,6 +10,8 @@ module top #(
         WX         = `WX,
         WY         = `WY,
         AXI_WIDTH  = `AXI_WIDTH,
+        AXIL_WIDTH = `AXIL_WIDTH,
+        ADDR_WIDTH = `ADDR_WIDTH,
         
         WA = 32,
         LM = 1,
@@ -19,13 +21,10 @@ module top #(
         AXI_ID_WIDTH            = 6,
         AXI_STRB_WIDTH          = (AXI_WIDTH/8),
         AXI_MAX_BURST_LEN       = 32,
-        AXI_ADDR_WIDTH          = 32,
         AXIS_USER_WIDTH         = 8,         
         // AXI-Lite
-        AXIL_WIDTH              = 32,
-        AXIL_ADDR_WIDTH         = 32,
         AXIL_STRB_WIDTH         = (AXIL_WIDTH/8),
-    parameter  [AXIL_ADDR_WIDTH-1:0] AXIL_BASE_ADDR = `AXIL_BASE_ADDR
+    parameter  [ADDR_WIDTH     -1:0] AXIL_BASE_ADDR = `AXIL_BASE_ADDR
 
 ) (
     // axilite interface for configuration
@@ -36,7 +35,7 @@ module top #(
       AXI Slave
     */
     input  wire [AXI_ID_WIDTH-1:0]     s_axi_awid   ,
-    input  wire [AXIL_ADDR_WIDTH-1:0]  s_axi_awaddr ,
+    input  wire [ADDR_WIDTH     -1:0]  s_axi_awaddr ,
     input  wire [7:0]                  s_axi_awlen  ,
     input  wire [2:0]                  s_axi_awsize ,
     input  wire [1:0]                  s_axi_awburst,
@@ -55,7 +54,7 @@ module top #(
     output wire                        s_axi_bvalid ,
     input  wire                        s_axi_bready ,
     input  wire [AXI_ID_WIDTH-1:0]     s_axi_arid   ,
-    input  wire [AXIL_ADDR_WIDTH-1:0]  s_axi_araddr ,
+    input  wire [ADDR_WIDTH     -1:0]  s_axi_araddr ,
     input  wire [7:0]                  s_axi_arlen  ,
     input  wire [2:0]                  s_axi_arsize ,
     input  wire [1:0]                  s_axi_arburst,
@@ -76,7 +75,7 @@ module top #(
     */
     // Weights
     output wire [AXI_ID_WIDTH-1:0]    m_axi_mm2s_0_arid,
-    output wire [AXI_ADDR_WIDTH-1:0]  m_axi_mm2s_0_araddr,
+    output wire [ADDR_WIDTH    -1:0]  m_axi_mm2s_0_araddr,
     output wire [7:0]                 m_axi_mm2s_0_arlen,
     output wire [2:0]                 m_axi_mm2s_0_arsize,
     output wire [1:0]                 m_axi_mm2s_0_arburst,
@@ -93,7 +92,7 @@ module top #(
     output wire                       m_axi_mm2s_0_rready,
     // Pixels
     output wire [AXI_ID_WIDTH-1:0]    m_axi_mm2s_1_arid,
-    output wire [AXI_ADDR_WIDTH-1:0]  m_axi_mm2s_1_araddr,
+    output wire [ADDR_WIDTH    -1:0]  m_axi_mm2s_1_araddr,
     output wire [7:0]                 m_axi_mm2s_1_arlen,
     output wire [2:0]                 m_axi_mm2s_1_arsize,
     output wire [1:0]                 m_axi_mm2s_1_arburst,
@@ -110,7 +109,7 @@ module top #(
     output wire                       m_axi_mm2s_1_rready,
     // Partial sums
     output wire [AXI_ID_WIDTH-1:0]    m_axi_mm2s_2_arid,
-    output wire [AXI_ADDR_WIDTH-1:0]  m_axi_mm2s_2_araddr,
+    output wire [ADDR_WIDTH    -1:0]  m_axi_mm2s_2_araddr,
     output wire [7:0]                 m_axi_mm2s_2_arlen,
     output wire [2:0]                 m_axi_mm2s_2_arsize,
     output wire [1:0]                 m_axi_mm2s_2_arburst,
@@ -129,7 +128,7 @@ module top #(
     // Output
     // (* mark_debug = "true" *) 
     output wire [AXI_ID_WIDTH-1:0]    m_axi_s2mm_awid,
-    output wire [AXI_ADDR_WIDTH-1:0]  m_axi_s2mm_awaddr,
+    output wire [ADDR_WIDTH    -1:0]  m_axi_s2mm_awaddr,
     output wire [7:0]                 m_axi_s2mm_awlen,
     output wire [2:0]                 m_axi_s2mm_awsize,
     output wire [1:0]                 m_axi_s2mm_awburst,
@@ -374,17 +373,17 @@ alex_axis_adapter_any #(
 
 
 // Wires connecting AXIL2RAM to CONTROLLER
-wire [AXIL_ADDR_WIDTH-1:0] reg_wr_addr;
+wire [ADDR_WIDTH     -1:0] reg_wr_addr;
 wire [AXIL_WIDTH-1:0] reg_wr_data;
 wire [AXIL_STRB_WIDTH-1:0] reg_wr_strb;
 wire reg_wr_en;
-wire [AXIL_ADDR_WIDTH-1:0] reg_rd_addr;
+wire [ADDR_WIDTH     -1:0] reg_rd_addr;
 wire reg_rd_en;
 wire [AXIL_WIDTH-1:0] reg_rd_data;
 
 // Veriltor width mismatch bullshit
-wire [AXIL_ADDR_WIDTH-1:0] reg_wr_addr_ctrl = (reg_wr_addr-AXIL_BASE_ADDR) >> 2;
-wire [AXIL_ADDR_WIDTH-1:0] reg_rd_addr_ctrl = (reg_rd_addr-AXIL_BASE_ADDR) >> 2;
+wire [ADDR_WIDTH     -1:0] reg_wr_addr_ctrl = (reg_wr_addr-AXIL_BASE_ADDR) >> 2;
+wire [ADDR_WIDTH     -1:0] reg_rd_addr_ctrl = (reg_rd_addr-AXIL_BASE_ADDR) >> 2;
 
 
 localparam      AXI_LEN_WIDTH           = 32,
@@ -405,7 +404,7 @@ localparam      AXI_LEN_WIDTH           = 32,
     
 
 // Controller with Alex DMAs: desc signals (including od tag) and status signals
-wire [AXI_ADDR_WIDTH+AXI_LEN_WIDTH-1:0] s2mm_desc_tdata;
+wire [ADDR_WIDTH    +AXI_LEN_WIDTH-1:0] s2mm_desc_tdata;
 wire [TAG_WIDTH-1:0]                    s2mm_desc_tag;
 wire                                    s2mm_desc_tvalid;
 wire                                    s2mm_desc_tready;
@@ -413,21 +412,21 @@ wire [TAG_WIDTH-1:0]                    s2mm_status_tag;
 wire [3:0]                              s2mm_status_error;
 wire                                    s2mm_status_valid;
 
-wire [AXI_ADDR_WIDTH+AXI_LEN_WIDTH-1:0] mm2s_0_desc_tdata;
+wire [ADDR_WIDTH    +AXI_LEN_WIDTH-1:0] mm2s_0_desc_tdata;
 wire [AXIS_USER_WIDTH-1:0]              mm2s_0_desc_tuser;
 wire                                    mm2s_0_desc_tvalid;
 wire                                    mm2s_0_desc_tready;
 wire [3:0]                              mm2s_0_status_error;
 wire                                    mm2s_0_status_valid;
 
-wire [AXI_ADDR_WIDTH+AXI_LEN_WIDTH-1:0] mm2s_1_desc_tdata;
+wire [ADDR_WIDTH    +AXI_LEN_WIDTH-1:0] mm2s_1_desc_tdata;
 wire [AXIS_USER_WIDTH-1:0]              mm2s_1_desc_tuser;
 wire                                    mm2s_1_desc_tvalid;
 wire                                    mm2s_1_desc_tready;
 wire [3:0]                              mm2s_1_status_error;
 wire                                    mm2s_1_status_valid;
 
-wire [AXI_ADDR_WIDTH+AXI_LEN_WIDTH-1:0] mm2s_2_desc_tdata;
+wire [ADDR_WIDTH    +AXI_LEN_WIDTH-1:0] mm2s_2_desc_tdata;
 wire [AXIS_USER_WIDTH-1:0]              mm2s_2_desc_tuser;
 wire                                    mm2s_2_desc_tvalid;
 wire                                    mm2s_2_desc_tready;
@@ -437,7 +436,7 @@ wire                                    mm2s_2_status_valid;
 /*
   * AXI-Lite slave interface
   */
-wire [AXIL_ADDR_WIDTH-1:0]  s_axil_awaddr ;
+wire [ADDR_WIDTH     -1:0]  s_axil_awaddr ;
 wire [2:0]                  s_axil_awprot ;
 wire                        s_axil_awvalid;
 wire                        s_axil_awready;
@@ -448,7 +447,7 @@ wire                        s_axil_wready ;
 wire [1:0]                  s_axil_bresp  ;
 wire                        s_axil_bvalid ;
 wire                        s_axil_bready ;
-wire [AXIL_ADDR_WIDTH-1:0]  s_axil_araddr ;
+wire [ADDR_WIDTH     -1:0]  s_axil_araddr ;
 wire [2:0]                  s_axil_arprot ;
 wire                        s_axil_arvalid;
 wire                        s_axil_arready;
@@ -458,7 +457,7 @@ wire                        s_axil_rvalid ;
 wire                        s_axil_rready ;
 
 axi_axil_adapter #(
-  .ADDR_WIDTH           (AXIL_ADDR_WIDTH),
+  .ADDR_WIDTH           (ADDR_WIDTH     ),
   .AXI_DATA_WIDTH       (AXIL_WIDTH),
   .AXI_ID_WIDTH         (AXI_ID_WIDTH),
   .AXIL_DATA_WIDTH      (AXIL_WIDTH),
@@ -528,7 +527,7 @@ axi_axil_adapter #(
 alex_axilite_ram #(
     .DATA_WR_WIDTH(AXIL_WIDTH),
     .DATA_RD_WIDTH(AXIL_WIDTH),
-    .ADDR_WIDTH(AXIL_ADDR_WIDTH),
+    .ADDR_WIDTH(ADDR_WIDTH     ),
     .STRB_WIDTH(AXIL_STRB_WIDTH),
     .TIMEOUT(TIMEOUT)
 ) AXIL2RAM (
@@ -567,7 +566,7 @@ alex_axilite_ram #(
 );
 
 dma_controller #(
-    .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
+    .ADDR_WIDTH    (ADDR_WIDTH    ),
     .AXIS_USER_WIDTH(AXIS_USER_WIDTH),
     .AXI_DATA_WIDTH(AXIL_WIDTH),
     .AXI_LEN_WIDTH(AXI_LEN_WIDTH),
@@ -577,10 +576,10 @@ dma_controller #(
     .rstn(rstn),
 
     .reg_wr_en  (reg_wr_en),
-    .reg_wr_addr(reg_wr_addr_ctrl[AXI_ADDR_WIDTH-1:0]),
+    .reg_wr_addr(reg_wr_addr_ctrl[ADDR_WIDTH    -1:0]),
     .reg_wr_data(reg_wr_data),
     .reg_rd_en  (reg_rd_en),
-    .reg_rd_addr(reg_rd_addr_ctrl[AXI_ADDR_WIDTH-1:0]),
+    .reg_rd_addr(reg_rd_addr_ctrl[ADDR_WIDTH    -1:0]),
     .reg_rd_data(reg_rd_data),
 
     .s2mm_desc        (s2mm_desc_tdata  ),
@@ -615,7 +614,7 @@ dma_controller #(
 
 alex_axi_dma_rd #(
     .AXI_DATA_WIDTH(AXI_WIDTH   ),
-    .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
+    .ADDR_WIDTH    (ADDR_WIDTH    ),
     .AXI_STRB_WIDTH(AXI_STRB_WIDTH),
     .AXI_ID_WIDTH(AXI_ID_WIDTH),
     .AXI_MAX_BURST_LEN(AXI_MAX_BURST_LEN),
@@ -678,7 +677,7 @@ alex_axi_dma_rd #(
 
 alex_axi_dma_rd #(
     .AXI_DATA_WIDTH(AXI_WIDTH   ),
-    .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
+    .ADDR_WIDTH    (ADDR_WIDTH    ),
     .AXI_STRB_WIDTH(AXI_STRB_WIDTH),
     .AXI_ID_WIDTH(AXI_ID_WIDTH),
     .AXI_MAX_BURST_LEN(AXI_MAX_BURST_LEN),
@@ -741,7 +740,7 @@ alex_axi_dma_rd #(
 
 alex_axi_dma_rd #(
     .AXI_DATA_WIDTH(AXI_WIDTH   ),
-    .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
+    .ADDR_WIDTH    (ADDR_WIDTH    ),
     .AXI_STRB_WIDTH(AXI_STRB_WIDTH),
     .AXI_ID_WIDTH(AXI_ID_WIDTH),
     .AXI_MAX_BURST_LEN(AXI_MAX_BURST_LEN),
@@ -804,7 +803,7 @@ alex_axi_dma_rd #(
 
 alex_axi_dma_wr #(
     .AXI_DATA_WIDTH(AXI_WIDTH   ),
-    .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
+    .ADDR_WIDTH    (ADDR_WIDTH    ),
     .AXI_STRB_WIDTH(AXI_STRB_WIDTH),
     .AXI_ID_WIDTH(AXI_ID_WIDTH),
     .AXI_MAX_BURST_LEN(AXI_MAX_BURST_LEN),

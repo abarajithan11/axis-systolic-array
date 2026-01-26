@@ -2,7 +2,7 @@
 
 module saxi_to_host #(
   parameter int AXI_ID_WIDTH    = 4,
-  parameter int AXI_ADDR_WIDTH  = 32,
+  parameter int ADDR_WIDTH      = 32,
   parameter int AXI_DATA_WIDTH  = 32,   // must be 32
   parameter int AXI_STRB_WIDTH  = AXI_DATA_WIDTH/8
 )(
@@ -11,7 +11,7 @@ module saxi_to_host #(
 
   // ---------------- AXI4-Slave: Read Address ----------------
   input  wire [AXI_ID_WIDTH-1:0]      s_axi_arid,
-  input  wire [AXI_ADDR_WIDTH-1:0]    s_axi_araddr,
+  input  wire [ADDR_WIDTH    -1:0]    s_axi_araddr,
   input  wire [7:0]                   s_axi_arlen,   // beats-1
   input  wire [2:0]                   s_axi_arsize,  // must be 3'b010
   input  wire [1:0]                   s_axi_arburst, // INCR only (2'b01)
@@ -28,7 +28,7 @@ module saxi_to_host #(
 
   // ---------------- AXI4-Slave: Write Address ----------------
   input  wire [AXI_ID_WIDTH-1:0]      s_axi_awid,
-  input  wire [AXI_ADDR_WIDTH-1:0]    s_axi_awaddr,
+  input  wire [ADDR_WIDTH    -1:0]    s_axi_awaddr,
   input  wire [7:0]                   s_axi_awlen,   // beats-1
   input  wire [2:0]                   s_axi_awsize,  // must be 3'b010
   input  wire [1:0]                   s_axi_awburst, // INCR only

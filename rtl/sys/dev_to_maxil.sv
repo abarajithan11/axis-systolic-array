@@ -1,7 +1,7 @@
 `timescale 1ns/1ps
 
 module dev_to_maxil #(
-  parameter int AXI_ADDR_WIDTH = 32,
+  parameter int ADDR_WIDTH     = 32,
   parameter int AXI_DATA_WIDTH = 32,
   // minimum gap (in cycles) between accepted READ requests
   parameter int POLL_GAP       = 8
@@ -21,7 +21,7 @@ module dev_to_maxil #(
   output logic [31:0]               data_rdata_o,
 
   // AXI-Lite Master
-  output logic [AXI_ADDR_WIDTH-1:0] M_AXI_AWADDR,
+  output logic [ADDR_WIDTH    -1:0] M_AXI_AWADDR,
   output logic                      M_AXI_AWVALID,
   input  logic                      M_AXI_AWREADY,
 
@@ -34,7 +34,7 @@ module dev_to_maxil #(
   input  logic                      M_AXI_BVALID,
   output logic                      M_AXI_BREADY,
 
-  output logic [AXI_ADDR_WIDTH-1:0] M_AXI_ARADDR,
+  output logic [ADDR_WIDTH    -1:0] M_AXI_ARADDR,
   output logic                      M_AXI_ARVALID,
   input  logic                      M_AXI_ARREADY,
 
@@ -65,7 +65,7 @@ module dev_to_maxil #(
   logic [31:0] resp_rdata;
 
   // Word-aligned address (defensive)
-  wire [AXI_ADDR_WIDTH-1:0] req_addr_aligned = {req_addr[AXI_ADDR_WIDTH-1:2], 2'b00};
+  wire [ADDR_WIDTH    -1:0] req_addr_aligned = {req_addr[ADDR_WIDTH    -1:2], 2'b00};
 
   // AXI handshakes
   wire aw_hs = M_AXI_AWVALID & M_AXI_AWREADY;

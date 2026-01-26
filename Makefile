@@ -9,6 +9,8 @@ VALID_PROB = 1
 READY_PROB = 50
 FREQ_MHZ = 100
 AXI_WIDTH = 32
+ADDR_WIDTH = 32
+AXIL_WIDTH = 32
 BOARD = zcu104
 TRACE = 0
 OPTIMIZE = 0
@@ -93,6 +95,8 @@ $(WORK_DIR)/config.svh $(WORK_DIR)/config.h $(WORK_DIR)/config.tcl: $(RUN_DIR)/c
 		--WORK_DIR $(FULL_WORK_DIR) \
 		--FREQ_MHZ $(FREQ_MHZ) \
 		--AXI_WIDTH $(AXI_WIDTH) \
+		--AXIL_WIDTH $(AXIL_WIDTH) \
+		--ADDR_WIDTH $(ADDR_WIDTH) \
 		--BOARD $(BOARD) \
 
 wave:
@@ -202,6 +206,8 @@ IMAGE     := $(USR)/sa-ibex:dev
 CONTAINER := sa-ibex-$(USR)
 HOSTNAME  := saibex
 
+fresh: kill image start enter
+
 image:
 	docker build \
 		-f Dockerfile \
@@ -224,7 +230,7 @@ enter:
 	docker exec -it $(CONTAINER) bash
 
 kill:
-	docker kill $(CONTAINER) || true
-	docker rm   $(CONTAINER) || true
+	- docker kill $(CONTAINER) || true
+	- docker rm   $(CONTAINER) || true
 
 .PHONY: sim vlog elab run clean vivado regress veri xrun ibuild irun iprint iwave irun-clean veri_axis veri_smoke regress image start enter kill wave clean

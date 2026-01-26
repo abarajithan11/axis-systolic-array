@@ -14,9 +14,8 @@
 module sa_for_ibex #(
   parameter int AXI_WIDTH       = `AXI_WIDTH,
   parameter int AXI_ID_WIDTH    = 6,
-  parameter int AXI_ADDR_WIDTH  = 32,
+  parameter int ADDR_WIDTH      = 32,
   parameter int AXIL_WIDTH      = 32,
-  parameter int AXIL_ADDR_WIDTH = 32,
   parameter int STRB_WIDTH      = AXIL_WIDTH/8
   
 )(
@@ -47,7 +46,7 @@ module sa_for_ibex #(
 );
 
   // ---------------- AXI-Lite wires (dev_to_maxil -> SA "top") ----------------
-  logic [AXIL_ADDR_WIDTH-1:0]  axil_awaddr;
+  logic [ADDR_WIDTH     -1:0]  axil_awaddr;
   logic                        axil_awvalid;
   logic                        axil_awready;
   logic [AXIL_WIDTH-1:0]       axil_wdata;
@@ -57,7 +56,7 @@ module sa_for_ibex #(
   logic [1:0]                  axil_bresp;
   logic                        axil_bvalid;
   logic                        axil_bready;
-  logic [AXIL_ADDR_WIDTH-1:0]  axil_araddr;
+  logic [ADDR_WIDTH     -1:0]  axil_araddr;
   logic                        axil_arvalid;
   logic                        axil_arready;
   logic [AXIL_WIDTH-1:0]       axil_rdata;
@@ -70,7 +69,7 @@ module sa_for_ibex #(
   localparam int STRB = DW/8;
 
   logic [AXI_ID_WIDTH-1:0]      axi_arid, axi_rid;
-  logic [AXI_ADDR_WIDTH-1:0]    axi_araddr;
+  logic [ADDR_WIDTH    -1:0]    axi_araddr;
   logic [7:0]                   axi_arlen;
   logic [2:0]                   axi_arsize;
   logic [1:0]                   axi_arburst;
@@ -79,7 +78,7 @@ module sa_for_ibex #(
   logic [1:0]                   axi_rresp;
   logic                         axi_rlast, axi_rvalid, axi_rready;
   logic [AXI_ID_WIDTH-1:0]      axi_awid, axi_bid;
-  logic [AXI_ADDR_WIDTH-1:0]    axi_awaddr;
+  logic [ADDR_WIDTH    -1:0]    axi_awaddr;
   logic [7:0]                   axi_awlen;
   logic [2:0]                   axi_awsize;
   logic [1:0]                   axi_awburst;
@@ -91,7 +90,7 @@ module sa_for_ibex #(
   logic                         axi_bvalid, axi_bready;
 
   // Make local offset addresses for AXI-Lite
-  logic [AXIL_ADDR_WIDTH-1:0]  axil_awaddr_off, axil_araddr_off;
+  logic [ADDR_WIDTH     -1:0]  axil_awaddr_off, axil_araddr_off;
   assign axil_awaddr_off = axil_awaddr;
   assign axil_araddr_off = axil_araddr;
 
@@ -159,7 +158,7 @@ module sa_for_ibex #(
 
   // ---------------- dev_to_maxil: Ibex device -> AXI-Lite master ----------------
   dev_to_maxil #(
-    .AXI_ADDR_WIDTH(AXIL_ADDR_WIDTH),
+    .ADDR_WIDTH    (ADDR_WIDTH     ),
     .AXI_DATA_WIDTH(AXIL_WIDTH)
   ) u_cfg (
     .clk   (clk),
@@ -205,7 +204,7 @@ module sa_for_ibex #(
   // === mm2s_0 (READ) -> host0 ===
   saxi_to_host #(
     .AXI_ID_WIDTH   (AXI_ID_WIDTH),
-    .AXI_ADDR_WIDTH (AXI_ADDR_WIDTH),
+    .ADDR_WIDTH     (ADDR_WIDTH    ),
     .AXI_DATA_WIDTH (DW)
   ) u_h0 (
     .clk   (clk),

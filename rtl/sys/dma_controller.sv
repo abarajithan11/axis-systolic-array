@@ -2,14 +2,14 @@
 
 module dma_controller #(
   parameter
-    AXI_ADDR_WIDTH     = 32  ,
+    ADDR_WIDTH         = 32  ,
     AXI_DATA_WIDTH     = 32  ,
     AXIS_USER_WIDTH    = 65  ,
     AXI_LEN_WIDTH      = 32  ,
     AXI_TAG_WIDTH      = 8   ,
   
   localparam 
-    DESC_WIDTH = AXI_ADDR_WIDTH + AXI_LEN_WIDTH
+    DESC_WIDTH = ADDR_WIDTH     + AXI_LEN_WIDTH
 )(
   input  logic clk,
   input  logic rstn,
@@ -17,7 +17,7 @@ module dma_controller #(
   // SRAM port
   // (* mark_debug = "true" *) 
   input  logic reg_wr_en, reg_rd_en,
-  input  logic [AXI_ADDR_WIDTH-1:0] reg_wr_addr, reg_rd_addr,
+  input  logic [ADDR_WIDTH    -1:0] reg_wr_addr, reg_rd_addr,
   input  logic [AXI_DATA_WIDTH-1:0] reg_wr_data,
   output logic [AXI_DATA_WIDTH-1:0] reg_rd_data,
 
@@ -100,7 +100,7 @@ module dma_controller #(
   
   // MM2S_0 Controller
   logic mm2s_0_done;
-  logic [AXI_ADDR_WIDTH-1:0] mm2s_0_addr;
+  logic [ADDR_WIDTH    -1:0] mm2s_0_addr;
   logic [AXI_LEN_WIDTH -1:0] mm2s_0_len ;
 
   always_comb begin 
@@ -114,7 +114,7 @@ module dma_controller #(
   
   // MM2S_1 Controller
   logic mm2s_1_done;
-  logic [AXI_ADDR_WIDTH-1:0] mm2s_1_addr;
+  logic [ADDR_WIDTH    -1:0] mm2s_1_addr;
   logic [AXI_LEN_WIDTH -1:0] mm2s_1_len ;
 
   always_comb begin 
@@ -128,7 +128,7 @@ module dma_controller #(
   
   // MM2S_2 Controller
   logic mm2s_2_done;
-  logic [AXI_ADDR_WIDTH-1:0] mm2s_2_addr;
+  logic [ADDR_WIDTH    -1:0] mm2s_2_addr;
   logic [AXI_LEN_WIDTH -1:0] mm2s_2_len ;
 
   always_comb begin 
@@ -142,7 +142,7 @@ module dma_controller #(
 
   // S2MM Controller
   logic s2mm_done;
-  logic [AXI_ADDR_WIDTH-1:0] s2mm_addr;
+  logic [ADDR_WIDTH    -1:0] s2mm_addr;
   logic [AXI_LEN_WIDTH -1:0] s2mm_len ;
 
   always_comb begin 
