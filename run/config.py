@@ -9,6 +9,7 @@ if __name__ == "__main__":
     parser.add_argument('--WK', default=8, type=int)
     parser.add_argument('--WX', default=8, type=int)
     parser.add_argument('--WY', default=32, type=int)
+    parser.add_argument('--CONFIG_BASEADDR', default=0, type=str)
     parser.add_argument('--VALID_PROB', default=1000, type=int)
     parser.add_argument('--READY_PROB', default=1000, type=int)
     parser.add_argument('--DATA_DIR', required=True, type=str)
@@ -21,17 +22,21 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    '''
-    Each FPGA board allows a specific AXI base address and range.
-    '''
-    if args.BOARD == "pynq_z2":
-        config_baseaddr, config_range = "40000000", "1G"
-    elif args.BOARD == "zcu104":
-        config_baseaddr, config_range = "B0000000", "256M"
-    elif args.BOARD == "zcu102":
-        config_baseaddr, config_range = "B0000000", "256M"
+    if args.CONFIG_BASEADDR == 0:
+        '''
+        Each FPGA board allows a specific AXI base address and range.
+        '''
+        if args.BOARD == "pynq_z2":
+            config_baseaddr, config_range = "40000000", "1G"
+        elif args.BOARD == "zcu104":
+            config_baseaddr, config_range = "B0000000", "256M"
+        elif args.BOARD == "zcu102":
+            config_baseaddr, config_range = "B0000000", "256M"
+        else:
+            config_baseaddr, config_range = "40000000", "256M"
     else:
-        config_baseaddr, config_range = "40000000", "256M"
+        config_baseaddr = args.CONFIG_BASEADDR
+        config_range = "256M"
 
 
 
@@ -100,7 +105,7 @@ case class MyAxiIPParams(
   idCount:       Int    = 1,
   maxFlight:     Int    = 1,
   verilogTop:    String = "my_axi_ip",
-  resourcePath:  String = "/vsrc/my_axi_ip/my_axi_ip_blackbox.sv"
+  resourcePath:  String = "/vsrc/my_axi_ip_blackbox.sv"
 )
 
 case object MyAxiIPKey extends Field[Option[MyAxiIPParams]](None)

@@ -303,8 +303,8 @@ class MyAxiIP(pIp: MyAxiIPParams)(implicit p: Parameters) extends LazyModule {
           address       = Seq(AddressSet(pIp.baseAddress, pIp.cfgBytes - 1)),
           regionType    = RegionType.UNCACHED,
           executable    = false,
-          supportsRead  = TransferSizes(1, 64),
-          supportsWrite = TransferSizes(1, 64)
+          supportsRead  = TransferSizes(1, beatBytes),
+          supportsWrite = TransferSizes(1, beatBytes)
         )
       ),
       beatBytes = beatBytes
@@ -353,12 +353,14 @@ trait CanHavePeripheryMyAxiIP { this: BaseSubsystem =>
 
     ip.clockNode := this.sbus.fixedClockNode
 
-    this.pbus.coupleTo("my_axi_ip_cfg") { tl =>
+    this.pbus.coupleTo("my_axi_ip_cfg") { bus =>
       ip.cfg :=
         AXI4UserYanker() :=
         AXI4Deinterleaver(params.maxBurstBytes) :=
+        AXI4Buffer() :=                      // optional but recommended
         TLToAXI4() :=
-        tl
+        TLFragmenter(pbus.beatBytes, pbus.blockBytes, holdFirstDeny = true) :=
+        bus
     }
 
     def attachMaster(name: String, n: AXI4MasterNode): Unit = {

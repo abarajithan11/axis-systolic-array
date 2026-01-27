@@ -382,8 +382,9 @@ wire reg_rd_en;
 wire [AXIL_WIDTH-1:0] reg_rd_data;
 
 // Veriltor width mismatch bullshit
-wire [ADDR_WIDTH     -1:0] reg_wr_addr_ctrl = (reg_wr_addr-AXIL_BASE_ADDR) >> 2;
-wire [ADDR_WIDTH     -1:0] reg_rd_addr_ctrl = (reg_rd_addr-AXIL_BASE_ADDR) >> 2;
+localparam AXIL_BYTES = AXIL_WIDTH/8; // 32/8=4, 64/8=8
+wire [ADDR_WIDTH     -1:0] reg_wr_addr_ctrl = (reg_wr_addr-AXIL_BASE_ADDR) >> $clog2(AXIL_BYTES);
+wire [ADDR_WIDTH     -1:0] reg_rd_addr_ctrl = (reg_rd_addr-AXIL_BASE_ADDR) >> $clog2(AXIL_BYTES);
 
 
 localparam      AXI_LEN_WIDTH           = 32,

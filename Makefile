@@ -15,6 +15,7 @@ BOARD = zcu104
 TRACE = 0
 OPTIMIZE = 0
 CLEAN_REGRESS = 0
+CONFIG_BASEADDR = 0
 
 SYS = axi
 TB_MODULE = top_$(SYS)_tb
@@ -98,7 +99,7 @@ $(WORK_DIR)/config.svh $(WORK_DIR)/config.h $(WORK_DIR)/config.tcl $(WORK_DIR)/c
 		--AXIL_WIDTH $(AXIL_WIDTH) \
 		--ADDR_WIDTH $(ADDR_WIDTH) \
 		--BOARD $(BOARD) \
-
+		--CONFIG_BASEADDR $(CONFIG_BASEADDR)
 wave:
 	gtkwave $(WORK_DIR)/top_tb.vcd &
 

@@ -22,7 +22,7 @@ submodule_sync:
 	$(MAKE) -C chipyard-docker submodule_sync
 
 generate_ip:
-	$(MAKE) -C $(HOST_GIT_ROOT) clean $(IP_CONFIG_SCALA) AXI_WIDTH=64 ADDR_WIDTH=32 AXIL_WIDTH=32
+	$(MAKE) -C $(HOST_GIT_ROOT) clean $(IP_CONFIG_SCALA) AXI_WIDTH=64 ADDR_WIDTH=32 AXIL_WIDTH=64 CONFIG_BASEADDR=2000
 
 concat_sv: $(NEW_IP_NAME)_blackbox.sv
 $(NEW_IP_NAME)_blackbox.sv: $(HOST_GIT_ROOT)/$(IP_CONFIG_SCALA)
@@ -41,17 +41,15 @@ sync_ip: submodule_sync concat_sv
 
 smoke_test: generate_ip concat_sv sync_ip
 	$(MAKE) -C chipyard-docker run CMD=" \
-		cd chipyard/tests && \
-		make hello.riscv && \
-		cd ../sims/verilator && \
-		make CONFIG=SmallBoomMyAxiIPConfig && \
-		make CONFIG=SmallBoomMyAxiIPConfig BINARY=../../tests/hello.riscv run-binary"
+		make -C chipyard/tests hello_sa.riscv && \
+		make -C chipyard/sims/verilator CONFIG=SmallBoomMyAxiIPConfig BINARY=../../tests/hello_sa.riscv run-binary"
 
 clean:
 	rm -f $(SV_BLACKBOX)
 	rm -f $(CHIPYARD_SV_BLACKBOX_PATH)/$(SV_BLACKBOX)
 	rm -f $(CHIPYARD_CONFIG_PATH)/$(SCALA_SOC_CONFIG)
 	rm -f $(CHIPYARD_WRAPPER_PATH)/*
-	$(MAKE) -C chipyard-docker run CMD="cd chipyard/sims/verilator && make clean"
+	rm -f $(HOST_GIT_ROOT)/$(IP_CONFIG_SCALA)
+	$(MAKE) -C chipyard-docker run CMD="make -C chipyard/sims/verilator clean"
 
 	
