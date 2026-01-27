@@ -81,7 +81,7 @@ $(DATA_DIR): | $(WORK_DIR)
 $(DATA_DIR)/kxa.bin: $(DATA_DIR)
 	python3 run/golden.py --R $(R) --K $(K) --C $(C) --DIR $(FULL_DATA_DIR)
 
-$(WORK_DIR)/config.svh $(WORK_DIR)/config.h $(WORK_DIR)/config.tcl: $(RUN_DIR)/config.py $(WORK_DIR)
+$(WORK_DIR)/config.svh $(WORK_DIR)/config.h $(WORK_DIR)/config.tcl $(WORK_DIR)/config.scala: $(RUN_DIR)/config.py $(WORK_DIR)
 	cd $(RUN_DIR) && python3 config.py \
 		--R $(R) \
 		--C $(C) \
@@ -157,6 +157,12 @@ veri_smoke: rtl/sa/axis_sa.sv rtl/sa/mac.sv rtl/sa/n_delay.sv rtl/sa/tri_buffer.
 	mkdir -p $(WORK_DIR)
 	verilator --top smoke_tb --binary -j 0 -O3 --trace --Wno-BLKANDNBLK --Wno-INITIALDLY --Mdir $(WORK_DIR) $^
 	@cd run && work/Vsmoke_tb
+
+
+#----------------- Chipyard/Boom System ---------
+
+boom_smoke_test:
+	$(MAKE) -C soc/chipyard smoke_test
 
 #----------------- Ibex System ------------------
 

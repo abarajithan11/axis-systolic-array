@@ -41,6 +41,7 @@ if __name__ == "__main__":
     svh_path = os.path.join(args.WORK_DIR, "config.svh")
     h_path = os.path.join(args.WORK_DIR, "config.h")
     tcl_path = os.path.join(args.WORK_DIR, "config.tcl")
+    scala_path = os.path.join(args.WORK_DIR, "config.scala")
 
     # Generate config.svh
     with open(svh_path, 'w') as f:
@@ -82,5 +83,27 @@ set FREQ_MHZ            {args.FREQ_MHZ}
 set AXI_WIDTH           {args.AXI_WIDTH}
 set BOARD               {args.BOARD}
 """)
+    
+    # Generate config.scala for Chipyard integration
+    with open(scala_path, "w") as f:
+        f.write(f"""package chipyard.my_axi_ip
 
-    print(f"Generated {svh_path}, {h_path}, and {tcl_path} successfully.")
+import org.chipsalliance.cde.config.Field
+
+case class MyAxiIPParams(
+  baseAddress:   BigInt = 0x{config_baseaddr}L,
+  cfgBytes:      Int    = 0x1000,
+  axiAddrBits:   Int    = {args.ADDR_WIDTH},
+  axiDataBits:   Int    = {args.AXI_WIDTH},
+  axiIdBits:     Int    = 6,
+  maxBurstBytes: Int    = 32 * ({args.AXI_WIDTH} / 8),
+  idCount:       Int    = 1,
+  maxFlight:     Int    = 1,
+  verilogTop:    String = "my_axi_ip",
+  resourcePath:  String = "/vsrc/my_axi_ip/my_axi_ip_blackbox.sv"
+)
+
+case object MyAxiIPKey extends Field[Option[MyAxiIPParams]](None)
+""")
+
+    print(f"Generated {svh_path}, {h_path}, {tcl_path}, and {scala_path} successfully.")
