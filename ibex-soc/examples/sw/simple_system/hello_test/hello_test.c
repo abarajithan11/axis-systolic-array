@@ -1,12 +1,13 @@
-// Copyright lowRISC contributors.
-// Licensed under the Apache License, Version 2.0, see LICENSE for details.
-// SPDX-License-Identifier: Apache-2.0
-
 #include "simple_system_common.h"
 #include <stdarg.h>
 #include <stdint.h>
-
 #include "firmware_helpers.h"
+
+#include "config.h"
+
+Memory_st mem;
+
+#include "fb_fw_wrap.h"
 #include "firmware.h"
 
 int main(int argc, char **argv) {
@@ -14,22 +15,19 @@ int main(int argc, char **argv) {
   pcount_reset();
   pcount_enable(1);
 
-  volatile uint32_t * const cfg = (volatile uint32_t *)CONFIG_BASEADDR;
-  Memory_st *p_mem = &mem_phy;
-  
-  
-  // Test read/write to config regs
-  volatile uint32_t * const p_addr = &cfg[A_MM2S_0_ADDR];
-  puts("Addr:"); puthex((uintptr_t)p_addr); putchar('\n');
-  *p_addr = 123u;
-  puthex(0xDEADBEEF); putchar('\n');
-  uint32_t val = *p_addr;
-  puts("Val:"); puthex(val); putchar('\n');
+  fb_reg_t *cfg = fb_get_cfg_p();
 
-  // Run the test
-  randomize_inputs(p_mem, 500);
-  run(p_mem);
-  check_output(p_mem);
+  fb_reg_t *p_addr = cfg + A_MM2S_0_ADDR;
+  puts("Addr:"); puthex((uintptr_t)p_addr); putchar('\n');
+
+  fb_write_reg(p_addr, (fb_reg_t)123u);
+
+  fb_reg_t val = fb_read_reg(p_addr);
+  puts("Val:"); puthex((uintptr_t)val); putchar('\n');
+
+  randomize_inputs(&mem, 500);
+  run(&mem);
+  check_output(&mem);
 
   pcount_enable(0);
   return 0;

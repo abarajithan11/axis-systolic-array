@@ -11,11 +11,10 @@ FREQ_MHZ = 100
 AXI_WIDTH = 32
 ADDR_WIDTH = 32
 AXIL_WIDTH = 32
-BOARD = zcu104
+TARGET = sim
 TRACE = 0
 OPTIMIZE = 0
 CLEAN_REGRESS = 0
-CONFIG_BASEADDR = 0
 
 SYS = axi
 TB_MODULE = top_$(SYS)_tb
@@ -98,8 +97,7 @@ $(WORK_DIR)/config.svh $(WORK_DIR)/config.h $(WORK_DIR)/config.tcl $(WORK_DIR)/c
 		--AXI_WIDTH $(AXI_WIDTH) \
 		--AXIL_WIDTH $(AXIL_WIDTH) \
 		--ADDR_WIDTH $(ADDR_WIDTH) \
-		--BOARD $(BOARD) \
-		--CONFIG_BASEADDR $(CONFIG_BASEADDR)
+		--TARGET $(TARGET)
 wave:
 	gtkwave $(WORK_DIR)/top_tb.vcd &
 
@@ -166,6 +164,9 @@ boom_smoke_test:
 	$(MAKE) -C soc/chipyard smoke_test
 
 #----------------- Ibex System ------------------
+
+ibex_test:
+	make clean ibuild irun iprint TARGET=ibex 
 
 iprint: 
 	$(MAKE) -C ibex-soc print

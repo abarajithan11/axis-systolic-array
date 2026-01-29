@@ -1,4 +1,3 @@
-
 `timescale 1ns/1ps
 
 module fb_axi_vip #(
@@ -102,7 +101,9 @@ module fb_axi_vip #(
     LSB = $clog2(M_AXI_DATA_WIDTH)-3,
     OPT_LOCK          = 1'b0,
     OPT_LOCKID        = 1'b1,
-    OPT_LOWPOWER      = 1'b0;
+    OPT_LOWPOWER      = 1'b0,
+    S_BYTES           = (S_AXI_DATA_WIDTH/8),
+    S_SIZE            = $clog2(S_BYTES);
 
   bit  [M_COUNT-1:0]                            ren;
   bit  [M_COUNT-1:0][M_AXI_ADDR_WIDTH-LSB-1:0]  raddr;
@@ -153,7 +154,7 @@ module fb_axi_vip #(
     s_axi_awid   [i]  <= S_AXI_ID_WIDTH'(1);
     s_axi_awaddr [i]  <= addr;
     s_axi_awlen  [i]  <= 8'd0;
-    s_axi_awsize [i]  <= 3'd2; // 4 bytes
+    s_axi_awsize [i]  <= 3'(S_SIZE); // 4 bytes
     s_axi_awburst[i]  <= 2'b01;
     s_axi_awlock [i]  <= 0;
     s_axi_awcache[i]  <= 0;
@@ -164,7 +165,7 @@ module fb_axi_vip #(
     at_posedge_clk();
     s_axi_awvalid[i]  <= 0;
     s_axi_wdata  [i]  <= data;
-    s_axi_wstrb  [i]  <= S_AXI_STRB_WIDTH'(4'hF);
+    s_axi_wstrb  [i]  <= {S_AXI_STRB_WIDTH{1'b1}};
     s_axi_wlast  [i]  <= 1;
     s_axi_wvalid [i]  <= 1;
 
@@ -188,7 +189,7 @@ module fb_axi_vip #(
     s_axi_arid   [i]  <= S_AXI_ID_WIDTH'(1);
     s_axi_araddr [i]  <= addr;
     s_axi_arlen  [i]  <= 8'd0;
-    s_axi_arsize [i]  <= 3'd2;
+    s_axi_arsize [i]  <= 3'(S_SIZE);
     s_axi_arburst[i]  <= 2'b01;
     s_axi_arlock [i]  <= 0;
     s_axi_arcache[i]  <= 0;
@@ -208,21 +209,26 @@ module fb_axi_vip #(
     s_axi_rready[i] <= 0;
   endtask
 
-  export "DPI-C" task fb_task_read_reg32;
-  export "DPI-C" function fb_fn_read_reg32;
-  export "DPI-C" task fb_task_write_reg32;
+  export "DPI-C" task fb_task_read_reg;
+  export "DPI-C" function fb_fn_read_reg;
+  export "DPI-C" task fb_task_write_reg;
 
-  int tmp_get_data;
-  task automatic fb_task_read_reg32(input longint addr);
-    axi_read(S_AXI_ADDR_WIDTH'(addr), tmp_get_data);
+  typedef bit [S_AXI_DATA_WIDTH-1:0] fb_reg_t;
+  typedef longint unsigned fb_reg_64_t;
+  fb_reg_64_t tmp_get_data;
+
+  task automatic fb_task_read_reg(input longint addr);
+    fb_reg_t d;
+    axi_read(S_AXI_ADDR_WIDTH'(addr), d);
+    tmp_get_data = fb_reg_64_t'(d);
   endtask
 
-  function automatic int fb_fn_read_reg32();
+  function automatic fb_reg_64_t fb_fn_read_reg();
     return tmp_get_data;
   endfunction
 
-  task automatic fb_task_write_reg32(input longint addr, input int data);
-    axi_write(S_AXI_ADDR_WIDTH'(addr), data);
+  task automatic fb_task_write_reg(input longint addr, input longint data);
+    axi_write(S_AXI_ADDR_WIDTH'(addr), fb_reg_t'(data));
   endtask
 
 
@@ -373,13 +379,13 @@ module fb_axi_vip #(
 `endif
 
   import "DPI-C" context task `AUTOMATIC run(input chandle mem_ptr_virtual);
-  import "DPI-C" context function chandle fb_get_mp ();
+  import "DPI-C" context function chandle fb_get_mem_p ();
 
   chandle mem_ptr_virtual;
   initial begin
     firebridge_done <= 0;
     wait (rstn);
-    mem_ptr_virtual = fb_get_mp();
+    mem_ptr_virtual = fb_get_mem_p();
     run(mem_ptr_virtual);
     firebridge_done <= 1;
   end

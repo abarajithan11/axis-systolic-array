@@ -1,3 +1,6 @@
+#ifndef FB_FW_WRAP_H
+#define FB_FW_WRAP_H
+
 #ifndef RISCV
   #include <assert.h>
   #include <stdlib.h>
@@ -18,50 +21,63 @@ typedef double   f64;
 
 #ifdef __cplusplus
   #define EXT_C "C"
-  #define restrict __restrict__ 
+  #define restrict __restrict__
 #else
   #define EXT_C
 #endif
 
+#ifndef REG_WIDTH
+  #define REG_WIDTH 32
+#endif
+
+#if (REG_WIDTH == 32)
+  typedef volatile u32 fb_reg_t;
+#elif (REG_WIDTH == 64)
+  typedef volatile u64 fb_reg_t;
+#else
+  #error "REG_WIDTH must be 32 or 64"
+#endif
+
+static inline fb_reg_t *fb_get_cfg_p(void) {
+  return (fb_reg_t *)(uintptr_t)CONFIG_BASEADDR;
+}
+
+extern EXT_C void *fb_get_mem_p(){
+  return &mem;
+}
+
 #ifdef SIM
   #define XDEBUG
   #include <stdio.h>
-  #define sim_fprintf fprintf
   #include <stdbool.h>
-  #define STRINGIFY(x) #x
-  #define TO_STRING(x) STRINGIFY(x)
 
-  Memory_st mem_phy;
-  extern EXT_C void fb_task_write_reg32(u64, u32);
-	extern EXT_C void fb_task_read_reg32(u64);
-	extern EXT_C u32  fb_fn_read_reg32();
+  extern EXT_C void fb_task_write_reg(u64 addr, u64 data);
+  extern EXT_C void fb_task_read_reg(u64 addr);
+  extern EXT_C u64  fb_fn_read_reg(void);
 
-	u32 fb_read_reg32(void* addr){
-    fb_task_read_reg32((u64)addr);
-    u32 data = fb_fn_read_reg32();
-    return data;
+  static inline fb_reg_t fb_read_reg(fb_reg_t *addr) {
+    fb_task_read_reg((u64)(uintptr_t)addr);
+    return (fb_reg_t)fb_fn_read_reg();
   }
-  void fb_write_reg32(void* addr, u32 data) {
-    fb_task_write_reg32((u64)addr, data);
+
+  static inline void fb_write_reg(fb_reg_t *addr, fb_reg_t data) {
+    fb_task_write_reg((u64)(uintptr_t)addr, (u64)data);
   }
-  static inline void flush_cache(void *addr, uint32_t bytes) {} // Do nothing
+
+  static inline void flush_cache(void *addr, uint32_t bytes) { (void)addr; (void)bytes; }
 
 #else
   #define sim_fprintf(...)
 
-  #ifdef RISCV
-    Memory_st mem_phy;
-  #else
-    #define mem_phy (*(Memory_st* restrict)MEM_BASEADDR)
-  #endif
-
-  volatile u32 fb_read_reg32(void *addr){
-    return *(volatile u32 *)addr;
+  static inline fb_reg_t fb_read_reg(fb_reg_t *addr) {
+    return *addr;
   }
 
-  void fb_write_reg32(void *addr, u32 data){	
-    *(volatile u32 *restrict)addr = data;
+  static inline void fb_write_reg(fb_reg_t *addr, fb_reg_t data) {
+    *addr = data;
   }
+
+  static inline void flush_cache(void *addr, uint32_t bytes) { (void)addr; (void)bytes; }
 #endif
 
 #ifdef XDEBUG
@@ -76,31 +92,30 @@ typedef double   f64;
 #ifdef SIM
 
 extern EXT_C u32 fb_addr_64to32(void* restrict addr){
-  u64 offset = (u64)addr - (u64)&mem_phy;
-  return (u32)offset + MEM_BASEADDR;
+  u64 offset = (u64)(uintptr_t)addr - (u64)(uintptr_t)&mem;
+  return (u32)offset + (u32)0x20000000u;
 }
 
 extern EXT_C u64 fb_sim_addr_32to64(u32 addr){
-  return (u64)addr - (u64)MEM_BASEADDR + (u64)&mem_phy;
+  return (u64)addr - (u64)0x20000000u + (u64)(uintptr_t)&mem;
 }
 
 extern EXT_C u8 fb_c_read_ddr8_addr32 (u32 addr_32){
   u64 addr = fb_sim_addr_32to64(addr_32);
-  u8 val = *(u8*restrict)addr;
+  u8 val = *(u8*restrict)(uintptr_t)addr;
   return val;
 }
 
 extern EXT_C void fb_c_write_ddr8_addr32 (u32 addr_32, u8 data){
   u64 addr = fb_sim_addr_32to64(addr_32);
-  *(u8*restrict)addr = data;
+  *(u8*restrict)(uintptr_t)addr = data;
 }
 
-extern EXT_C void *fb_get_mp(){
-  return &mem_phy;
-}
 #else
 
 u32 fb_addr_64to32 (void* addr){
   return (u32)((uintptr_t)addr);
 }
+#endif
+
 #endif

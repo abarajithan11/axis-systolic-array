@@ -60,7 +60,7 @@ Note that the weights k[K,C] needs to be transposed as k.T[C,K] and stored in th
 
 Use the template:
 ```bash
-make <TOOL> SYS=<CFG>
+make <TOOL> SYS=<CFG> TARGET=<TARGET>
 ```
 
 Where:
@@ -72,6 +72,13 @@ Where:
   * `axi` - 5 AXI ports. One S_AXIL and four M_AXI. Full-throughput 
   * `axi_int` - 2 AXI ports. 4xM_AXI merged into one via interconnect
   * `ram` - 5 x simplified RAM ports
+* `<TARGET>`: This sets the baseaddr & range
+  * `sim` - Simulation only
+  * `pynq_z2`
+  * `zcu104`
+  * `zcu102`
+  * `ibex`
+  * `boom`
 
 Examples
 ```
@@ -82,32 +89,17 @@ make xrun SYS=ram       # Xcelium, simplified RAM ports
 
 ## Build and Simulate a Full SoC (System on Chip) with Ibex RISC-V processor
 
-First, generate the required files.
+To enter docker:
 
-```
-make veri        # generate .h, .bin ...etc
-```
-
-Start and enter the docker container
-
-```
-make kill image start enter    # Rebuild docker and enter
-
-# make image    # Build docker image with ibex dependencies
-# make start    # Start container
-# make enter    # Enter the container
-# make kill     # Kill and delete the container if needed
+```sh
+make fresh
+make enter
 ```
 
-Work with Ibex System
+To test ibex:
 
-
-```
-make ibuild      # Build hardware (takes a few minutes)
-make irun        # Build software, run simulation and print console output
-make iprint      # Print output
-make iclean      # Clean build & run
-make irun-clean  # Clean only run
+```sh
+make ibex_test
 ```
 
 Key files:
@@ -123,8 +115,8 @@ Key files:
 ### Vivado: 
 
 ```
-make vivado BOARD=zcu104
-make vivado BOARD=zcu102
+make vivado TARGET=zcu104
+make vivado TARGET=zcu102
 ```
 
 ### Vitis:
