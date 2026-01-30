@@ -160,8 +160,8 @@ veri_smoke: rtl/sa/axis_sa.sv rtl/sa/mac.sv rtl/sa/n_delay.sv rtl/sa/tri_buffer.
 
 #----------------- Chipyard/Boom System ---------
 
-boom_smoke_test:
-	$(MAKE) -C soc/chipyard smoke_test
+boom_test:
+	$(MAKE) -C soc/chipyard test
 
 #----------------- Ibex System ------------------
 

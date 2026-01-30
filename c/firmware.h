@@ -1,8 +1,24 @@
 #include <stdint.h>
 
-extern EXT_C void run(Memory_st *restrict mp) {
+void run(Memory_st *restrict mp) {
+
+  fb_reg_t *cfg = (fb_reg_t *)CONFIG_BASEADDR;
+
+  fb_write_reg(cfg + A_MM2S_0_ADDR , fb_shorten_ptr(mp->k, mp));
+  fb_write_reg(cfg + A_MM2S_0_BYTES, sizeof(mp->k));
+  fb_write_reg(cfg + A_MM2S_1_ADDR , fb_shorten_ptr(mp->x, mp));
+  fb_write_reg(cfg + A_MM2S_1_BYTES, sizeof(mp->x));
+  fb_write_reg(cfg + A_MM2S_2_ADDR , fb_shorten_ptr(mp->a, mp));
+  fb_write_reg(cfg + A_MM2S_2_BYTES, sizeof(mp->a));
+  fb_write_reg(cfg + A_S2MM_ADDR   , fb_shorten_ptr(mp->y, mp));
+  fb_write_reg(cfg + A_S2MM_BYTES  , sizeof(mp->y));
+  fb_write_reg(cfg + A_START       , 1);
+
+  while (!fb_read_reg(cfg + A_S2MM_DONE)) {}
+}
 
 #ifdef SIM
+extern EXT_C void run_sim(Memory_st *restrict mp) {
   FILE *fp;
   char f_path[1000];
   size_t bytes;
@@ -13,31 +29,17 @@ extern EXT_C void run(Memory_st *restrict mp) {
   bytes = fread(mp->k, 1, sizeof(mp->k) + sizeof(mp->x) + sizeof(mp->a), fp);
   (void)bytes;
   fclose(fp);
-#endif
 
-  fb_reg_t *cfg = fb_get_cfg_p();
+  run(mp);
 
-  fb_write_reg(cfg + A_MM2S_0_ADDR , (fb_reg_t)fb_addr_64to32(mp->k));
-  fb_write_reg(cfg + A_MM2S_0_BYTES, (fb_reg_t)sizeof(mp->k));
-  fb_write_reg(cfg + A_MM2S_1_ADDR , (fb_reg_t)fb_addr_64to32(mp->x));
-  fb_write_reg(cfg + A_MM2S_1_BYTES, (fb_reg_t)sizeof(mp->x));
-  fb_write_reg(cfg + A_MM2S_2_ADDR , (fb_reg_t)fb_addr_64to32(mp->a));
-  fb_write_reg(cfg + A_MM2S_2_BYTES, (fb_reg_t)sizeof(mp->a));
-  fb_write_reg(cfg + A_S2MM_ADDR   , (fb_reg_t)fb_addr_64to32(mp->y));
-  fb_write_reg(cfg + A_S2MM_BYTES  , (fb_reg_t)sizeof(mp->y));
-  fb_write_reg(cfg + A_START       , (fb_reg_t)1);
-
-  while (!fb_read_reg(cfg + A_S2MM_DONE)) {}
-
-#ifdef SIM
   sprintf(f_path, "%s/y.bin", DIR);
   fp = fopen(f_path, "wb");
   assert(fp);
   bytes = fwrite(mp->y, 1, sizeof(mp->y), fp);
   (void)bytes;
   fclose(fp);
-#endif
 }
+#endif
 
 void randomize_inputs(Memory_st *restrict mp, int seed) {
   srand(seed);

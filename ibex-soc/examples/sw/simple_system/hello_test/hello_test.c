@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
   pcount_reset();
   pcount_enable(1);
 
-  fb_reg_t *cfg = fb_get_cfg_p();
+  fb_reg_t *cfg = (fb_reg_t *)CONFIG_BASEADDR;
 
   fb_reg_t *p_addr = cfg + A_MM2S_0_ADDR;
   puts("Addr:"); puthex((uintptr_t)p_addr); putchar('\n');

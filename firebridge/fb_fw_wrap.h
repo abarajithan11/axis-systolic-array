@@ -38,10 +38,6 @@ typedef double   f64;
   #error "REG_WIDTH must be 32 or 64"
 #endif
 
-static inline fb_reg_t *fb_get_cfg_p(void) {
-  return (fb_reg_t *)(uintptr_t)CONFIG_BASEADDR;
-}
-
 extern EXT_C void *fb_get_mem_p(){
   return &mem;
 }
@@ -91,29 +87,31 @@ extern EXT_C void *fb_get_mem_p(){
 // Rest of the helper functions used in simulation.
 #ifdef SIM
 
-extern EXT_C u32 fb_addr_64to32(void* restrict addr){
-  u64 offset = (u64)(uintptr_t)addr - (u64)(uintptr_t)&mem;
-  return (u32)offset + (u32)0x20000000u;
+#define FB_SIM_DDR_BASE 0x20000000u
+
+static inline u32 fb_shorten_ptr(void* addr, void* p_mem){
+  u64 offset = (u64)(uintptr_t)addr - (u64)(uintptr_t)p_mem;
+  return (u32)offset + (u32)FB_SIM_DDR_BASE;
 }
 
-extern EXT_C u64 fb_sim_addr_32to64(u32 addr){
-  return (u64)addr - (u64)0x20000000u + (u64)(uintptr_t)&mem;
+static inline u64 fb_widen_ptr(u32 addr, void* p_mem){
+  return (u64)addr - (u64)FB_SIM_DDR_BASE + (u64)(uintptr_t)p_mem;
 }
 
-extern EXT_C u8 fb_c_read_ddr8_addr32 (u32 addr_32){
-  u64 addr = fb_sim_addr_32to64(addr_32);
+extern EXT_C u8 fb_c_read_ddr8_addr32 (u32 addr_32, void* p_mem){
+  u64 addr = fb_widen_ptr(addr_32, p_mem);
   u8 val = *(u8*restrict)(uintptr_t)addr;
   return val;
 }
 
-extern EXT_C void fb_c_write_ddr8_addr32 (u32 addr_32, u8 data){
-  u64 addr = fb_sim_addr_32to64(addr_32);
+extern EXT_C void fb_c_write_ddr8_addr32 (u32 addr_32, u8 data, void* p_mem){
+  u64 addr = fb_widen_ptr(addr_32, p_mem);
   *(u8*restrict)(uintptr_t)addr = data;
 }
 
 #else
 
-u32 fb_addr_64to32 (void* addr){
+static inline u32 fb_shorten_ptr (void* addr, void* p_mem){
   return (u32)((uintptr_t)addr);
 }
 #endif

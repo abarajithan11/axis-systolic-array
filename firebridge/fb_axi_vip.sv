@@ -95,7 +95,7 @@ module fb_axi_vip #(
   output bit [M_COUNT-1:0]                        m_axi_rvalid ,
   input  bit [M_COUNT-1:0]                        m_axi_rready  
 );
-
+  chandle p_mem;
   genvar m;
   localparam  
     LSB = $clog2(M_AXI_DATA_WIDTH)-3,
@@ -263,8 +263,8 @@ module fb_axi_vip #(
   
 
   // Handle M Masters
-  import "DPI-C" context function byte fb_c_read_ddr8_addr32  (input int unsigned addr);
-  import "DPI-C" context function void fb_c_write_ddr8_addr32 (input int unsigned addr, input byte data);
+  import "DPI-C" context function byte fb_c_read_ddr8_addr32  (input int unsigned addr, chandle p_mem);
+  import "DPI-C" context function void fb_c_write_ddr8_addr32 (input int unsigned addr, input byte data, chandle p_mem);
 
   for (m=0; m< M_COUNT; m++) begin
 
@@ -355,14 +355,14 @@ module fb_axi_vip #(
       end else begin
         if (ren[m]) begin
           for (int i = 0; i < M_AXI_DATA_WIDTH/8; i++) begin
-            tmp_data[i*8 +: 8] = fb_c_read_ddr8_addr32((32'(raddr[m]) << LSB) + i);
+            tmp_data[i*8 +: 8] = fb_c_read_ddr8_addr32((32'(raddr[m]) << LSB) + i, p_mem);
           end
           rdata[m] <= tmp_data;
         end
         if (wen[m]) 
           for (int i = 0; i < M_AXI_DATA_WIDTH/8; i++) 
             if (wstrb[m][i]) 
-              fb_c_write_ddr8_addr32((32'(waddr[m]) << LSB) + i, wdata[m][i*8 +: 8]);
+              fb_c_write_ddr8_addr32((32'(waddr[m]) << LSB) + i, wdata[m][i*8 +: 8], p_mem);
       end
       end
   end
@@ -378,15 +378,14 @@ module fb_axi_vip #(
   `define AUTOMATIC automatic
 `endif
 
-  import "DPI-C" context task `AUTOMATIC run(input chandle mem_ptr_virtual);
+  import "DPI-C" context task `AUTOMATIC run_sim(input chandle p_mem);
   import "DPI-C" context function chandle fb_get_mem_p ();
 
-  chandle mem_ptr_virtual;
   initial begin
     firebridge_done <= 0;
     wait (rstn);
-    mem_ptr_virtual = fb_get_mem_p();
-    run(mem_ptr_virtual);
+    p_mem = fb_get_mem_p();
+    run_sim(p_mem);
     firebridge_done <= 1;
   end
 

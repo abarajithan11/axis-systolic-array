@@ -24,7 +24,7 @@ int main() {
   init_platform();
 
   Memory_st *p_mem = fb_get_mem_p();
-  void *p_cfg = (void *)fb_get_cfg_p();
+  void *p_cfg = (fb_reg_t *)CONFIG_BASEADDR;
 
   xil_printf("Hello! Config:%p, Mem:%p\n", p_cfg, p_mem);
 
