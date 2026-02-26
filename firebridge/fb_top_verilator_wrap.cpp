@@ -13,16 +13,6 @@
 #define VTB_H(tb) STR(VTB(tb).h)
 #include VTB_H(TB_MODULE)
 
-// Build V<tb>_<tb>.h
-#define VTB_TB(tb) V##tb##_##tb
-#define VTB_TB_H(tb) STR(VTB_TB(tb).h)
-#include VTB_TB_H(TB_MODULE)
-
-// Build V<tb>_<fb>__pi1.h
-#define VTB_FIREBRIDGE(tb, fb) V##tb##_##fb##__pi1
-#define VTB_FIREBRIDGE_H(tb, fb) STR(VTB_FIREBRIDGE(tb, fb).h)
-#include VTB_FIREBRIDGE_H(TB_MODULE, FB_MODULE)
-
 #define VCLASS XCAT(V, TB_MODULE)
 
 using namespace std;

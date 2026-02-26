@@ -28,7 +28,7 @@ module top_axi_tb;
     DATA_WR_WIDTH       = AXIL_WIDTH         ,
     DATA_RD_WIDTH       = AXIL_WIDTH         ;
 
-  logic clk /* verilator public */ = 0, rstn, firebridge_done;
+  logic clk = 0, rstn, firebridge_done;
   initial forever #(CLK_PERIOD/2) clk = ~clk;
 
   localparam S_COUNT = 1;

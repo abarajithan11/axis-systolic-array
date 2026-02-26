@@ -56,7 +56,7 @@ module axis_sa #(
       always_ff @(posedge clk)
         if (!rstn)                r_last[d] <= 0;
         else if (en_shift) 
-          if (m_last)             r_last[d] <= 0;            // At the last beat, clear all diagonal regs beyond C
+          if (d >= C-1 && m_last) r_last[d] <= 0;            // At the last beat, clear all diagonal regs beyond C
           else                    r_last[d] <= r_last[d-1];  // on non-last beats, shift right
   
     always_ff @(posedge clk)
@@ -69,13 +69,13 @@ module axis_sa #(
 
     always_ff @(posedge clk)
       if (!rstn)                               r_valid[d] <= 0;
-      else if (en_shift && m_last)             r_valid[d] <= 0; // At the last beat, clear all diagonal regs beyond C
+      else if (d >= C-1 && en_shift && m_last) r_valid[d] <= 0; // At the last beat, clear all diagonal regs beyond C
       else if (r_copy [d])                     r_valid[d] <= 1;
       else if (r_clear[d])                     r_valid[d] <= 0;
   end
 
   assign m_valid = r_valid[D-1];
-  assign m_last  = r_last [D-1];
+  assign m_last  = r_last [C-1];
 
   logic [R-1:0][C-1:0][WX-1:0] xo;
   logic [R-1:0][C-1:0][WK-1:0] ko;
