@@ -9,7 +9,9 @@ VALID_PROB = 1
 READY_PROB = 50
 FREQ_MHZ = 100
 AXI_WIDTH = 32
-BOARD = zcu104
+ADDR_WIDTH = 32
+AXIL_WIDTH = 32
+TARGET = sim
 TRACE = 0
 OPTIMIZE = 0
 CLEAN_REGRESS = 0
@@ -79,7 +81,7 @@ $(DATA_DIR): | $(WORK_DIR)
 $(DATA_DIR)/kxa.bin: $(DATA_DIR)
 	python3 run/golden.py --R $(R) --K $(K) --C $(C) --DIR $(FULL_DATA_DIR)
 
-$(WORK_DIR)/config.svh $(WORK_DIR)/config.h $(WORK_DIR)/config.tcl: $(RUN_DIR)/config.py $(WORK_DIR)
+$(WORK_DIR)/config.svh $(WORK_DIR)/config.h $(WORK_DIR)/config.tcl $(WORK_DIR)/config.scala: $(RUN_DIR)/config.py $(WORK_DIR)
 	cd $(RUN_DIR) && python3 config.py \
 		--R $(R) \
 		--C $(C) \
@@ -93,8 +95,9 @@ $(WORK_DIR)/config.svh $(WORK_DIR)/config.h $(WORK_DIR)/config.tcl: $(RUN_DIR)/c
 		--WORK_DIR $(FULL_WORK_DIR) \
 		--FREQ_MHZ $(FREQ_MHZ) \
 		--AXI_WIDTH $(AXI_WIDTH) \
-		--BOARD $(BOARD) \
-
+		--AXIL_WIDTH $(AXIL_WIDTH) \
+		--ADDR_WIDTH $(ADDR_WIDTH) \
+		--TARGET $(TARGET)
 wave:
 	gtkwave $(WORK_DIR)/top_tb.vcd &
 
@@ -154,7 +157,16 @@ veri_smoke: rtl/sa/axis_sa.sv rtl/sa/mac.sv rtl/sa/n_delay.sv rtl/sa/tri_buffer.
 	verilator --top smoke_tb --binary -j 0 -O3 --trace --Wno-BLKANDNBLK --Wno-INITIALDLY --Mdir $(WORK_DIR) $^
 	@cd run && work/Vsmoke_tb
 
+
+#----------------- Chipyard/Boom System ---------
+
+boom_test:
+	$(MAKE) -C soc/chipyard test
+
 #----------------- Ibex System ------------------
+
+ibex_test:
+	make clean ibuild irun iprint TARGET=ibex 
 
 iprint: 
 	$(MAKE) -C ibex-soc print
@@ -202,6 +214,8 @@ IMAGE     := $(USR)/sa-ibex:dev
 CONTAINER := sa-ibex-$(USR)
 HOSTNAME  := saibex
 
+fresh: kill image start enter
+
 image:
 	docker build \
 		-f Dockerfile \
@@ -224,7 +238,7 @@ enter:
 	docker exec -it $(CONTAINER) bash
 
 kill:
-	docker kill $(CONTAINER) || true
-	docker rm   $(CONTAINER) || true
+	- docker kill $(CONTAINER) || true
+	- docker rm   $(CONTAINER) || true
 
 .PHONY: sim vlog elab run clean vivado regress veri xrun ibuild irun iprint iwave irun-clean veri_axis veri_smoke regress image start enter kill wave clean

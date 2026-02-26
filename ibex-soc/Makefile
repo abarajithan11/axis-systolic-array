@@ -29,7 +29,7 @@ build:
 		$(FUSESOC_CONFIG_OPTS)
 
 sw-simple-hello: $(simple-system-program)
-$(simple-system-program): $(SYSTEM_DIR)/hello_test.c $(SYSTEM_DIR)/sa.h
+$(simple-system-program): $(SYSTEM_DIR)/hello_test.c
 	cd $(SYSTEM_DIR) && $(MAKE)
 
 run-clean:

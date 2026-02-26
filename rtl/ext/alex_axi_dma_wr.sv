@@ -36,7 +36,7 @@ module alex_axi_dma_wr #
     // Width of AXI data bus in bits
     parameter AXI_DATA_WIDTH = 128,
     // Width of AXI address bus in bits
-    parameter AXI_ADDR_WIDTH = 32,
+    parameter ADDR_WIDTH     = 32,
     // Width of AXI wstrb (width of data bus in words)
     parameter AXI_STRB_WIDTH = 16,
     // Width of AXI ID signal
@@ -81,9 +81,9 @@ module alex_axi_dma_wr #
     /*
      * AXI write descriptor input
      */
-    //input  wire [AXI_ADDR_WIDTH-1:0]  s_axis_write_desc_addr,
+    //input  wire [ADDR_WIDTH    -1:0]  s_axis_write_desc_addr,
     //input  wire [LEN_WIDTH-1:0]       s_axis_write_desc_len,
-    input  wire [AXI_ADDR_WIDTH+LEN_WIDTH-1:0] s_axis_write_desc_tdata,
+    input  wire [ADDR_WIDTH    +LEN_WIDTH-1:0] s_axis_write_desc_tdata,
     input  wire [TAG_WIDTH-1:0]       s_axis_write_desc_tag,
     input  wire                       s_axis_write_desc_tvalid,
     output wire                       s_axis_write_desc_tready,
@@ -115,7 +115,7 @@ module alex_axi_dma_wr #
      * AXI master interface
      */
     output wire [AXI_ID_WIDTH-1:0]    m_axi_awid,
-    output wire [AXI_ADDR_WIDTH-1:0]  m_axi_awaddr,
+    output wire [ADDR_WIDTH    -1:0]  m_axi_awaddr,
     output wire [7:0]                 m_axi_awlen,
     output wire [2:0]                 m_axi_awsize,
     output wire [1:0]                 m_axi_awburst,
@@ -152,7 +152,7 @@ localparam AXIS_WORD_SIZE = AXIS_DATA_WIDTH/AXIS_WORD_WIDTH;
 
 localparam OFFSET_WIDTH = AXI_STRB_WIDTH > 1 ? $clog2(AXI_STRB_WIDTH) : 1;
 localparam OFFSET_MASK = AXI_STRB_WIDTH > 1 ? {OFFSET_WIDTH{1'b1}} : 0;
-localparam ADDR_MASK = {AXI_ADDR_WIDTH{1'b1}} << $clog2(AXI_STRB_WIDTH);
+localparam ADDR_MASK = {ADDR_WIDTH    {1'b1}} << $clog2(AXI_STRB_WIDTH);
 localparam CYCLE_COUNT_WIDTH = LEN_WIDTH - AXI_BURST_SIZE + 1;
 
 localparam STATUS_FIFO_ADDR_WIDTH = 5;
@@ -224,8 +224,8 @@ localparam [2:0]
     STATE_FINISH_BURST = 3'd3,
     STATE_DROP_DATA = 3'd4;
 
-wire [AXI_ADDR_WIDTH-1:0]  s_axis_write_desc_addr   = s_axis_write_desc_tdata[AXI_ADDR_WIDTH-1:0];
-wire [LEN_WIDTH-1:0]       s_axis_write_desc_len    = s_axis_write_desc_tdata[AXI_ADDR_WIDTH+LEN_WIDTH-1:AXI_ADDR_WIDTH];
+wire [ADDR_WIDTH    -1:0]  s_axis_write_desc_addr   = s_axis_write_desc_tdata[ADDR_WIDTH    -1:0];
+wire [LEN_WIDTH-1:0]       s_axis_write_desc_len    = s_axis_write_desc_tdata[ADDR_WIDTH    +LEN_WIDTH-1:ADDR_WIDTH    ];
 wire                       s_axis_write_desc_valid  = s_axis_write_desc_tvalid;
 wire    s_axis_write_desc_ready;
 
@@ -239,7 +239,7 @@ reg status_fifo_we;
 integer i;
 reg [OFFSET_WIDTH:0] cycle_size;
 
-reg [AXI_ADDR_WIDTH-1:0] addr_reg, addr_next;
+reg [ADDR_WIDTH    -1:0] addr_reg, addr_next;
 reg [LEN_WIDTH-1:0] op_word_count_reg, op_word_count_next;
 reg [LEN_WIDTH-1:0] tr_word_count_reg, tr_word_count_next;
 
@@ -292,7 +292,7 @@ reg [AXIS_USER_WIDTH-1:0] m_axis_write_desc_status_user_reg, m_axis_write_desc_s
 reg [3:0] m_axis_write_desc_status_error_reg, m_axis_write_desc_status_error_next;
 reg m_axis_write_desc_status_valid_reg, m_axis_write_desc_status_valid_next;
 
-reg [AXI_ADDR_WIDTH-1:0] m_axi_awaddr_reg, m_axi_awaddr_next;
+reg [ADDR_WIDTH    -1:0] m_axi_awaddr_reg, m_axi_awaddr_next;
 reg [7:0] m_axi_awlen_reg, m_axi_awlen_next;
 reg m_axi_awvalid_reg, m_axi_awvalid_next;
 reg m_axi_bready_reg, m_axi_bready_next;
@@ -803,7 +803,7 @@ always @(posedge clk `OR_NEGEDGE(rstn)) begin
 
         state_reg <= STATE_IDLE;
 
-        addr_reg <= {AXI_ADDR_WIDTH{1'b0}};
+        addr_reg <= {ADDR_WIDTH    {1'b0}};
         op_word_count_reg <= {LEN_WIDTH{1'b0}};
         tr_word_count_reg <= {LEN_WIDTH{1'b0}};
 
@@ -842,7 +842,7 @@ always @(posedge clk `OR_NEGEDGE(rstn)) begin
         m_axis_write_desc_status_error_reg <= 4'd0;
         m_axis_write_desc_status_valid_reg <= 1'b0;
 
-        m_axi_awaddr_reg <= {AXI_ADDR_WIDTH{1'b0}};
+        m_axi_awaddr_reg <= {ADDR_WIDTH    {1'b0}};
         m_axi_awlen_reg <= 8'd0;
         m_axi_awvalid_reg <= 1'b0;
         m_axi_bready_reg <= 1'b0;

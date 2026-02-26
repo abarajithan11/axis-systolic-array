@@ -1,4 +1,3 @@
-
 `timescale 1ns/1ps
 
 module fb_axi_vip #(
@@ -96,13 +95,15 @@ module fb_axi_vip #(
   output bit [M_COUNT-1:0]                        m_axi_rvalid ,
   input  bit [M_COUNT-1:0]                        m_axi_rready  
 );
-
+  chandle p_mem;
   genvar m;
   localparam  
     LSB = $clog2(M_AXI_DATA_WIDTH)-3,
     OPT_LOCK          = 1'b0,
     OPT_LOCKID        = 1'b1,
-    OPT_LOWPOWER      = 1'b0;
+    OPT_LOWPOWER      = 1'b0,
+    S_BYTES           = (S_AXI_DATA_WIDTH/8),
+    S_SIZE            = $clog2(S_BYTES);
 
   bit  [M_COUNT-1:0]                            ren;
   bit  [M_COUNT-1:0][M_AXI_ADDR_WIDTH-LSB-1:0]  raddr;
@@ -131,49 +132,50 @@ module fb_axi_vip #(
   export "DPI-C" function get_clk;
 
   import "DPI-C" context function void at_posedge_clk();
-  import "DPI-C" context function void step_cycle();
+  import "DPI-C" context function void step_time_veri();
 
-  `define FB_WAIT(expr) while (expr) step_cycle()
+  `define TIMESTEP step_time_veri()
+  `define FB_PAUSE_WHILE(expr) while (expr) step_time_veri()
 
 `else
   task at_posedge_clk();
     @(posedge clk) #10ps;
   endtask
 
-  `define FB_WAIT(expr) wait (expr)
+  `define TIMESTEP #10ps
+  `define FB_PAUSE_WHILE(expr) wait (!(expr))
 `endif
 
   task axi_write(input bit [S_AXI_ADDR_WIDTH-1:0] addr, input bit [S_AXI_DATA_WIDTH-1:0] data);
 
     automatic int i = get_s_index(addr);
 
-    // @(posedge clk) #10ps;
     at_posedge_clk();
     s_axi_awid   [i]  <= S_AXI_ID_WIDTH'(1);
     s_axi_awaddr [i]  <= addr;
     s_axi_awlen  [i]  <= 8'd0;
-    s_axi_awsize [i]  <= 3'd2; // 4 bytes
+    s_axi_awsize [i]  <= 3'(S_SIZE); // 4 bytes
     s_axi_awburst[i]  <= 2'b01;
     s_axi_awlock [i]  <= 0;
     s_axi_awcache[i]  <= 0;
     s_axi_awprot [i]  <= 0;
     s_axi_awvalid[i]  <= 1;
 
-    `FB_WAIT(!s_axi_awready[i]);
+    `FB_PAUSE_WHILE(!s_axi_awready[i]);
     at_posedge_clk();
     s_axi_awvalid[i]  <= 0;
     s_axi_wdata  [i]  <= data;
-    s_axi_wstrb  [i]  <= S_AXI_STRB_WIDTH'(4'hF);
+    s_axi_wstrb  [i]  <= {S_AXI_STRB_WIDTH{1'b1}};
     s_axi_wlast  [i]  <= 1;
     s_axi_wvalid [i]  <= 1;
 
 
-    `FB_WAIT(!s_axi_wready[i]);
+    `FB_PAUSE_WHILE(!s_axi_wready[i]);
     at_posedge_clk();
     s_axi_wvalid [i] <= 0;
     s_axi_bready [i] <= 1;
 
-    `FB_WAIT(!s_axi_bvalid[i]);
+    `FB_PAUSE_WHILE(!s_axi_bvalid[i]);
     at_posedge_clk();
     s_axi_bready[i]  <= 0;
   endtask
@@ -183,45 +185,50 @@ module fb_axi_vip #(
 
     automatic int i = get_s_index(addr);
 
-    // @(posedge clk) #10ps;
     at_posedge_clk();
     s_axi_arid   [i]  <= S_AXI_ID_WIDTH'(1);
     s_axi_araddr [i]  <= addr;
     s_axi_arlen  [i]  <= 8'd0;
-    s_axi_arsize [i]  <= 3'd2;
+    s_axi_arsize [i]  <= 3'(S_SIZE);
     s_axi_arburst[i]  <= 2'b01;
     s_axi_arlock [i]  <= 0;
     s_axi_arcache[i]  <= 0;
     s_axi_arprot [i]  <= 0;
     s_axi_arvalid[i]  <= 1;
 
-    `FB_WAIT(!s_axi_arready[i]);
+    `FB_PAUSE_WHILE(!s_axi_arready[i]);
     at_posedge_clk();
     s_axi_arvalid[i] <= 0;
     s_axi_rready [i] <= 1;
 
-    `FB_WAIT(!s_axi_rvalid[i]);
+    `FB_PAUSE_WHILE(!s_axi_rvalid[i]);
+    `TIMESTEP;
     rdata = s_axi_rdata[i];
 
     at_posedge_clk();
     s_axi_rready[i] <= 0;
   endtask
 
-  export "DPI-C" task fb_task_read_reg32;
-  export "DPI-C" function fb_fn_read_reg32;
-  export "DPI-C" task fb_task_write_reg32;
+  export "DPI-C" task fb_task_read_reg;
+  export "DPI-C" function fb_fn_read_reg;
+  export "DPI-C" task fb_task_write_reg;
 
-  int tmp_get_data;
-  task automatic fb_task_read_reg32(input longint addr);
-    axi_read(S_AXI_ADDR_WIDTH'(addr), tmp_get_data);
+  typedef bit [S_AXI_DATA_WIDTH-1:0] fb_reg_t;
+  typedef longint unsigned fb_reg_64_t;
+  fb_reg_64_t tmp_get_data;
+
+  task automatic fb_task_read_reg(input longint addr);
+    fb_reg_t d;
+    axi_read(S_AXI_ADDR_WIDTH'(addr), d);
+    tmp_get_data = fb_reg_64_t'(d);
   endtask
 
-  function automatic int fb_fn_read_reg32();
+  function automatic fb_reg_64_t fb_fn_read_reg();
     return tmp_get_data;
   endfunction
 
-  task automatic fb_task_write_reg32(input longint addr, input int data);
-    axi_write(S_AXI_ADDR_WIDTH'(addr), data);
+  task automatic fb_task_write_reg(input longint addr, input longint data);
+    axi_write(S_AXI_ADDR_WIDTH'(addr), fb_reg_t'(data));
   endtask
 
 
@@ -256,8 +263,8 @@ module fb_axi_vip #(
   
 
   // Handle M Masters
-  import "DPI-C" context function byte fb_c_read_ddr8_addr32  (input int unsigned addr);
-  import "DPI-C" context function void fb_c_write_ddr8_addr32 (input int unsigned addr, input byte data);
+  import "DPI-C" context function byte fb_c_read_ddr8_addr32  (input int unsigned addr, chandle p_mem);
+  import "DPI-C" context function void fb_c_write_ddr8_addr32 (input int unsigned addr, input byte data, chandle p_mem);
 
   for (m=0; m< M_COUNT; m++) begin
 
@@ -348,14 +355,14 @@ module fb_axi_vip #(
       end else begin
         if (ren[m]) begin
           for (int i = 0; i < M_AXI_DATA_WIDTH/8; i++) begin
-            tmp_data[i*8 +: 8] = fb_c_read_ddr8_addr32((32'(raddr[m]) << LSB) + i);
+            tmp_data[i*8 +: 8] = fb_c_read_ddr8_addr32((32'(raddr[m]) << LSB) + i, p_mem);
           end
           rdata[m] <= tmp_data;
         end
         if (wen[m]) 
           for (int i = 0; i < M_AXI_DATA_WIDTH/8; i++) 
             if (wstrb[m][i]) 
-              fb_c_write_ddr8_addr32((32'(waddr[m]) << LSB) + i, wdata[m][i*8 +: 8]);
+              fb_c_write_ddr8_addr32((32'(waddr[m]) << LSB) + i, wdata[m][i*8 +: 8], p_mem);
       end
       end
   end
@@ -371,15 +378,14 @@ module fb_axi_vip #(
   `define AUTOMATIC automatic
 `endif
 
-  import "DPI-C" context task `AUTOMATIC run(input chandle mem_ptr_virtual);
-  import "DPI-C" context function chandle fb_get_mp ();
+  import "DPI-C" context task `AUTOMATIC run_sim(input chandle p_mem);
+  import "DPI-C" context function chandle fb_get_mem_p ();
 
-  chandle mem_ptr_virtual;
   initial begin
     firebridge_done <= 0;
     wait (rstn);
-    mem_ptr_virtual = fb_get_mp();
-    run(mem_ptr_virtual);
+    p_mem = fb_get_mem_p();
+    run_sim(p_mem);
     firebridge_done <= 1;
   end
 

@@ -14,6 +14,8 @@ module top_ram_tb;
     READY_PROB          = `READY_PROB        ,
     CLK_PERIOD          = `CLK_PERIOD        ,
     AXI_WIDTH           = `AXI_WIDTH         ,
+    ADDR_WIDTH          = `ADDR_WIDTH        ,
+    AXIL_WIDTH          = `AXIL_WIDTH        ,
     DIR                 = `DIR               ,
     WA                  = 32                 ,
     LM                  = 1                  ,
@@ -21,9 +23,6 @@ module top_ram_tb;
     AXI_ID_WIDTH        = 6                  ,
     AXI_STRB_WIDTH      = AXI_WIDTH/8        ,
     AXI_MAX_BURST_LEN   = 32                 ,
-    AXI_ADDR_WIDTH      = 32                 ,
-    AXIL_WIDTH          = 32                 ,
-    AXIL_ADDR_WIDTH     = 32                 ,
     STRB_WIDTH          = 4                  ,
     DATA_WR_WIDTH       = AXIL_WIDTH         ,
     DATA_RD_WIDTH       = AXIL_WIDTH         ,
@@ -31,31 +30,31 @@ module top_ram_tb;
 
 
   // SIGNALS
-  logic [AXIL_ADDR_WIDTH-1:0] reg_wr_addr;
+  logic [ADDR_WIDTH     -1:0] reg_wr_addr;
   logic [AXIL_WIDTH     -1:0] reg_wr_data;
   logic [STRB_WIDTH     -1:0] reg_wr_strb;
   logic                       reg_wr_en  ;
-  logic [AXIL_ADDR_WIDTH-1:0] reg_rd_addr;
+  logic [ADDR_WIDTH     -1:0] reg_rd_addr;
   logic                       reg_rd_en  ;
   logic [AXIL_WIDTH     -1:0] reg_rd_data;
 
   logic                       mm2s_0_rd_en  ;
-  logic [AXI_ADDR_WIDTH-1:0]  mm2s_0_rd_addr;
+  logic [ADDR_WIDTH    -1:0]  mm2s_0_rd_addr;
   logic [AXI_WIDTH-1:0]       mm2s_0_rd_data;
   logic                       mm2s_0_rd_wait;
   logic                       mm2s_0_rd_ack ;
   logic                       mm2s_1_rd_en  ;
-  logic [AXI_ADDR_WIDTH-1:0]  mm2s_1_rd_addr;
+  logic [ADDR_WIDTH    -1:0]  mm2s_1_rd_addr;
   logic [AXI_WIDTH-1:0]       mm2s_1_rd_data;
   logic                       mm2s_1_rd_wait;
   logic                       mm2s_1_rd_ack ;
   logic                       mm2s_2_rd_en  ;
-  logic [AXI_ADDR_WIDTH-1:0]  mm2s_2_rd_addr;
+  logic [ADDR_WIDTH    -1:0]  mm2s_2_rd_addr;
   logic [AXI_WIDTH-1:0]       mm2s_2_rd_data;
   logic                       mm2s_2_rd_wait;
   logic                       mm2s_2_rd_ack ;
   logic                       s2mm_wr_en    ;
-  logic [AXI_ADDR_WIDTH-1:0]  s2mm_wr_addr  ;
+  logic [ADDR_WIDTH    -1:0]  s2mm_wr_addr  ;
   logic [AXI_WIDTH-1:0]       s2mm_wr_data  ;
   logic [AXI_STRB_WIDTH-1:0]  s2mm_wr_strb  ;
   logic                       s2mm_wr_wait  ;
@@ -74,9 +73,8 @@ module top_ram_tb;
     .AXI_ID_WIDTH      (AXI_ID_WIDTH     ), 
     .AXI_STRB_WIDTH    (AXI_STRB_WIDTH   ), 
     .AXI_MAX_BURST_LEN (AXI_MAX_BURST_LEN), 
-    .AXI_ADDR_WIDTH    (AXI_ADDR_WIDTH   ), 
+    .ADDR_WIDTH        (ADDR_WIDTH       ), 
     .AXIL_WIDTH        (AXIL_WIDTH       ), 
-    .AXIL_ADDR_WIDTH   (AXIL_ADDR_WIDTH  ), 
     .STRB_WIDTH        (STRB_WIDTH       ), 
     .AXIL_BASE_ADDR    (AXIL_BASE_ADDR   ) 
   ) dut(.*);

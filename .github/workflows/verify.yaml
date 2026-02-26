@@ -204,7 +204,7 @@ jobs:
           docker run --rm -v "$PWD":/repo -w /repo "${GHCR_IMAGE}:${IMAGE_TAG}" \
             bash -lc '
               fusesoc library add sa_ip "$(pwd -P)" || true
-              make ibuild irun
+              make ibex_test
             '
 
   regress-ibex-soc:
@@ -239,7 +239,7 @@ jobs:
           docker run --rm \
             -v "$PWD":/repo \
             -w /repo \
-            -e CMD="veri ibuild irun" \
+            -e CMD="veri ibex_test TARGET=ibex" \
             "${GHCR_IMAGE}:${IMAGE_TAG}" \
             bash -lc '
               fusesoc library add sa_ip "$(pwd -P)" || true

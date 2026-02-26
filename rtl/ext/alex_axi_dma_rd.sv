@@ -36,7 +36,7 @@ module alex_axi_dma_rd #
     // Width of AXI data bus in bits
     parameter AXI_DATA_WIDTH = 128,
     // Width of AXI address bus in bits
-    parameter AXI_ADDR_WIDTH = 32,
+    parameter ADDR_WIDTH     = 32,
     // Width of AXI wstrb (width of data bus in words)
     parameter AXI_STRB_WIDTH = 16,//(AXI_DATA_WIDTH/8),
     // Width of AXI ID signal
@@ -81,9 +81,9 @@ module alex_axi_dma_rd #
     /*
      * AXI read descriptor input
      */
-    //input  wire [AXI_ADDR_WIDTH-1:0]  s_axis_read_desc_addr,
+    //input  wire [ADDR_WIDTH    -1:0]  s_axis_read_desc_addr,
     //input  wire [LEN_WIDTH-1:0]       s_axis_read_desc_len,
-    input  wire [LEN_WIDTH+AXI_ADDR_WIDTH-1:0] s_axis_read_desc_tdata,
+    input  wire [LEN_WIDTH+ADDR_WIDTH    -1:0] s_axis_read_desc_tdata,
     input  wire [TAG_WIDTH-1:0]       s_axis_read_desc_tag,
     input  wire [AXIS_ID_WIDTH-1:0]   s_axis_read_desc_tid,
     input  wire [AXIS_DEST_WIDTH-1:0] s_axis_read_desc_tdest,
@@ -114,7 +114,7 @@ module alex_axi_dma_rd #
      * AXI master interface
      */
     output wire [AXI_ID_WIDTH-1:0]    m_axi_arid,
-    output wire [AXI_ADDR_WIDTH-1:0]  m_axi_araddr,
+    output wire [ADDR_WIDTH    -1:0]  m_axi_araddr,
     output wire [7:0]                 m_axi_arlen,
     output wire [2:0]                 m_axi_arsize,
     output wire [1:0]                 m_axi_arburst,
@@ -147,13 +147,13 @@ localparam AXIS_WORD_SIZE = AXIS_DATA_WIDTH/AXIS_WORD_WIDTH;
 
 localparam OFFSET_WIDTH = AXI_STRB_WIDTH > 1 ? $clog2(AXI_STRB_WIDTH) : 1;
 localparam OFFSET_MASK = AXI_STRB_WIDTH > 1 ? {OFFSET_WIDTH{1'b1}} : 0;
-localparam ADDR_MASK = {AXI_ADDR_WIDTH{1'b1}} << $clog2(AXI_STRB_WIDTH);
+localparam ADDR_MASK = {ADDR_WIDTH    {1'b1}} << $clog2(AXI_STRB_WIDTH);
 localparam CYCLE_COUNT_WIDTH = LEN_WIDTH - AXI_BURST_SIZE + 1;
 
 localparam OUTPUT_FIFO_ADDR_WIDTH = 5;
 
-wire [AXI_ADDR_WIDTH-1:0]  s_axis_read_desc_addr   = s_axis_read_desc_tdata[AXI_ADDR_WIDTH-1:0];
-wire [LEN_WIDTH-1:0]       s_axis_read_desc_len    = s_axis_read_desc_tdata[AXI_ADDR_WIDTH+LEN_WIDTH-1:AXI_ADDR_WIDTH];
+wire [ADDR_WIDTH    -1:0]  s_axis_read_desc_addr   = s_axis_read_desc_tdata[ADDR_WIDTH    -1:0];
+wire [LEN_WIDTH-1:0]       s_axis_read_desc_len    = s_axis_read_desc_tdata[ADDR_WIDTH    +LEN_WIDTH-1:ADDR_WIDTH    ];
 wire [AXIS_ID_WIDTH-1:0]   s_axis_read_desc_id     = s_axis_read_desc_tid;
 wire [AXIS_DEST_WIDTH-1:0] s_axis_read_desc_dest   = s_axis_read_desc_tdest;
 wire [AXIS_USER_WIDTH-1:0] s_axis_read_desc_user   = s_axis_read_desc_tuser;
@@ -235,7 +235,7 @@ reg [0:0] axis_state_reg = AXIS_STATE_IDLE, axis_state_next;
 reg transfer_in_save;
 reg axis_cmd_ready;
 
-reg [AXI_ADDR_WIDTH-1:0] addr_reg, addr_next;
+reg [ADDR_WIDTH    -1:0] addr_reg, addr_next;
 reg [LEN_WIDTH-1:0] op_word_count_reg, op_word_count_next;
 reg [LEN_WIDTH-1:0] tr_word_count_reg, tr_word_count_next;
 
@@ -272,7 +272,7 @@ reg [TAG_WIDTH-1:0] m_axis_read_desc_status_tag_reg, m_axis_read_desc_status_tag
 reg [3:0] m_axis_read_desc_status_error_reg, m_axis_read_desc_status_error_next;
 reg m_axis_read_desc_status_valid_reg, m_axis_read_desc_status_valid_next;
 
-reg [AXI_ADDR_WIDTH-1:0] m_axi_araddr_reg, m_axi_araddr_next;
+reg [ADDR_WIDTH    -1:0] m_axi_araddr_reg, m_axi_araddr_next;
 reg [7:0] m_axi_arlen_reg, m_axi_arlen_next;
 reg m_axi_arvalid_reg, m_axi_arvalid_next;
 reg m_axi_rready_reg, m_axi_rready_next;
@@ -581,7 +581,7 @@ always @(posedge clk `OR_NEGEDGE(rstn)) begin
         rresp_reg <= AXI_RESP_OKAY;
         
         
-        addr_reg <= {AXI_ADDR_WIDTH{1'b0}};
+        addr_reg <= {ADDR_WIDTH    {1'b0}};
         op_word_count_reg <= {LEN_WIDTH{1'b0}};
         tr_word_count_reg <= {LEN_WIDTH{1'b0}};
         axis_cmd_offset_reg <= {OFFSET_WIDTH{1'b0}};
@@ -612,7 +612,7 @@ always @(posedge clk `OR_NEGEDGE(rstn)) begin
         m_axis_read_desc_status_tag_reg <= {TAG_WIDTH{1'b0}};
         m_axis_read_desc_status_error_reg <= 4'd0;
         m_axis_read_desc_status_valid_reg <= 1'b0;
-        m_axi_araddr_reg <= {AXI_ADDR_WIDTH{1'b0}};
+        m_axi_araddr_reg <= {ADDR_WIDTH    {1'b0}};
         m_axi_arlen_reg <= 8'd0;
         m_axi_arvalid_reg <= 1'b0;
         m_axi_rready_reg <= 1'b0;

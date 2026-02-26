@@ -14,6 +14,8 @@ module top_axi_tb;
     READY_PROB          = `READY_PROB        ,
     CLK_PERIOD          = `CLK_PERIOD        ,
     AXI_WIDTH           = `AXI_WIDTH         ,
+    ADDR_WIDTH          = `ADDR_WIDTH        ,
+    AXIL_WIDTH          = `AXIL_WIDTH        ,
     DIR                 = `DIR               ,
     WA                  = 32                 ,
     LM                  = 1                  ,
@@ -21,9 +23,6 @@ module top_axi_tb;
     AXI_ID_WIDTH        = 6                  ,
     AXI_STRB_WIDTH      = AXI_WIDTH/8        ,
     AXI_MAX_BURST_LEN   = 32                 ,
-    AXI_ADDR_WIDTH      = 32                 ,
-    AXIL_WIDTH          = 32                 ,
-    AXIL_ADDR_WIDTH     = 32                 ,
     AXIL_STRB_WIDTH     = (AXIL_WIDTH/8)     ,
     DATA_WR_WIDTH       = AXIL_WIDTH         ,
     DATA_RD_WIDTH       = AXIL_WIDTH         ;
@@ -35,7 +34,7 @@ module top_axi_tb;
   localparam M_COUNT = 4;
 
   wire [S_COUNT-1:0][AXI_ID_WIDTH   -1:0]   s_axi_awid   ;
-  wire [S_COUNT-1:0][AXIL_ADDR_WIDTH-1:0]   s_axi_awaddr ;
+  wire [S_COUNT-1:0][ADDR_WIDTH     -1:0]   s_axi_awaddr ;
   wire [S_COUNT-1:0][7:0]                   s_axi_awlen  ;
   wire [S_COUNT-1:0][2:0]                   s_axi_awsize ;
   wire [S_COUNT-1:0][1:0]                   s_axi_awburst;
@@ -54,7 +53,7 @@ module top_axi_tb;
   wire [S_COUNT-1:0]                        s_axi_bvalid ;
   wire [S_COUNT-1:0]                        s_axi_bready ;
   wire [S_COUNT-1:0][AXI_ID_WIDTH-1:0]      s_axi_arid   ;
-  wire [S_COUNT-1:0][AXIL_ADDR_WIDTH-1:0]   s_axi_araddr ;
+  wire [S_COUNT-1:0][ADDR_WIDTH     -1:0]   s_axi_araddr ;
   wire [S_COUNT-1:0][7:0]                   s_axi_arlen  ;
   wire [S_COUNT-1:0][2:0]                   s_axi_arsize ;
   wire [S_COUNT-1:0][1:0]                   s_axi_arburst;
@@ -70,7 +69,7 @@ module top_axi_tb;
   wire [S_COUNT-1:0]                        s_axi_rvalid ;
   wire [S_COUNT-1:0]                        s_axi_rready ;
   wire [M_COUNT-1:0][AXI_ID_WIDTH-1:0]      m_axi_awid   ;
-  wire [M_COUNT-1:0][AXI_ADDR_WIDTH-1:0]    m_axi_awaddr ;
+  wire [M_COUNT-1:0][ADDR_WIDTH    -1:0]    m_axi_awaddr ;
   wire [M_COUNT-1:0][7:0]                   m_axi_awlen  ;
   wire [M_COUNT-1:0][2:0]                   m_axi_awsize ;
   wire [M_COUNT-1:0][1:0]                   m_axi_awburst;
@@ -89,7 +88,7 @@ module top_axi_tb;
   wire [M_COUNT-1:0]                        m_axi_bvalid ;
   wire [M_COUNT-1:0]                        m_axi_bready ;
   wire [M_COUNT-1:0][AXI_ID_WIDTH-1:0]      m_axi_arid   ;
-  wire [M_COUNT-1:0][AXI_ADDR_WIDTH-1:0]    m_axi_araddr ;
+  wire [M_COUNT-1:0][ADDR_WIDTH    -1:0]    m_axi_araddr ;
   wire [M_COUNT-1:0][7:0]                   m_axi_arlen  ;
   wire [M_COUNT-1:0][2:0]                   m_axi_arsize ;
   wire [M_COUNT-1:0][1:0]                   m_axi_arburst;
@@ -109,11 +108,11 @@ module top_axi_tb;
     .S_COUNT           (S_COUNT          ),
     .M_COUNT           (M_COUNT          ),
     .M_AXI_DATA_WIDTH  (AXI_WIDTH        ), 
-    .M_AXI_ADDR_WIDTH  (AXI_ADDR_WIDTH   ), 
+    .M_AXI_ADDR_WIDTH  (ADDR_WIDTH       ), 
     .M_AXI_ID_WIDTH    (AXI_ID_WIDTH     ), 
     .M_AXI_STRB_WIDTH  (AXI_STRB_WIDTH   ), 
     .S_AXI_DATA_WIDTH  (AXIL_WIDTH       ), 
-    .S_AXI_ADDR_WIDTH  (AXIL_ADDR_WIDTH  ), 
+    .S_AXI_ADDR_WIDTH  (ADDR_WIDTH       ), 
     .S_AXI_STRB_WIDTH  (AXIL_STRB_WIDTH  ), 
     .S_AXI_BASE_ADDR   (AXIL_BASE_ADDR   ),
     .VALID_PROB        (VALID_PROB       ),
@@ -134,9 +133,8 @@ module top_axi_tb;
       .AXI_ID_WIDTH     (AXI_ID_WIDTH     ),
       .AXI_STRB_WIDTH   (AXI_STRB_WIDTH   ),
       .AXI_MAX_BURST_LEN(AXI_MAX_BURST_LEN),
-      .AXI_ADDR_WIDTH   (AXI_ADDR_WIDTH   ),
       .AXIL_WIDTH       (AXIL_WIDTH       ),
-      .AXIL_ADDR_WIDTH  (AXIL_ADDR_WIDTH  ),
+      .ADDR_WIDTH       (ADDR_WIDTH       ),
       .AXIL_STRB_WIDTH  (AXIL_STRB_WIDTH  ),
       .AXIL_BASE_ADDR   (AXIL_BASE_ADDR   )
   ) TOP (
