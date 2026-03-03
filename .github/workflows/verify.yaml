@@ -112,6 +112,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Free disk space on runner
         run: |
@@ -135,7 +137,7 @@ jobs:
       - name: Full Regression - AXI Stream Only
         run: |
           docker run --rm -v "$PWD":/repo -w /repo "${GHCR_IMAGE}:${IMAGE_TAG}" \
-            make regress veri_axis CLEAN_REGRESS=1
+            make regress CMD=veri_axis CLEAN_REGRESS=1
 
   regress-axi-int:
     runs-on: ubuntu-22.04
