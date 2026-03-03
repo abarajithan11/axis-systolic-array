@@ -15,6 +15,7 @@ TARGET = sim
 TRACE = 0
 OPTIMIZE = 0
 CLEAN_REGRESS = 0
+COPY_WORKDIR = 0
 
 SYS = axi
 TB_MODULE = top_$(SYS)_tb
@@ -101,6 +102,9 @@ $(WORK_DIR)/config.svh $(WORK_DIR)/config.h $(WORK_DIR)/config.tcl $(WORK_DIR)/c
 wave:
 	gtkwave $(WORK_DIR)/top_tb.vcd &
 
+config: $(WORK_DIR)/config.svh $(WORK_DIR)/config.h $(WORK_DIR)/config.tcl $(WORK_DIR)/config.scala
+	@if [ -n "$(COPY_WORKDIR)" ]; then rm -rf run/work && cp -r $(WORK_DIR) run/work; fi;
+
 #----------------- Vivado XSIM ------------------
 
 # Compile C source
@@ -166,7 +170,7 @@ boom_test:
 #----------------- Ibex System ------------------
 
 ibex_test:
-	make clean ibuild irun iprint TARGET=ibex 
+	make ibuild irun iprint TARGET=ibex 
 
 iprint: 
 	$(MAKE) -C ibex-soc print
@@ -195,9 +199,9 @@ regress:
 	  for Cv in $(C_LIST); do \
 	    WD="$(RUN_DIR)/work_R$${Rv}_C$${Cv}"; \
 	    DD="$${WD}/data"; \
+			if [ -n "$(CLEAN_REGRESS)" ]; then $(MAKE) clean; fi; \
 	    echo "\n\n\n================== [regress] R=$$Rv C=$$Cv SYS=$(SYS) VALID_PROB=$(VALID_PROB)/1000 READY_PROB=$(READY_PROB)/1000 ==================\n\n\n"; \
 	    $(MAKE) $(CMD) R=$$Rv C=$$Cv WORK_DIR="$$WD" DATA_DIR="$$DD"; \
-			if [ -n "$(CLEAN_REGRESS)" ]; then $(MAKE) clean; fi; \
 	  done; \
 	done
 

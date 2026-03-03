@@ -271,11 +271,11 @@ jobs:
           docker run --rm \
             -v "$PWD":/repo \
             -w /repo \
-            -e CMD="veri ibex_test TARGET=ibex" \
+            -e CMD="config ibex_test TARGET=ibex COPY_WORKDIR=1" \
             "${GHCR_IMAGE}:${IMAGE_TAG}" \
             bash -lc '
               fusesoc library add sa_ip "$(pwd -P)" || true
-              make regress
+              make regress CLEAN_REGRESS=1
             '
 
   
