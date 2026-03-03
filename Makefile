@@ -150,12 +150,12 @@ veri: work_verilator $(DATA_DIR)
 veri_axis: rtl/sa/axis_sa.sv rtl/sa/pe.sv rtl/sa/mac.sv rtl/sa/n_delay.sv rtl/sa/tri_buffer.sv tb/axis_sa_tb.sv tb/axis_vip/tb/axis_sink.sv tb/axis_vip/tb/axis_source.sv
 	mkdir -p $(WORK_DIR)
 	verilator --binary -j 0 -O3 --trace --top axis_sa_tb -Mdir $(WORK_DIR)/ $^ --Wno-BLKANDNBLK --Wno-INITIALDLY
-	@cd run && work/Vaxis_sa_tb
+	cd $(WORK_DIR) && ./Vaxis_sa_tb
 
 veri_smoke: rtl/sa/axis_sa.sv rtl/sa/mac.sv rtl/sa/n_delay.sv rtl/sa/tri_buffer.sv tb/smoke_tb.sv
 	mkdir -p $(WORK_DIR)
 	verilator --top smoke_tb --binary -j 0 -O3 --trace --Wno-BLKANDNBLK --Wno-INITIALDLY --Mdir $(WORK_DIR) $^
-	@cd run && work/Vsmoke_tb
+	cd $(WORK_DIR) && ./Vsmoke_tb
 
 
 #----------------- Chipyard/Boom System ---------
@@ -190,17 +190,14 @@ R_LIST := 2 3 4 5 6 7 8 9 10 11 12
 C_LIST := 2 3 4 5 6 7 8 9 10 11 12
 
 regress:
-	@if [ -n "$(CLEAN_REGRESS)" ]; then $(MAKE) clean; fi; \
 	@set -e; \
 	for Rv in $(R_LIST); do \
 	  for Cv in $(C_LIST); do \
 	    WD="$(RUN_DIR)/work_R$${Rv}_C$${Cv}"; \
 	    DD="$${WD}/data"; \
 	    echo "\n\n\n================== [regress] R=$$Rv C=$$Cv SYS=$(SYS) VALID_PROB=$(VALID_PROB)/1000 READY_PROB=$(READY_PROB)/1000 ==================\n\n\n"; \
-	    $(MAKE) --no-print-directory $(CMD) \
-	      R=$$Rv C=$$Cv \
-	      WORK_DIR="$$WD" \
-	      DATA_DIR="$$DD"; \
+	    $(MAKE) $(CMD) R=$$Rv C=$$Cv WORK_DIR="$$WD" DATA_DIR="$$DD"; \
+			if [ -n "$(CLEAN_REGRESS)" ]; then $(MAKE) clean; fi; \
 	  done; \
 	done
 
