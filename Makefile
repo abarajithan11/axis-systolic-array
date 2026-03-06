@@ -151,7 +151,7 @@ veri: work_verilator $(DATA_DIR)
 	cd $(WORK_DIR) && ./V$(TB_MODULE)
 
 
-veri_axis: rtl/sa/axis_sa.sv rtl/sa/pe.sv rtl/sa/mac.sv rtl/sa/n_delay.sv rtl/sa/tri_buffer.sv tb/axis_sa_tb.sv tb/axis_vip/tb/axis_sink.sv tb/axis_vip/tb/axis_source.sv
+veri_axis: $(WORK_DIR)/config.svh rtl/sa/axis_sa.sv rtl/sa/pe.sv rtl/sa/mac.sv rtl/sa/n_delay.sv rtl/sa/tri_buffer.sv tb/axis_sa_tb.sv tb/axis_vip/tb/axis_sink.sv tb/axis_vip/tb/axis_source.sv
 	mkdir -p $(WORK_DIR)
 	verilator --binary -j 0 -O3 --trace --top axis_sa_tb -Mdir $(WORK_DIR)/ $^ --Wno-BLKANDNBLK --Wno-INITIALDLY
 	cd $(WORK_DIR) && ./Vaxis_sa_tb

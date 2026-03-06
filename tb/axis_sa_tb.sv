@@ -1,21 +1,22 @@
 `timescale 1ns/1ps
 `define DIAG(a, b) (a+b)
+`include "config.svh"
 
 module axis_sa_tb;
   localparam 
-    R          = 2, // Rows of SA == rows of output matrix
-    C          = 2, // Cols of SA == cols of output matrix
+    R          = `R, // Rows of SA == rows of output matrix
+    C          = `C, // Cols of SA == cols of output matrix
     K_MIN      = 5, // Cols of matrix_k and rows of matrix_k
     K_MAX      = 30,
-    WX         = 8, // word width of matrix_k
-    WK         = 4, // word width of matrix_k
+    WX         = `WX, // word width of matrix_k
+    WK         = `WX, // word width of matrix_k
     LM         = 2, // latency of multiplier
     LA         = 3, // latency of accumulator
     WM         = WX + WK,            // word width of multiplier
     WY         = WM + $clog2(K_MAX), // word width of accumulator
-    P_VALID    = 1,  // Probability with which s_valid is toggled
-    P_READY    = 100, // Probability with which m_ready is toggled
-    CLK_PERIOD = 100,
+    P_VALID    = `VALID_PROB,  // Probability with which s_valid is toggled
+    P_READY    = `READY_PROB, // Probability with which m_ready is toggled
+    CLK_PERIOD = `CLK_PERIOD,
     NUM_EXP    = 50;  // Number of experiments
 
   logic clk=0, rstn=0;
