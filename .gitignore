@@ -7,3 +7,4 @@ vivado
 .vscode
 docs
 fusesoc.conf
+build

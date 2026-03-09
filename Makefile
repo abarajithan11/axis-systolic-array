@@ -16,6 +16,7 @@ TRACE = 0
 OPTIMIZE = 0
 CLEAN_REGRESS = 0
 COPY_WORKDIR = 0
+IP ?= axis_sa
 
 SYS = axi
 TB_MODULE = top_$(SYS)_tb
@@ -161,6 +162,10 @@ veri_smoke: rtl/sa/axis_sa.sv rtl/sa/mac.sv rtl/sa/n_delay.sv rtl/sa/tri_buffer.
 	verilator --top smoke_tb --binary -j 0 -O3 --trace --Wno-BLKANDNBLK --Wno-INITIALDLY --Mdir $(WORK_DIR) $^
 	cd $(WORK_DIR) && ./Vsmoke_tb
 
+qverify:
+	mkdir -p build/qverify
+	qverify -c -od build/qverify -do formal/tb_$(IP).tcl
+
 
 #----------------- Chipyard/Boom System ---------
 
@@ -242,4 +247,4 @@ kill:
 	- docker kill $(CONTAINER) || true
 	- docker rm   $(CONTAINER) || true
 
-.PHONY: sim vlog elab run clean vivado regress veri xrun ibuild irun iprint iwave irun-clean veri_axis veri_smoke regress image start enter kill wave clean
+.PHONY: sim vlog elab run clean vivado regress veri xrun ibuild irun iprint iwave irun-clean veri_axis veri_smoke qverify regress image start enter kill wave clean
