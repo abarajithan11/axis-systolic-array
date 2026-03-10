@@ -8,3 +8,6 @@ vivado
 docs
 fusesoc.conf
 build
+.qverify
+.visualizer
+*.log

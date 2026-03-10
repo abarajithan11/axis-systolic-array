@@ -17,7 +17,7 @@ module axis_sa #(
   localparam D  = `DIAG(R,C)-1; // length of diagonal
   localparam WM = WX + WK;
 
-  logic en_mac, en_shift;
+  logic en_mac, en_shift, stall;
 
   logic [R-1:0][WX-1:0] xi_delayed;
   logic [C-1:0][WK-1:0] ki_delayed, sk_reversed;
@@ -27,7 +27,8 @@ module axis_sa #(
   logic [LM+LA+D-1:0] valid, vlast;
 
   // Global Control
-  assign en_mac   = !(|conflict); // pull en_mac down if any acc is pushing data (avalid) and reg already has data (r_valid)
+  assign stall    = m_valid && !m_ready;
+  assign en_mac   = !(|conflict) && !stall; // pull en_mac down if any acc is pushing data (avalid) and reg already has data (r_valid)
   assign en_shift = r_valid[D-1] && m_ready;  // shift only when entire array is full (m_valid) and mready
   assign s_ready  = en_mac;
 
@@ -70,7 +71,7 @@ module axis_sa #(
     always_ff @(posedge clk)
       if (!rstn)                               r_valid[d] <= 0;
       else if (d >= C-1 && en_shift && m_last) r_valid[d] <= 0; // At the last beat, clear all diagonal regs beyond C
-      else if (r_copy [d])                     r_valid[d] <= 1;
+      else if (r_copy [d] && en_mac)           r_valid[d] <= 1;
       else if (r_clear[d])                     r_valid[d] <= 0;
   end
 

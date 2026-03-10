@@ -44,7 +44,11 @@ module tb_axis_sa;
   wire s_stall = s_valid && !s_ready;
   wire m_stall = m_valid && !m_ready;
 
-  // Keep only stable handshake properties for now.
+  // Slave side assumptions
+  a_valid_x        : assume property (!$isunknown(s_valid));
+  a_valid_rst      : assume property (@(posedge clk) !rstn |-> !s_valid);
+  a_valid_rst_clk  : assume property (@(posedge clk) $rose(rstn) |-> !s_valid);
+
   a_stable_s_valid : assume property (s_stall |=> $stable(s_valid));
   a_stable_s_last  : assume property (s_stall |=> $stable(s_last));
   a_stable_sx_data : assume property (s_stall |=> $stable(sx_data));
