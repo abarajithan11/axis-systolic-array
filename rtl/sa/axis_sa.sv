@@ -17,19 +17,18 @@ module axis_sa #(
   localparam D  = `DIAG(R,C)-1; // length of diagonal
   localparam WM = WX + WK;
 
-  logic en_mac, en_shift, stall;
+  logic en_mac, en_shift;
 
   logic [R-1:0][WX-1:0] xi_delayed;
   logic [C-1:0][WK-1:0] ki_delayed, sk_reversed;
 
   // Control Signals are passed diagonally through the array
-  logic [D-1:0] r_valid, r_last, r_copy, r_clear, conflict, a_valid, m_first;
+  logic [D-1:0] r_valid, r_last, r_copy, r_clear, conflict, a_valid, m_first, reg_stall, can_copy, m_stall;
   logic [LM+LA+D-1:0] valid, vlast;
 
   // Global Control
-  assign stall    = m_valid && !m_ready;
-  assign en_mac   = !(|conflict) && !stall; // pull en_mac down if any acc is pushing data (avalid) and reg already has data (r_valid)
-  assign en_shift = r_valid[D-1] && m_ready;  // shift only when entire array is full (m_valid) and mready
+  assign en_mac   = !(|conflict) && !(|reg_stall); // pull en_mac down if any acc is pushing data (avalid) and reg already has data (r_valid)
+  assign en_shift = m_valid && m_ready;  // shift during handshake
   assign s_ready  = en_mac;
 
   // Reverse the columns of K matrix, so that outputs come out with C=0 first
@@ -65,13 +64,16 @@ module axis_sa #(
       else if (en_mac)          a_valid[d] <= vlast[LM+LA+d-1];
 
     assign conflict [d] = a_valid[d]  &&  r_valid[d]; // acc wants to send data, but reg already has data
-    assign r_copy   [d] = a_valid[d]  && !r_valid[d]; // copy only if acc can send data (a_valid) and reg is empty (!r_valid)
+    assign can_copy [d] = a_valid[d]  && !r_valid[d]; // acc wants to send data, and reg is empty
+    assign m_stall  [d] = (d >= C-1)  &&  m_valid && !m_ready;
+    assign reg_stall[d] = can_copy[d] &&  m_stall[d];
+    assign r_copy   [d] = can_copy[d] && !m_stall[d];
     assign r_clear  [d] = en_shift    &&  r_last [d]; // clear if current reg is last
 
     always_ff @(posedge clk)
       if (!rstn)                               r_valid[d] <= 0;
       else if (d >= C-1 && en_shift && m_last) r_valid[d] <= 0; // At the last beat, clear all diagonal regs beyond C
-      else if (r_copy [d] && en_mac)           r_valid[d] <= 1;
+      else if (r_copy [d])                     r_valid[d] <= 1;
       else if (r_clear[d])                     r_valid[d] <= 0;
   end
 
