@@ -11,3 +11,5 @@ build
 .qverify
 .visualizer
 *.log
+*.vstf
+*.ses

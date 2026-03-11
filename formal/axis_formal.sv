@@ -7,6 +7,9 @@
   `define ASSERT assert
 `endif
 
+default clocking cb @(posedge clk); endclocking
+default disable iff (!rstn);
+
 wire stall = valid && !ready;
 wire handshake = valid && ready;
 

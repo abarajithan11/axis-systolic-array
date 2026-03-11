@@ -6,8 +6,6 @@ module s_axis_formal #(
   input  logic ready,
   output logic [WIDTH-1:0] payload
 );
-  default clocking cb @(posedge clk); endclocking
-  default disable iff (!rstn);
 
 `define S_AXIS
 `include "axis_formal.sv"
