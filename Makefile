@@ -191,6 +191,7 @@ iwave:
 clean:
 	rm -rf $(WORK_DIR)*
 	$(MAKE) -C ibex-soc clean
+	rm -rf build *.vstf *.log *.ses .qverify .visualizer
 
 #----------------- Regression ------------------
 
