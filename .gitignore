@@ -13,3 +13,4 @@ build
 *.log
 *.vstf
 *.ses
+pdfdocs

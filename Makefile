@@ -163,8 +163,17 @@ veri_smoke: rtl/sa/axis_sa.sv rtl/sa/mac.sv rtl/sa/n_delay.sv rtl/sa/tri_buffer.
 	cd $(WORK_DIR) && ./Vsmoke_tb
 
 qverify:
-	mkdir -p build/qverify
+	rm -rf build/qverify/traces
+	mkdir -p build/qverify/traces
 	qverify -c -od build/qverify -do formal/tb_$(IP).tcl
+	for db in build/qverify/qwave_files/*.db; do \
+	  [ -f "$$db" ] || continue; \
+	  name=$$(basename "$${db%.db}"); \
+	  script -q /dev/null -c \
+	    "qwave2vcd -wavefile $$db -outfile build/qverify/traces/$${name}.vcd" \
+	    > /dev/null 2>&1; \
+	  echo "VCD written: build/qverify/traces/$${name}.vcd"; \
+	done
 
 
 #----------------- Chipyard/Boom System ---------

@@ -46,8 +46,8 @@ module tb_axis_sa;
 
   // unconstrained variables
   logic arbit_start;
-  localparam WIDTH_K = $clog2(K_MAX) + 2; // extra bits to allow out-of-range
-  localparam WIDTH_C = $clog2(C) + 2; // extra bits to allow out-of-range
+  localparam WIDTH_K = $clog2(K_MAX) + 1; // extra bit to allow out-of-range
+  localparam WIDTH_C = $clog2(C) + 1; // extra bit to allow out-of-range
   typedef logic signed     [C-1:0][R-1:0][WY-1:0] y_mat_t;
   typedef logic signed [K_MAX-1:0][R-1:0][WX-1:0] x_mat_t;
   typedef logic signed [K_MAX-1:0][C-1:0][WK-1:0] k_mat_t;

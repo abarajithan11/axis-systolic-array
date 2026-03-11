@@ -13,3 +13,5 @@ vlog -sv -work build/qverify/work \
 
 formal compile -d tb_${IP} -work build/qverify/work -sva
 formal verify -auto_constraint_off
+
+formal generate waveforms
