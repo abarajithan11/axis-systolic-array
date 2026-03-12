@@ -1,5 +1,12 @@
 `timescale 1ns/1ps
 
+`define MASTER
+`include "formal/axis_fvip.svh"
+`undef MASTER
+`define SLAVE
+`include "formal/axis_fvip.svh"
+`undef SLAVE
+
 module tb_axis_sa;
   localparam int R  = 2;
   localparam int C  = 2;
@@ -17,7 +24,7 @@ module tb_axis_sa;
 
   axis_sa #(.R(R),.C(C),.WX(WX),.WK(WK),.WY(WY),.LM(LM),.LA(LA)) dut (.*);
 
-  s_axis_formal #(.WIDTH(R*WX + C*WK + 1)) S_AXIS (
+  s_axis_fvip #(.WIDTH(R*WX + C*WK + 1)) S_AXIS (
     .clk(clk),
     .rstn(rstn),
     .valid(s_valid),
@@ -25,7 +32,7 @@ module tb_axis_sa;
     .payload({sx_data, sk_data, s_last})
   );
 
-  m_axis_formal #(.WIDTH(R*WY + 1)) M_AXIS (
+  m_axis_fvip #(.WIDTH(R*WY + 1)) M_AXIS (
     .clk(clk),
     .rstn(rstn),
     .valid(m_valid),

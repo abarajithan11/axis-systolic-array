@@ -7,8 +7,6 @@ vlog -sv -work build/qverify/work \
   rtl/sa/tri_buffer.sv \
   rtl/sa/pe.sv \
   rtl/sa/${IP}.sv \
-  formal/m_axis_formal.sv \
-  formal/s_axis_formal.sv \
   formal/tb_${IP}.sv
 
 formal compile -d tb_${IP} -work build/qverify/work -sva
