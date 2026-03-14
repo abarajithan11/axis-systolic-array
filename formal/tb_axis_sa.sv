@@ -16,8 +16,8 @@ module tb_axis_sa;
   localparam int LM = 1;
   localparam int LA = 1;
   localparam int K_MAX = 10;
-  localparam int AXI_MAX_STALL = 20;
-  localparam int AXI_MAX_READY_IDLE = 50;
+  localparam int AXI_MAX_STALL_ENV = 10;
+  localparam int AXI_MAX_STALL_DUT = 100;
 
   logic clk, rstn, s_valid, s_last, m_ready, s_ready, m_valid, m_last;
   logic [R-1:0][WX-1:0] sx_data;
@@ -28,8 +28,8 @@ module tb_axis_sa;
 
   m_axis_fvip #(
     .WIDTH(R*WX + C*WK + 1),
-    .AXI_MAX_STALL(AXI_MAX_STALL),
-    .AXI_MAX_READY_IDLE(AXI_MAX_READY_IDLE)
+    .AXI_MAX_STALL_ENV(AXI_MAX_STALL_ENV),
+    .AXI_MAX_STALL_DUT(AXI_MAX_STALL_DUT)
   ) M_AXIS (
     .clk(clk),
     .rstn(rstn),
@@ -40,8 +40,8 @@ module tb_axis_sa;
 
   s_axis_fvip #(
     .WIDTH(R*WY + 1),
-    .AXI_MAX_STALL(AXI_MAX_STALL),
-    .AXI_MAX_READY_IDLE(AXI_MAX_READY_IDLE)
+    .AXI_MAX_STALL_ENV(AXI_MAX_STALL_ENV),
+    .AXI_MAX_STALL_DUT(AXI_MAX_STALL_DUT)
   ) S_AXIS (
     .clk(clk),
     .rstn(rstn),

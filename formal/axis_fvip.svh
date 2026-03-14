@@ -1,17 +1,15 @@
 
-`define CONCAT(a,b) a``b
-
 // Default is MASTER, to drive a slave
 // valid, payload are driven by fvip (assumed),
 // ready is observed (asserted)
 `ifdef SLAVE
-  `define ROLE   m
   `define ASSUME assert
   `define ASSERT assume
+  `define AXI_MAX_STALL AXI_MAX_STALL_ENV
 `else
-  `define ROLE   s
   `define ASSUME assume
   `define ASSERT assert
+  `define AXI_MAX_STALL AXI_MAX_STALL_DUT
 `endif
 
 `ifdef MASTER
@@ -20,8 +18,8 @@ module m_axis_fvip #(
 module s_axis_fvip #(
 `endif
     parameter WIDTH=8,
-    parameter AXI_MAX_STALL = 20,
-    parameter AXI_MAX_READY_IDLE = 50
+    parameter AXI_MAX_STALL_ENV = 10,
+    parameter AXI_MAX_STALL_DUT = 100
   )(
     input logic             clk,
     input logic             rstn,
@@ -68,10 +66,15 @@ module s_axis_fvip #(
     `ASSUME property (
       @(posedge clk) valid |-> !$isunknown(payload)
       );
+
+  a_max_ready_after_valid:
+    `ASSERT property (
+      @(posedge clk) valid |-> ##[0:`AXI_MAX_STALL] ready
+      );
+
 endmodule
 
 
-`undef ROLE
 `undef CONCAT
 `undef ASSUME
 `undef ASSERT
