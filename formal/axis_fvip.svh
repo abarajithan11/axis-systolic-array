@@ -1,9 +1,11 @@
 
 `define CONCAT(a,b) a``b
 
-`ifdef MASTER
+// Default is MASTER, to drive a slave
+// valid, payload are driven by fvip (assumed),
+// ready is observed (asserted)
+`ifdef SLAVE
   `define ROLE   m
-  `define M_AXIS
   `define ASSUME assert
   `define ASSERT assume
 `else
@@ -17,7 +19,9 @@ module m_axis_fvip #(
 `else
 module s_axis_fvip #(
 `endif
-    parameter WIDTH=8
+    parameter WIDTH=8,
+    parameter AXI_MAX_STALL = 20,
+    parameter AXI_MAX_READY_IDLE = 50
   )(
     input logic             clk,
     input logic             rstn,
