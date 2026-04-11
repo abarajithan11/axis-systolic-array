@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use this work in your research, please cite our paper."
+title: "FireBridge: Cycle-Accurate Hardware+ Firmware Co-Verification for Modern Accelerators"
+authors:
+  - family-names: "Abarajithan"
+    given-names: "G"
+  - family-names: "Ma"
+    given-names: "Zhenghua"
+  - family-names: "Restuccia"
+    given-names: "Francesco"
+  - family-names: "Kastner"
+    given-names: "Ryan"
+preferred-citation:
+  type: article
+  title: "FireBridge: Cycle-Accurate Hardware+ Firmware Co-Verification for Modern Accelerators"
+  authors:
+    - family-names: "Abarajithan"
+      given-names: "G"
+    - family-names: "Ma"
+      given-names: "Zhenghua"
+    - family-names: "Restuccia"
+      given-names: "Francesco"
+    - family-names: "Kastner"
+      given-names: "Ryan"
+  journal: "arXiv preprint arXiv:2603.25969"
+  year: 2026
+  url: "https://arxiv.org/abs/2603.25969"
