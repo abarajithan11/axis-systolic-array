@@ -146,3 +146,16 @@ FREQ=100MHz
 ```
 
 ![FPGA](docs/fpga.png)
+
+## Citation
+
+If you use this work in your research, please cite our paper:
+
+```bibtex
+@article{abarajithan2026firebridge,
+  title={FireBridge: Cycle-Accurate Hardware+ Firmware Co-Verification for Modern Accelerators},
+  author={Abarajithan, G and Ma, Zhenghua and Restuccia, Francesco and Kastner, Ryan},
+  journal={arXiv preprint arXiv:2603.25969},
+  year={2026}
+}
+```
