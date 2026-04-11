@@ -172,3 +172,16 @@ fb_write_reg(cfg1 + 5, 20); // write 20 to the 6th register in slave 0
 - `fb_axi_vip.sv` (interfaces, address decode, DPI entry)
 - `fb_fw_wrap.h` (MMIO helpers, pointer translation)
 - `firmware.h` (example register programming + DMA flow)
+
+## Citation
+
+If you use this work in your research, please cite our paper:
+
+```bibtex
+@article{abarajithan2026firebridge,
+  title={FireBridge: Cycle-Accurate Hardware+ Firmware Co-Verification for Modern Accelerators},
+  author={Abarajithan, G and Ma, Zhenghua and Restuccia, Francesco and Kastner, Ryan},
+  journal={arXiv preprint arXiv:2603.25969},
+  year={2026}
+}
+```
