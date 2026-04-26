@@ -153,6 +153,8 @@ module dma_controller #(
     s2mm_desc  = {s2mm_len, s2mm_addr};
   end
 
+  wire start_next = reg_wr_en && reg_wr_addr == A_START && reg_wr_data[0];
+
   always_ff @(posedge clk) // All cfg written in this always block
     if (!rstn) cfg <= '0;
     else begin
@@ -162,9 +164,17 @@ module dma_controller #(
         cfg[A_MM2S_1_DONE] <= 1;
       if (mm2s_2_done)
         cfg[A_MM2S_2_DONE] <= 1;
-
       if (s2mm_done)
         cfg[A_S2MM_DONE] <= 1;
+      
+      // Clear done signals at the same time as start bit gets written
+      if (start_next) begin
+        cfg[A_MM2S_0_DONE] <= 0;
+        cfg[A_MM2S_1_DONE] <= 0;
+        cfg[A_MM2S_2_DONE] <= 0;
+        cfg[A_S2MM_DONE  ] <= 0;  
+      end
+
       if (cfg[A_START][0] && s2mm_ready && mm2s_0_ready && mm2s_1_ready && mm2s_2_ready) 
         cfg[A_START] <= 0; // written by PS after all config, stays high for only 1 clock
 

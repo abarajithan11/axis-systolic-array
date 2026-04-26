@@ -58,7 +58,7 @@ void randomize_inputs(Memory_st *restrict mp, int seed) {
 }
 
 void check_output(Memory_st *restrict mp) {
-  TY y_exp[C][R];
+  static TY y_exp[C][R];
 
   for (int c=0; c<C; c++)
     for (int r=0; r<R; r++) {
