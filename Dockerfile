@@ -2,7 +2,7 @@ FROM ubuntu:22.04
 
 ARG DEBIAN_FRONTEND=noninteractive 
 
-# Base tools + RISC-V + Verilator deps + minimal X11 tools for GUI
+# Base tools + RISC-V + Verilator deps + GUI waveform tools
 RUN apt-get update && apt-get install -y \
     build-essential \
     git curl wget \
@@ -17,7 +17,8 @@ RUN apt-get update && apt-get install -y \
     gcc-riscv64-unknown-elf \
     ccache \
     vim \
-    x11-apps \ 
+    x11-apps \
+    gtkwave \
     && rm -rf /var/lib/apt/lists/*
 
 # Python deps (project + riscv-dv)

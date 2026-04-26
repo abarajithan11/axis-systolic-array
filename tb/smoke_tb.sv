@@ -38,7 +38,7 @@ module smoke_tb;
   int c=0;
 
   initial begin
-    $dumpfile ("dump.vcd"); $dumpvars;
+    $dumpfile ("trace.vcd"); $dumpvars;
 
     // Generate random input data
     for (int k=0; k<K; k++)

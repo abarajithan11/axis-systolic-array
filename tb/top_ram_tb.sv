@@ -153,7 +153,7 @@ module top_ram_tb;
   end
   
   initial begin
-    $dumpfile("top_tb.vcd");
+    $dumpfile("trace.vcd");
     $dumpvars();
     #1000us;
     $fatal(1, "\n\nError: Timeout \n\n");

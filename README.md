@@ -33,6 +33,35 @@ Note that the weights k[K,C] needs to be transposed as k.T[C,K] and stored in th
 
 ![Full System](docs/ibex-sys.png)
 
+## Quickstart
+
+Clone our repo and initialize our submodule
+
+```bash
+git clone git@github.com:abarajithan11/axis-systolic-array.git
+git submodule update --init tb/axis_vip
+cd axis-systolic-array
+```
+
+Build and enter our docker container:
+
+```bash
+make fresh       # build image and start container for the first time
+make enter       # enter the container
+```
+
+Run our demos (from within the container):
+
+```bash
+make veri_axis   # run simulation of Systolic Array + AXI-Stream Verification IPs
+make wave        # Inspect waveform
+
+make veri        # run simulation of Systolic Array + AXI DMAs + AXI testbench
+make wave        # Inspect waveform
+
+make ibex_test   # run simulation of Systolic Array + AXI DMAs + Ibex CPU
+```
+
 ## Key files
 
 * `run/config.py` - Generates `run/work/config.svh`, `run/work/config.h` and `run/work/config.tcl` based on params passed

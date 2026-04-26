@@ -53,7 +53,7 @@ module axis_sa_tb;
   int rand_ks [NUM_EXP];
 
   initial begin
-    $dumpfile ("dump.vcd"); $dumpvars;
+    $dumpfile ("trace.vcd"); $dumpvars;
     
     for (int n=0; n<NUM_EXP; n++)
       rand_ks[n] = $urandom_range(K_MIN, K_MAX);

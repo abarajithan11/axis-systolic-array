@@ -63,7 +63,7 @@ VERI_FLAGS = --cc --exe --build -j 0 \
 	$(FULL_FB_DIR)/fb_top_verilator_wrap.cpp
 
 ifeq ($(TRACE),1)
-  VERI_FLAGS += --trace-fst -CFLAGS -g
+  VERI_FLAGS += --trace -CFLAGS -g
 endif
 ifeq ($(OPTIMIZE),1)
 	VERI_FLAGS += -O3
@@ -101,7 +101,7 @@ $(WORK_DIR)/config.svh $(WORK_DIR)/config.h $(WORK_DIR)/config.tcl $(WORK_DIR)/c
 		--ADDR_WIDTH $(ADDR_WIDTH) \
 		--TARGET $(TARGET)
 wave:
-	gtkwave $(WORK_DIR)/top_tb.vcd &
+	gtkwave $(WORK_DIR)/trace.vcd &
 
 config: $(WORK_DIR)/config.svh $(WORK_DIR)/config.h $(WORK_DIR)/config.tcl $(WORK_DIR)/config.scala
 	@if [ -n "$(COPY_WORKDIR)" ]; then rm -rf run/work && cp -r $(WORK_DIR) run/work; fi;
@@ -148,13 +148,15 @@ xrun: $(WORK_DIR) $(DATA_DIR)/kxa.bin $(WORK_DIR)/config.svh $(WORK_DIR)/config.
 work_verilator: $(WORK_DIR) $(DATA_DIR)/kxa.bin $(WORK_DIR)/config.svh $(WORK_DIR)/config.h
 	cd run && verilator --top $(TB_MODULE) -F $(SOURCES_FILE) $(C_SOURCE) $(VERI_FLAGS)
 
+veri: TRACE=1
 veri: work_verilator $(DATA_DIR)
 	cd $(WORK_DIR) && ./V$(TB_MODULE)
 
 
+veri_axis: TRACE=1
 veri_axis: $(WORK_DIR)/config.svh rtl/sa/axis_sa.sv rtl/sa/pe.sv rtl/sa/mac.sv rtl/sa/n_delay.sv rtl/sa/tri_buffer.sv tb/axis_sa_tb.sv tb/axis_vip/tb/axis_sink.sv tb/axis_vip/tb/axis_source.sv
 	mkdir -p $(WORK_DIR)
-	verilator --binary -j 0 -O3 --trace --top axis_sa_tb -Mdir $(WORK_DIR)/ $^ --Wno-BLKANDNBLK --Wno-INITIALDLY
+	verilator --binary -j 0 -O3 $(if $(filter 1,$(TRACE)),--trace) --top axis_sa_tb -Mdir $(WORK_DIR)/ $^ --Wno-BLKANDNBLK --Wno-INITIALDLY
 	cd $(WORK_DIR) && ./Vaxis_sa_tb
 
 veri_smoke: rtl/sa/axis_sa.sv rtl/sa/mac.sv rtl/sa/n_delay.sv rtl/sa/tri_buffer.sv tb/smoke_tb.sv
@@ -231,6 +233,8 @@ CONTAINER := sa-ibex-$(USR)
 HOSTNAME  := saibex
 
 fresh: kill image start enter
+
+restart: kill start enter
 
 image:
 	docker build \
