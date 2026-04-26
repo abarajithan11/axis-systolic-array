@@ -1,6 +1,6 @@
 FROM ubuntu:22.04
 
-ARG DEBIAN_FRONTEND=noninteractive 
+ARG DEBIAN_FRONTEND=noninteractive  
 
 # Base tools + RISC-V + Verilator deps + GUI waveform tools
 RUN apt-get update && apt-get install -y \

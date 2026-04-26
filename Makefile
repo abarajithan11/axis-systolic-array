@@ -59,12 +59,9 @@ VERI_FLAGS = --cc --exe --build -j 0 \
 	-CFLAGS -g --Mdir ../$(WORK_DIR) \
 	-CFLAGS -I$(WORK_DIR) \
 	-CFLAGS -I$(FULL_FB_DIR) \
+	$(if $(filter 1,$(TRACE)),--trace -CFLAGS -g) \
 	--timing \
 	$(FULL_FB_DIR)/fb_top_verilator_wrap.cpp
-
-ifeq ($(TRACE),1)
-  VERI_FLAGS += --trace -CFLAGS -g
-endif
 ifeq ($(OPTIMIZE),1)
 	VERI_FLAGS += -O3
 endif
