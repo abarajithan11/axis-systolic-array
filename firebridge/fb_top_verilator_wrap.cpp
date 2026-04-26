@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <verilated.h>
-#ifdef VM_TRACE
+#if VM_TRACE
 #include <verilated_vcd_c.h>
 #endif
 
@@ -24,7 +24,7 @@ using namespace std;
 vluint64_t sim_time = 0;
 VCLASS *top;
 VerilatedContext *contextp;
-#ifdef VM_TRACE
+#if VM_TRACE
 VerilatedVcdC *tfp;
 #endif
 
@@ -41,7 +41,7 @@ extern "C" unsigned char get_clk();
 
 extern "C" void step_time_veri() {
     top->eval();
-#ifdef VM_TRACE
+#if VM_TRACE
     tfp->dump(contextp->time());
 #endif
     contextp->timeInc(1);
@@ -67,7 +67,7 @@ int main(int argc, char** argv){
     contextp->commandArgs(argc, argv);
     contextp->traceEverOn(true);
     top = new VCLASS(contextp);
-#ifdef VM_TRACE
+#if VM_TRACE
     tfp = new VerilatedVcdC();
     top->trace(tfp, 99);
     tfp->open("trace.vcd");
@@ -75,7 +75,7 @@ int main(int argc, char** argv){
 
     while(!contextp->gotFinish()) step_time_veri();
 
-#ifdef VM_TRACE
+#if VM_TRACE
     tfp->close();
     delete tfp;
 #endif

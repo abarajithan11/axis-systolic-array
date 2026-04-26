@@ -40,8 +40,14 @@ jobs:
             exit 0
           fi
 
+          if ! git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+            echo "Missing before commit ${BEFORE} locally -> rebuild image"
+            echo "docker_changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           echo "Diffing $BEFORE..$SHA"
-          files="$(git diff --name-only "$BEFORE" "$SHA" || true)"
+          files="$(git diff --name-only "$BEFORE" "$SHA")"
           echo "Changed files:"
           echo "$files"
 
@@ -136,7 +142,7 @@ jobs:
         run: |
           git submodule update --init --recursive tb/axis_vip
           docker run --rm -v "$PWD":/repo -w /repo "${GHCR_IMAGE}:${IMAGE_TAG}" \
-            make regress CMD=veri_axis CLEAN_REGRESS=1
+            make regress CMD=veri_axis CLEAN_REGRESS=1 TRACE=0
 
   regress-axi-int:
     runs-on: ubuntu-22.04
@@ -168,7 +174,7 @@ jobs:
       - name: Full Regression -- 2 AXI Ports
         run: |
           docker run --rm -v "$PWD":/repo -w /repo "${GHCR_IMAGE}:${IMAGE_TAG}" \
-            make regress SYS=axi_int CLEAN_REGRESS=1
+            make regress SYS=axi_int CLEAN_REGRESS=1 TRACE=0
 
   regress-axi:
     runs-on: ubuntu-22.04
@@ -203,7 +209,7 @@ jobs:
             -v "$PWD":/repo \
             -w /repo \
             "${GHCR_IMAGE}:${IMAGE_TAG}" \
-            make regress SYS=axi CLEAN_REGRESS=1
+            make regress SYS=axi CLEAN_REGRESS=1 TRACE=0
 
   smoke-test-ibex-soc:
     runs-on: ubuntu-22.04

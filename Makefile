@@ -12,7 +12,7 @@ AXI_WIDTH = 32
 ADDR_WIDTH = 32
 AXIL_WIDTH = 32
 TARGET = sim
-TRACE = 0
+TRACE ?= 1
 OPTIMIZE = 0
 CLEAN_REGRESS = 0
 COPY_WORKDIR = 0
@@ -142,24 +142,24 @@ xrun: $(WORK_DIR) $(DATA_DIR)/kxa.bin $(WORK_DIR)/config.svh $(WORK_DIR)/config.
 
 #----------------- VERILATOR ------------------
 
-work_verilator: $(WORK_DIR) $(DATA_DIR)/kxa.bin $(WORK_DIR)/config.svh $(WORK_DIR)/config.h
-	cd run && verilator --top $(TB_MODULE) -F $(SOURCES_FILE) $(C_SOURCE) $(VERI_FLAGS)
+.PHONY: veri_clean_cache
 
-veri: TRACE=1
-veri: work_verilator $(DATA_DIR)
+veri_clean_cache:
+	rm -rf $(WORK_DIR)/V* $(WORK_DIR)/verilated* $(WORK_DIR)/*.o $(WORK_DIR)/*.a $(WORK_DIR)/*.d $(WORK_DIR)/*.mk $(WORK_DIR)/*.gch
+
+veri: $(WORK_DIR) veri_clean_cache $(DATA_DIR)/kxa.bin $(WORK_DIR)/config.svh $(WORK_DIR)/config.h $(DATA_DIR)
+	cd run && verilator --top $(TB_MODULE) -F $(SOURCES_FILE) $(C_SOURCE) $(VERI_FLAGS)
 	cd $(WORK_DIR) && ./V$(TB_MODULE)
 
-
-veri_axis: TRACE=1
-veri_axis: $(WORK_DIR)/config.svh rtl/sa/axis_sa.sv rtl/sa/pe.sv rtl/sa/mac.sv rtl/sa/n_delay.sv rtl/sa/tri_buffer.sv tb/axis_sa_tb.sv tb/axis_vip/tb/axis_sink.sv tb/axis_vip/tb/axis_source.sv
-	mkdir -p $(WORK_DIR)
-	verilator --binary -j 0 -O3 $(if $(filter 1,$(TRACE)),--trace) --top axis_sa_tb -Mdir $(WORK_DIR)/ $^ --Wno-BLKANDNBLK --Wno-INITIALDLY
+veri_axis: $(WORK_DIR) veri_clean_cache $(WORK_DIR)/config.svh rtl/sa/axis_sa.sv rtl/sa/pe.sv rtl/sa/mac.sv rtl/sa/n_delay.sv rtl/sa/tri_buffer.sv tb/axis_sa_tb.sv tb/axis_vip/tb/axis_sink.sv tb/axis_vip/tb/axis_source.sv
+	verilator --binary -j 0 -O3 $(if $(filter 1,$(TRACE)),--trace) --top axis_sa_tb -Mdir $(WORK_DIR)/ $(filter-out veri_clean_cache $(WORK_DIR),$^) --Wno-BLKANDNBLK --Wno-INITIALDLY
 	cd $(WORK_DIR) && ./Vaxis_sa_tb
 
-veri_smoke: rtl/sa/axis_sa.sv rtl/sa/mac.sv rtl/sa/n_delay.sv rtl/sa/tri_buffer.sv tb/smoke_tb.sv
-	mkdir -p $(WORK_DIR)
-	verilator --top smoke_tb --binary -j 0 -O3 --trace --Wno-BLKANDNBLK --Wno-INITIALDLY --Mdir $(WORK_DIR) $^
+veri_smoke: $(WORK_DIR) veri_clean_cache rtl/sa/axis_sa.sv rtl/sa/mac.sv rtl/sa/n_delay.sv rtl/sa/tri_buffer.sv tb/smoke_tb.sv
+	verilator --top smoke_tb --binary -j 0 -O3 --trace --Wno-BLKANDNBLK --Wno-INITIALDLY --Mdir $(WORK_DIR) $(filter-out veri_clean_cache $(WORK_DIR),$^)
 	cd $(WORK_DIR) && ./Vsmoke_tb
+
+#----------------- FORMAL VERIFICATION ------------------
 
 qverify:
 	rm -rf build/qverify/traces
