@@ -11,11 +11,17 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "config.h"
+
+Memory_st mem;
+
+#define FB_CUSTOM_FLUSH_CACHE
+#include "fb_fw_wrap.h"
+#include "firmware.h"
+
 static inline void flush_cache(void *addr, uint32_t bytes) {
   Xil_DCacheFlushRange((INTPTR)addr, bytes);
 }
-
-#include "firmware.h"
 
 XTime time_start, time_end;
 #define NUM_EXP 100
@@ -23,8 +29,8 @@ XTime time_start, time_end;
 int main() {
   init_platform();
 
-  Memory_st *p_mem = fb_get_mem_p();
-  void *p_cfg = (fb_reg_t *)CONFIG_BASEADDR;
+  Memory_st *p_mem = &mem;
+  fb_reg_t *p_cfg = (fb_reg_t *)CONFIG_BASEADDR;
 
   xil_printf("Hello! Config:%p, Mem:%p\n", p_cfg, p_mem);
 

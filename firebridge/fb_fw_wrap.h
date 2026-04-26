@@ -60,7 +60,9 @@ extern EXT_C void *fb_get_mem_p(){
     fb_task_write_reg((u64)(uintptr_t)addr, (u64)data);
   }
 
+  #ifndef FB_CUSTOM_FLUSH_CACHE
   static inline void flush_cache(void *addr, uint32_t bytes) { (void)addr; (void)bytes; }
+  #endif
 
 #else
   #define sim_fprintf(...)
@@ -73,7 +75,9 @@ extern EXT_C void *fb_get_mem_p(){
     *addr = data;
   }
 
+  #ifndef FB_CUSTOM_FLUSH_CACHE
   static inline void flush_cache(void *addr, uint32_t bytes) { (void)addr; (void)bytes; }
+  #endif
 #endif
 
 #ifdef XDEBUG

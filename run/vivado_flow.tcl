@@ -1,6 +1,7 @@
 
 source  config.tcl
 
+set BOARD        $TARGET
 set PROJECT_NAME sa_${BOARD}
 set RTL_DIR      ../../rtl
 
