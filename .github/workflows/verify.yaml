@@ -284,14 +284,21 @@ jobs:
               make gds_image_hi
             '
 
+      - name: Collect GDS artifacts
+        run: |
+          set -euo pipefail
+          rm -rf gds-artifacts
+          mkdir -p gds-artifacts
+          find openroad/work -type f \( -name '*.webp' -o -name '6_final.gds' \) -print | tee /tmp/gds-artifacts.txt
+          test -s /tmp/gds-artifacts.txt
+          tar -cf - -T /tmp/gds-artifacts.txt | tar -xf - -C gds-artifacts
+
       - name: Upload GDS artifacts
         uses: actions/upload-artifact@v4
         with:
           name: gds-report-artifacts
           if-no-files-found: error
-          path: |
-            openroad/work/reports/asap7/axi/base/*.webp
-            openroad/work/results/asap7/axi/base/6_final.gds
+          path: gds-artifacts/**
 
   regress-ibex-soc:
     runs-on: ubuntu-22.04
