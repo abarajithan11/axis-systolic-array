@@ -1,6 +1,8 @@
-FROM ubuntu:22.04
+FROM openroad/orfs:latest
 
 ARG DEBIAN_FRONTEND=noninteractive  
+
+USER root
 
 # Base tools + RISC-V + Verilator deps + GUI waveform tools
 RUN apt-get update && apt-get install -y \
@@ -19,7 +21,10 @@ RUN apt-get update && apt-get install -y \
     vim \
     x11-apps \
     gtkwave \
+    klayout \
     && rm -rf /var/lib/apt/lists/*
+
+ENV PATH="/OpenROAD-flow-scripts/tools/install/yosys/bin:/OpenROAD-flow-scripts/tools/install/OpenROAD/bin:${PATH}"
 
 # Python deps (project + riscv-dv)
 COPY ibex-soc/python-requirements.txt /tmp/python-requirements.txt

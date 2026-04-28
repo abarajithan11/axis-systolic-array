@@ -3,6 +3,7 @@ run/work*
 run/*.gtkw
 run/*.vcd
 run/XilinxBoardStore
+openroad/work
 vivado
 .vscode
 docs

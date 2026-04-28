@@ -35,13 +35,14 @@ Note that the weights k[K,C] needs to be transposed as k.T[C,K] and stored in th
 
 ## Quickstart
 
-Clone our repo and initialize our submodule
+Clone our repo:
 
 ```bash
 git clone git@github.com:abarajithan11/axis-systolic-array.git
-git submodule update --init tb/axis_vip
 cd axis-systolic-array
 ```
+
+Make targets lazily initialize the submodules they need.
 
 Build and enter our docker container:
 
@@ -175,6 +176,14 @@ FREQ=100MHz
 ```
 
 ![FPGA](docs/fpga.png)
+
+## Open Source ASIC Flow
+
+```bash
+make gds SYS=axi
+```
+
+![asap7](https://media.abapages.com/git_repos/systolic_array.webp)
 
 ## Citation
 

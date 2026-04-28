@@ -14,20 +14,20 @@ module n_delay #(
 
   genvar n;
   generate
-  if (N == 0) begin 
+  if (N == 0) begin : gen_no_delay
     assign d = i;
     assign o = i;
-  end 
-  else begin
-    logic [(N+1)-1:0][W-1:0]  data;
-    assign data [0] = i;
+  end
+  else begin : gen_delay
+    logic [((N+1)*W)-1:0] data;
+    assign data[W-1:0] = i;
     for (n=0 ; n < N; n++)
       always_ff @(posedge c or negedge rng)
-        if (!rng)      data [n+1] <= 0;
-        else if (!rnl) data [n+1] <= 0;
-        else if (e)    data [n+1] <= data [n];
-    assign d = data[N-1:0];
-    assign o = data[N];
+        if (!rng)      data[((n+1)*W) +: W] <= 0;
+        else if (!rnl) data[((n+1)*W) +: W] <= 0;
+        else if (e)    data[((n+1)*W) +: W] <= data[(n*W) +: W];
+    assign d = data[(N*W)-1:0];
+    assign o = data[(N*W) +: W];
   end
   endgenerate
 

@@ -1,6 +1,6 @@
 # Define variables
 R = 8
-C = 4
+C = 8
 K = 16
 WK = 8
 WX = 8
@@ -19,6 +19,7 @@ COPY_WORKDIR = 0
 IP ?= axis_sa
 
 SYS = axi
+PDK ?= asap7
 TB_MODULE = top_$(SYS)_tb
 FB_MODULE = fb_axi_vip
 RUN_DIR = run
@@ -101,7 +102,7 @@ wave:
 	gtkwave $(WORK_DIR)/trace.vcd &
 
 config: $(WORK_DIR)/config.svh $(WORK_DIR)/config.h $(WORK_DIR)/config.tcl $(WORK_DIR)/config.scala
-	@if [ -n "$(COPY_WORKDIR)" ]; then rm -rf run/work && cp -r $(WORK_DIR) run/work; fi;
+	@if [ "$(COPY_WORKDIR)" = "1" ]; then rm -rf run/work && cp -r $(WORK_DIR) run/work; fi;
 
 #----------------- Vivado XSIM ------------------
 
@@ -152,6 +153,7 @@ veri: $(WORK_DIR) veri_clean_cache $(DATA_DIR)/kxa.bin $(WORK_DIR)/config.svh $(
 	cd $(WORK_DIR) && ./V$(TB_MODULE)
 
 veri_axis: $(WORK_DIR) veri_clean_cache $(WORK_DIR)/config.svh rtl/sa/axis_sa.sv rtl/sa/pe.sv rtl/sa/mac.sv rtl/sa/n_delay.sv rtl/sa/tri_buffer.sv tb/axis_sa_tb.sv tb/axis_vip/tb/axis_sink.sv tb/axis_vip/tb/axis_source.sv
+	git submodule update --init tb/axis_vip
 	verilator --binary -j 0 -O3 $(if $(filter 1,$(TRACE)),--trace) --top axis_sa_tb -Mdir $(WORK_DIR)/ $(filter-out veri_clean_cache $(WORK_DIR),$^) --Wno-BLKANDNBLK --Wno-INITIALDLY
 	cd $(WORK_DIR) && ./Vaxis_sa_tb
 
@@ -180,6 +182,68 @@ qverify:
 boom_test:
 	$(MAKE) -C soc/chipyard test
 
+#----------------- OpenROAD ASIC flow ------------
+
+OPENROAD_DIR ?= $(CURDIR)/openroad
+ORFS_DIR ?= $(firstword $(wildcard /OpenROAD-flow-scripts) $(OPENROAD_DIR)/OpenROAD-flow-scripts)
+ORFS_FLOW_DIR ?= $(ORFS_DIR)/flow
+OPENROAD_WORK_DIR ?= $(OPENROAD_DIR)/work
+OPENROAD_DESIGN_CONFIG ?= $(OPENROAD_DIR)/config.mk
+OPENROAD_PLATFORM ?= $(PDK)
+ifeq ($(PDK),sky130)
+  OPENROAD_PLATFORM := sky130hd
+endif
+OPENROAD_DESIGN_NICKNAME ?= $(or $(DESIGN_NICKNAME),$(SYS))
+OPENROAD_FLOW_VARIANT ?= $(or $(FLOW_VARIANT),base)
+OPENROAD_RESULTS_DIR ?= $(OPENROAD_WORK_DIR)/results/$(OPENROAD_PLATFORM)/$(OPENROAD_DESIGN_NICKNAME)/$(OPENROAD_FLOW_VARIANT)
+OPENROAD_REPORTS_DIR ?= $(OPENROAD_WORK_DIR)/reports/$(OPENROAD_PLATFORM)/$(OPENROAD_DESIGN_NICKNAME)/$(OPENROAD_FLOW_VARIANT)
+OPENROAD_EXE ?= $(or $(shell command -v openroad 2>/dev/null),$(ORFS_DIR)/tools/install/OpenROAD/bin/openroad)
+GDS_IMAGE_SCALE ?= 8
+GDS_IMAGE_OUTPUT ?= $(OPENROAD_REPORTS_DIR)/final_all_$(GDS_IMAGE_SCALE)x.webp
+
+.PHONY: gds gds_image_hi gds_clean gds_nuke
+
+orfs_submodule:
+	git submodule update --init openroad/OpenROAD-flow-scripts
+
+gds: config orfs_submodule
+	$(MAKE) -C $(ORFS_FLOW_DIR) \
+		DESIGN_CONFIG=$(OPENROAD_DESIGN_CONFIG) \
+		SYS=$(SYS) \
+		PDK=$(PDK) \
+		WORK_HOME=$(OPENROAD_WORK_DIR) \
+		gds
+
+gds_image_hi: orfs_submodule
+	mkdir -p $(OPENROAD_REPORTS_DIR)
+	QT_QPA_PLATFORM=offscreen \
+	SCRIPTS_DIR=$(ORFS_FLOW_DIR)/scripts \
+	RESULTS_DIR=$(OPENROAD_RESULTS_DIR) \
+	REPORTS_DIR=$(OPENROAD_REPORTS_DIR) \
+	IMAGE_SCALE=$(GDS_IMAGE_SCALE) \
+	OUTPUT_FILE=$(GDS_IMAGE_OUTPUT) \
+	$(OPENROAD_EXE) $(CURDIR)/scripts/save_highres_final_all.tcl
+
+gds_clean: orfs_submodule
+	$(MAKE) -C $(ORFS_FLOW_DIR) \
+		DESIGN_CONFIG=$(OPENROAD_DESIGN_CONFIG) \
+		SYS=$(SYS) \
+		PDK=$(PDK) \
+		WORK_HOME=$(OPENROAD_WORK_DIR) \
+		clean_all
+	rm -rf $(OPENROAD_WORK_DIR)/results/$(OPENROAD_PLATFORM)/$(OPENROAD_DESIGN_NICKNAME)/$(OPENROAD_FLOW_VARIANT)
+	rm -rf $(OPENROAD_WORK_DIR)/logs/$(OPENROAD_PLATFORM)/$(OPENROAD_DESIGN_NICKNAME)/$(OPENROAD_FLOW_VARIANT)
+	rm -rf $(OPENROAD_WORK_DIR)/reports/$(OPENROAD_PLATFORM)/$(OPENROAD_DESIGN_NICKNAME)/$(OPENROAD_FLOW_VARIANT)
+	rm -rf $(OPENROAD_WORK_DIR)/objects/$(OPENROAD_PLATFORM)/$(OPENROAD_DESIGN_NICKNAME)/$(OPENROAD_FLOW_VARIANT)
+
+gds_nuke: orfs_submodule
+	$(MAKE) -C $(ORFS_FLOW_DIR) \
+		DESIGN_CONFIG=$(OPENROAD_DESIGN_CONFIG) \
+		SYS=$(SYS) \
+		PDK=$(PDK) \
+		WORK_HOME=$(OPENROAD_WORK_DIR) \
+		nuke
+
 #----------------- Ibex System ------------------
 
 ibex_test:
@@ -199,6 +263,7 @@ iwave:
 clean:
 	rm -rf $(WORK_DIR)*
 	$(MAKE) -C ibex-soc clean
+	$(MAKE) gds_clean
 	rm -rf build *.vstf *.log *.ses .qverify .visualizer
 
 #----------------- Regression ------------------

@@ -140,7 +140,7 @@ jobs:
 
       - name: Full Regression - AXI Stream Only
         run: |
-          git submodule update --init --recursive tb/axis_vip
+          git submodule update --init tb/axis_vip
           docker run --rm -v "$PWD":/repo -w /repo "${GHCR_IMAGE}:${IMAGE_TAG}" \
             make regress CMD=veri_axis CLEAN_REGRESS=1 TRACE=0
 
@@ -245,6 +245,53 @@ jobs:
               fusesoc library add sa_ip "$(pwd -P)" || true
               make ibex_test
             '
+
+  gds-artifacts:
+    runs-on: ubuntu-22.04
+    needs: smoke-test-axi-subsystem
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Checkout OpenROAD flow scripts
+        run: git submodule update --init openroad/OpenROAD-flow-scripts
+
+      - name: Free disk space on runner
+        run: |
+          echo "Before cleanup:"; df -h
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /opt/hostedtoolcache/CodeQL || true
+          sudo apt-get clean || true
+          sudo rm -rf /var/lib/apt/lists/* || true
+          docker system prune -af || true
+          echo "After cleanup:"; df -h
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull CI image
+        run: docker pull "${GHCR_IMAGE}:${IMAGE_TAG}"
+
+      - name: Generate GDS and report images
+        run: |
+          docker run --rm -v "$PWD":/repo -w /repo "${GHCR_IMAGE}:${IMAGE_TAG}" \
+            bash -lc '
+              make gds
+              make gds_image_hi
+            '
+
+      - name: Upload GDS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: gds-report-artifacts
+          if-no-files-found: error
+          path: |
+            openroad/work/reports/asap7/axi/base/*.webp
+            openroad/work/results/asap7/axi/base/6_final.gds
 
   regress-ibex-soc:
     runs-on: ubuntu-22.04
