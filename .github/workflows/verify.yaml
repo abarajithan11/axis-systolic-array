@@ -280,6 +280,7 @@ jobs:
         run: |
           docker run --rm -v "$PWD":/repo -w /repo "${GHCR_IMAGE}:${IMAGE_TAG}" \
             bash -lc '
+              set -e
               make gds
               make gds_image_hi
             '

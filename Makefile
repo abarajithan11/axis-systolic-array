@@ -1,6 +1,6 @@
 # Define variables
-R = 8
-C = 8
+R = 4
+C = 4
 K = 16
 WK = 8
 WX = 8
