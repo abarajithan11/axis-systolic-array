@@ -26,11 +26,6 @@ module axis_sa #(
   logic [D-1:0] r_valid, r_last, r_copy, r_clear, conflict, a_valid, m_first, reg_stall, can_copy, m_stall;
   logic [LM+LA+D-1:0] valid, vlast;
 
-  // Global Control
-  assign en_mac   = !(|conflict) && !(|reg_stall); // pull en_mac down if any acc is pushing data (avalid) and reg already has data (r_valid)
-  assign en_shift = m_valid && m_ready;  // shift during handshake
-  assign s_ready  = en_mac;
-
   // Reverse the columns of K matrix, so that outputs come out with C=0 first
   for (c=0; c<C; c=c+1)
     assign sk_reversed[c] = sk_data[C-1-c];
@@ -76,6 +71,10 @@ module axis_sa #(
       else if (r_copy [d])                     r_valid[d] <= 1;
       else if (r_clear[d])                     r_valid[d] <= 0;
   end
+
+  assign en_mac   = !(|conflict) && !(|reg_stall); // pull en_mac down if any acc is pushing data (avalid) and reg already has data (r_valid)
+  assign en_shift = m_valid && m_ready;  // shift during handshake
+  assign s_ready  = en_mac;
 
   assign m_valid = r_valid[D-1];
   assign m_last  = r_last [C-1];

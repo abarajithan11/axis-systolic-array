@@ -306,6 +306,9 @@ image:
 		--build-arg USERNAME=$(SHORTUSR) \
 		-t $(IMAGE) .
 
+run:
+	docker exec -it $(CONTAINER) bash -lc '$(CMD)'
+
 start:
 	- xhost +local:docker
 	docker run -d --name $(CONTAINER) \
