@@ -6,6 +6,8 @@ module axis_sa_tb;
   localparam 
     R          = `R, // Rows of SA == rows of output matrix
     C          = `C, // Cols of SA == cols of output matrix
+    RT         = `RT,
+    CT         = `CT,
     K_MIN      = 5, // Cols of matrix_k and rows of matrix_k
     K_MAX      = 30,
     WX         = `WX, // word width of matrix_k
@@ -35,7 +37,7 @@ module axis_sa_tb;
   wire sk_ready = sx_valid && s_ready;
   wire [R-1:0] m_keep = '1;
 
-  axis_sa #(.R(R), .C(C), .WX(WX), .WK(WK), .WY(WY), .LM(LM), .LA(LA)) DUT (.*);
+  axis_sa #(.R(R), .C(C), .RT(RT), .CT(CT), .WX(WX), .WK(WK), .WY(WY), .LM(LM), .LA(LA)) DUT (.*);
 
   axis_source #(.WORD_W(WX), .BUS_W(WX*R), .PROB_VALID(P_VALID)) source_x (.clk(clk), .s_valid(sx_valid), .s_ready(sx_ready), .s_last(sx_last), .s_keep(), .s_data(sx_data));
   axis_source #(.WORD_W(WK), .BUS_W(WK*C), .PROB_VALID(P_VALID)) source_k (.clk(clk), .s_valid(sk_valid), .s_ready(sk_ready), .s_last(sk_last), .s_keep(), .s_data(sk_data));
@@ -104,4 +106,4 @@ module axis_sa_tb;
     $finish();
   end
 
-endmodule 
+endmodule

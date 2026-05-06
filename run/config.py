@@ -5,6 +5,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate config.svh, config.h, and config.tcl based on input parameters.")
     parser.add_argument('--R', required=True, type=int)
     parser.add_argument('--C', required=True, type=int)
+    parser.add_argument('--RT', default=1, type=int)
+    parser.add_argument('--CT', default=1, type=int)
     parser.add_argument('--K', required=True, type=int)
     parser.add_argument('--WK', default=8, type=int)
     parser.add_argument('--WX', default=8, type=int)
@@ -68,6 +70,8 @@ if __name__ == "__main__":
         f.write(f"""
 `define R              {args.R}
 `define C              {args.C}
+`define RT             {args.RT}
+`define CT             {args.CT}
 `define WK             {args.WK}
 `define WX             {args.WX}
 `define WY             {args.WY}

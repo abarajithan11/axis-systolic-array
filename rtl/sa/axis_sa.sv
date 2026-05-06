@@ -5,7 +5,9 @@
 `define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 module axis_sa #(
-    parameter  R=4, C=8, WX=4, WK=8, WY=16, LM=1, LA=1
+    parameter  R=4, C=8, WX=4, WK=8, WY=16, LM=1, LA=1,
+    parameter  RT=1, CT=1,
+    parameter  RE=R/RT, CE=C/CT
     // rows, columns, x_width, k_width, y_width, multiplier latency, accumulator latency
   )(
     input  logic clk, rstn,
@@ -16,151 +18,232 @@ module axis_sa #(
     output logic [R-1:0][WY-1:0] m_data
   );
 
-  genvar r, c, d;
-  localparam D  = `DIAG(R,C)-1; // length of diagonal
-  localparam WD = `MAX(1, $clog2(D));
+  genvar r, c, tr, tc;
+  localparam D = R+C+RT+CT-3;
 
   logic [R-1:0][WX-1:0] xi_delayed;
   logic [C-1:0][WK-1:0] ki_delayed, sk_reversed;
-  logic [R-1:0][C-1:0][WX-1:0] xo;
-  logic [R-1:0][C-1:0][WK-1:0] ko;
-  logic [R-1:0][C-1:0][WY-1:0] ro;
-
-  logic [D-1:0] en_copy, en_copy_next, a_valid, a_valid_next, m_first;
-  logic [LM+LA+D-1:0] valid, vlast;
-
-  logic s_ready_next, m_valid_next, m_last_next;
-  logic en_mac, en_mac_next, en_shift, en_shift_next, shifting, shifting_next;
-  logic s_hsk, m_hsk, input_block, input_block_next, copying, copying_next, mac_stall_next;
-  logic copy_start, copy_last_en, shift_start, shift_last;
-  logic [C-1:0] copy_ready_col;
-  logic [WD-1:0] c_shift_col, c_shift_col_next;
-  logic [WD-1:0] c_copy_diag, c_copy_diag_next;
-  logic [WD-1:0] copy_col_next;
+  logic [RT-1:0][RE-1:0][WX-1:0] x_d;
+  logic [CT-1:0][CE-1:0][WK-1:0] k_d;
+  logic [RT-1:0] x_valid_d, x_last_d;
+  logic [CT-1:0] k_valid_d, k_last_d;
+  logic [RT-1:0][CT-1:0][RE-1:0][WX-1:0] x_w, x_e;
+  logic [RT-1:0][CT-1:0][CE-1:0][WK-1:0] k_n, k_s;
+  logic [RT-1:0][CT-1:0][RE-1:0][WY-1:0] r_w, r_e;
+  logic [RT-1:0][CT-1:0] t_valid, t_last, t_ready, t_m_valid, t_m_last, t_m_ready;
+  logic [RT-1:0][CT-1:0] t_en_mac, t_en_shift;
+  logic [RT-1:0][CT-1:0] x_valid_e, x_last_e, k_valid_s, k_last_s;
+  logic [RT-1:0][CT-1:0][RE-1:0] r_copy_e;
+  logic [RT-1:0][CT-1:0][`DIAG(RE,CE)-2:0] t_en_copy;
+  logic [RT-1:0][CT-1:0] x_valid_w, x_last_w, x_ready_w;
+  logic [RT-1:0][CT-1:0] k_valid_n, k_last_n, k_ready_n;
+  logic en_mac;
+  logic s_hsk;
 
   // ---------- DATAPATH ----------
+
+  initial begin
+    if (RT < 1 || CT < 1 || R % RT != 0 || C % CT != 0) begin
+      $fatal(1, "axis_sa requires RT/CT to evenly divide R/C");
+    end
+  end
 
   // Reverse the columns of K matrix, so that outputs come out with C=0 first.
   for (c=0; c<C; c=c+1)
     assign sk_reversed[c] = sk_data[C-1-c];
 
-  // Triangular buffer for x and k.
-  tri_buffer #(.W(WX), .N(R)) TRI_X (.clk(clk), .rstn(rstn), .cen(en_mac), .x(s_hsk ? sx_data     : '0), .y(xi_delayed));
-  tri_buffer #(.W(WK), .N(C)) TRI_K (.clk(clk), .rstn(rstn), .cen(en_mac), .x(s_hsk ? sk_reversed : '0), .y(ki_delayed));
+  // Skew x and k far enough to compensate for both PE and inter-tile registers.
+  for (r=0; r<R; r=r+1) begin: SKEW_X
+    n_delay #(.N(r + (r / RE)), .W(WX)) DELAY_X (
+      .c(clk), .e(en_mac), .rng(rstn), .rnl(rstn),
+      .i(s_hsk ? sx_data[r] : '0),
+      .o(xi_delayed[r]),
+      .d()
+    );
+  end
 
-  for (r=0; r<R; r=r+1) begin:PER
-    for (c=0; c<C; c=c+1) begin:PEC
+  for (c=0; c<C; c=c+1) begin: SKEW_K
+    n_delay #(.N(c + (c / CE)), .W(WK)) DELAY_K (
+      .c(clk), .e(en_mac), .rng(rstn), .rnl(rstn),
+      .i(s_hsk ? sk_reversed[c] : '0),
+      .o(ki_delayed[c]),
+      .d()
+    );
+  end
 
-      pe #(.WX(WX),.WK(WK),.WY(WY),.LM(LM),.LA(LA)) PE (
-        .clk     (clk),
-        .rstn    (rstn),
-        .en_mac  (en_mac),
-        .en_shift(en_shift),
-        .m_first (m_first[`DIAG(r,c)]),
-        .m_valid (valid[LM+`DIAG(r,c)]),
-        .r_copy  (en_copy[`DIAG(r,c)]),
-        .ki      (r == 0 ? ki_delayed[c] : ko[r-1][c]),
-        .xi      (c == 0 ? xi_delayed[r] : xo[r][c-1]),
-        .ri      (c == 0 ? WY'(0)        : ro[r][c-1]),
-        .ko      (ko[r][c]),
-        .xo      (xo[r][c]),
-        .ro      (ro[r][c])
+  assign s_hsk = s_valid && s_ready;
+  assign en_mac = t_en_mac[0][0];
+
+  assign s_ready = t_ready[0][0];
+
+  assign m_valid = t_m_valid[RT-1][CT-1];
+  assign m_last  = t_m_last [RT-1][CT-1];
+
+  for (tr=0; tr<RT; tr=tr+1) begin:TILE_R
+    for (tc=0; tc<CT; tc=tc+1) begin:TILE_C
+      for (r=0; r<RE; r=r+1) begin:TILE_XR
+        localparam int GR = tr*RE + r;
+
+        if (tc == 0) begin
+          assign x_d[tr][r] = xi_delayed[GR];
+          assign r_w[tr][tc][r] = '0;
+        end
+        if (tc == CT-1) begin
+          assign m_data[GR] = r_e[tr][tc][r];
+        end
+      end
+
+      for (c=0; c<CE; c=c+1) begin:TILE_KC
+        localparam int GC = tc*CE + c;
+
+        if (tr == 0)
+          assign k_d[tc][c] = ki_delayed[GC];
+      end
+
+      if (tc == 0) begin
+        n_delay #(.N(tr*(RE+1)), .W(1)) X_TILE_VALID (
+          .c(clk), .e(en_mac), .rng(rstn), .rnl(rstn),
+          .i(s_hsk),
+          .o(x_valid_d[tr]),
+          .d()
+        );
+
+        n_delay #(.N(tr*(RE+1)), .W(1)) X_TILE_LAST (
+          .c(clk), .e(en_mac), .rng(rstn), .rnl(rstn),
+          .i(s_hsk && s_last),
+          .o(x_last_d[tr]),
+          .d()
+        );
+
+        if (tr == 0) begin
+          assign x_w[tr][tc]       = x_d[tr];
+          assign x_valid_w[tr][tc] = x_valid_d[tr];
+          assign x_last_w [tr][tc] = x_last_d[tr];
+        end else begin
+          skid_buffer #(.WIDTH(RE*WX+1)) X_WEST_SKID (
+            .clk    (clk),
+            .rstn   (rstn),
+            .s_valid(x_valid_d[tr]),
+            .s_ready(),
+            .s_data ({x_d[tr], x_last_d[tr]}),
+            .m_ready(x_ready_w[tr][tc]),
+            .m_valid(x_valid_w[tr][tc]),
+            .m_data ({x_w[tr][tc], x_last_w[tr][tc]})
+          );
+        end
+      end
+
+      if (tr == 0) begin
+        n_delay #(.N(tc*(CE+1)), .W(1)) K_TILE_VALID (
+          .c(clk), .e(en_mac), .rng(rstn), .rnl(rstn),
+          .i(s_hsk),
+          .o(k_valid_d[tc]),
+          .d()
+        );
+
+        n_delay #(.N(tc*(CE+1)), .W(1)) K_TILE_LAST (
+          .c(clk), .e(en_mac), .rng(rstn), .rnl(rstn),
+          .i(s_hsk && s_last),
+          .o(k_last_d[tc]),
+          .d()
+        );
+
+        if (tc == 0) begin
+          assign k_n[tr][tc]       = k_d[tc];
+          assign k_valid_n[tr][tc] = k_valid_d[tc];
+          assign k_last_n [tr][tc] = k_last_d[tc];
+        end else begin
+          skid_buffer #(.WIDTH(CE*WK+1)) K_NORTH_SKID (
+            .clk    (clk),
+            .rstn   (rstn),
+            .s_valid(k_valid_d[tc]),
+            .s_ready(),
+            .s_data ({k_d[tc], k_last_d[tc]}),
+            .m_ready(k_ready_n[tr][tc]),
+            .m_valid(k_valid_n[tr][tc]),
+            .m_data ({k_n[tr][tc], k_last_n[tr][tc]})
+          );
+        end
+      end
+
+      assign t_valid[tr][tc] = x_valid_w[tr][tc] && k_valid_n[tr][tc];
+      assign t_last [tr][tc] = x_last_w [tr][tc] && k_last_n [tr][tc];
+      assign x_ready_w[tr][tc] = k_valid_n[tr][tc] && t_ready[tr][tc];
+      assign k_ready_n[tr][tc] = x_valid_w[tr][tc] && t_ready[tr][tc];
+
+      if (tc == CT-1) begin
+        if (tr == RT-1)
+          assign t_m_ready[tr][tc] = m_ready;
+        else
+          assign t_m_ready[tr][tc] = m_ready && t_m_valid[RT-1][tc];
+      end
+
+      sa #(.RE(RE), .CE(CE), .WX(WX), .WK(WK), .WY(WY), .LM(LM), .LA(LA)) TILE (
+        .clk       (clk),
+        .rstn      (rstn),
+        .s_valid_0 (t_valid[tr][tc]),
+        .s_last_0  (t_last[tr][tc]),
+        .s_ready_0 (t_ready[tr][tc]),
+        .m_ready_0 (t_m_ready[tr][tc]),
+        .m_valid_0 (t_m_valid[tr][tc]),
+        .m_last_0  (t_m_last[tr][tc]),
+        .en_mac_o  (t_en_mac[tr][tc]),
+        .en_shift_o(t_en_shift[tr][tc]),
+        .en_copy_o (t_en_copy[tr][tc]),
+        .r_copy_e_o(r_copy_e[tr][tc]),
+        .x_valid_o (x_valid_e[tr][tc]),
+        .x_last_o  (x_last_e [tr][tc]),
+        .k_valid_o (k_valid_s[tr][tc]),
+        .k_last_o  (k_last_s [tr][tc]),
+        .xi_data   (x_w[tr][tc]),
+        .ki_data   (k_n[tr][tc]),
+        .ri_data   (r_w[tr][tc]),
+        .xo_data   (x_e[tr][tc]),
+        .ko_data   (k_s[tr][tc]),
+        .ro_data   (r_e[tr][tc])
       );
-  end end
 
-  for (r=0; r<R; r=r+1)
-    assign m_data[r] = ro[r][C-1];
+      if (tc < CT-1) begin:X_EAST_BOUNDARY
+        skid_buffer #(.WIDTH(RE*WX+1)) X_SKID (
+          .clk    (clk),
+          .rstn   (rstn),
+          .s_valid(x_valid_e[tr][tc]),
+          .s_ready(),
+          .s_data ({x_e[tr][tc], x_last_e[tr][tc]}),
+          .m_ready(x_ready_w[tr][tc+1]),
+          .m_valid(x_valid_w[tr][tc+1]),
+          .m_data ({x_w[tr][tc+1], x_last_w[tr][tc+1]})
+        );
 
+        for (r=0; r<RE; r=r+1) begin:R_EAST_BOUNDARY
+          skid_buffer #(.WIDTH(WY)) R_SKID (
+            .clk    (clk),
+            .rstn   (rstn),
+            .s_valid(t_en_shift[tr][tc] || r_copy_e[tr][tc][r]),
+            .s_ready(),
+            .s_data (r_e[tr][tc][r]),
+            .m_ready(t_en_shift[tr][tc+1]),
+            .m_valid(),
+            .m_data (r_w[tr][tc+1][r])
+          );
+        end
 
-  // ---------- CONTROL PATH ----------
+        assign t_m_ready[tr][tc] = 1'b1;
+      end
 
-  n_delay #(.N(LM+LA+D), .W(1)) VALID (.c(clk), .e(en_mac), .rng(rstn), .rnl(rstn), .i(s_hsk          ), .o(), .d(valid));
-  n_delay #(.N(LM+LA+D), .W(1)) VLAST (.c(clk), .e(en_mac), .rng(rstn), .rnl(rstn), .i(s_hsk && s_last), .o(), .d(vlast));
-
-  counter #(.MAX(D), .W(WD)) COPY_COUNTER (
-    .clk(clk), .rstn(rstn),
-    .start(copy_start), .en_active(en_mac),
-    .cnt(c_copy_diag), .cnt_n(c_copy_diag_next),
-    .active(copying), .active_n(copying_next),
-    .last(), .last_n(), .last_en(copy_last_en)
-  );
-
-  counter #(.MAX(C), .W(WD)) SHIFT_COUNTER (
-    .clk(clk), .rstn(rstn),
-    .start(shift_start), .en_active(m_hsk),
-    .cnt(c_shift_col), .cnt_n(c_shift_col_next),
-    .active(shifting), .active_n(shifting_next),
-    .last(shift_last), .last_n(), .last_en()
-  );
-
-  for (d=0; d<D; d=d+1) begin
-    always_ff @(posedge clk `OR_NEGEDGE(rstn)) begin
-      if (!rstn)            m_first[d] <= 1'b1;
-      else if (valid[LM+d]) m_first[d] <= vlast[LM+d];
-    end
-  end
-  
-  always_comb begin
-    input_block_next = input_block;
-    if (s_hsk && s_last) input_block_next = 1'b1;
-    if (copy_last_en)    input_block_next = 1'b0;
-  end
-
-  always_comb begin
-    s_hsk          = s_valid && s_ready;
-    m_hsk          = m_valid && m_ready;
-    copy_start     = en_mac && a_valid_next[0];
-    shift_start    = !shifting && en_copy[D-1];
-    copy_ready_col = !shifting ? '1 : (C'(1) << c_shift_col) - C'(1);
-    copy_col_next  = `MIN(c_copy_diag_next, WD'(C-1));
-    mac_stall_next = shifting_next && copying_next && (copy_col_next >= c_shift_col);
-    s_ready_next   = !mac_stall_next && !input_block_next;
-    en_mac_next    = !mac_stall_next;
-  end
-
-  for (d=0; d<D; d=d+1) begin
-    assign a_valid_next[d] = en_mac ? vlast[LM+LA+d-1] : a_valid[d];  
-    assign en_copy_next[d] = a_valid_next[d] && en_mac_next && copy_ready_col[`MIN(d, C-1)];
-  end
-
-  always_comb begin
-    en_shift_next = 1'b0;
-    m_valid_next  = m_valid;
-    m_last_next   = m_last;
-
-    if (!shifting) begin
-      m_valid_next = en_copy[D-1];
-      m_last_next  = en_copy[D-1] && (C == 1);
-    end else if (!m_valid) begin
-      m_valid_next = 1'b1;
-      m_last_next  = shift_last;
-    end else if (m_hsk) begin
-      en_shift_next = !m_last;
-      m_valid_next  = 1'b0;
-      m_last_next   = 1'b0;
+      if (tr < RT-1) begin:K_SOUTH_BOUNDARY
+        skid_buffer #(.WIDTH(CE*WK+1)) K_SKID (
+          .clk    (clk),
+          .rstn   (rstn),
+          .s_valid(k_valid_s[tr][tc]),
+          .s_ready(),
+          .s_data ({k_s[tr][tc], k_last_s[tr][tc]}),
+          .m_ready(k_ready_n[tr+1][tc]),
+          .m_valid(k_valid_n[tr+1][tc]),
+          .m_data ({k_n[tr+1][tc], k_last_n[tr+1][tc]})
+        );
+      end
     end
   end
 
-  always_ff @(posedge clk `OR_NEGEDGE(rstn)) begin
-    if (!rstn) begin
-      en_mac      <= 1'b0;
-      en_shift    <= 1'b0;
-      en_copy     <= '0;
-      s_ready     <= 1'b0;
-      m_valid     <= 1'b0;
-      m_last      <= 1'b0;
-      a_valid     <= '0;
-      input_block <= 1'b0;
-    end else begin
-      en_mac      <= en_mac_next;
-      en_shift    <= en_shift_next;
-      en_copy     <= en_copy_next;
-      s_ready     <= s_ready_next;
-      m_valid     <= m_valid_next;
-      m_last      <= m_last_next;
-      a_valid     <= a_valid_next;
-      input_block <= input_block_next;
-    end
-  end
-  
 endmodule

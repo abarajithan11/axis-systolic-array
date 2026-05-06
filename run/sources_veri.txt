@@ -1,10 +1,12 @@
 config.svh
 ../../rtl/sa/axis_sa.sv
+../../rtl/sa/sa.sv
 ../../rtl/sa/counter.sv
 ../../rtl/sa/mac.sv
 ../../rtl/sa/pe.sv
 ../../rtl/sa/n_delay.sv
 ../../rtl/sa/tri_buffer.sv
+../../rtl/sys/skid_buffer.sv
 ../../rtl/sys/top.v
 ../../rtl/sys/dma_controller.sv
 ../../rtl/ext/alex_axi_dma_rd.sv
