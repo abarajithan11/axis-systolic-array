@@ -14,7 +14,6 @@ AXIL_WIDTH = 32
 TARGET = sim
 TRACE ?= 1
 OPTIMIZE = 0
-CLEAN_REGRESS = 0
 COPY_WORKDIR = 0
 IP ?= axis_sa
 
@@ -263,9 +262,12 @@ iwave:
 	$(MAKE) -C ibex-soc wave
 
 clean:
+	$(MAKE) sim_clean
+	$(MAKE) gds_clean
+
+sim_clean:
 	rm -rf $(WORK_DIR)*
 	$(MAKE) -C ibex-soc clean
-	$(MAKE) gds_clean
 	rm -rf build *.vstf *.log *.ses .qverify .visualizer
 
 #----------------- Regression ------------------
@@ -280,7 +282,6 @@ regress:
 	  for Cv in $(C_LIST); do \
 	    WD="$(RUN_DIR)/work_R$${Rv}_C$${Cv}"; \
 	    DD="$${WD}/data"; \
-			if [ -n "$(CLEAN_REGRESS)" ]; then $(MAKE) clean; fi; \
 	    echo "\n\n\n================== [regress] R=$$Rv C=$$Cv SYS=$(SYS) VALID_PROB=$(VALID_PROB)/1000 READY_PROB=$(READY_PROB)/1000 ==================\n\n\n"; \
 	    $(MAKE) $(CMD) R=$$Rv C=$$Cv WORK_DIR="$$WD" DATA_DIR="$$DD"; \
 	  done; \
@@ -328,4 +329,4 @@ kill:
 	- docker kill $(CONTAINER) || true
 	- docker rm   $(CONTAINER) || true
 
-.PHONY: sim vlog elab run clean vivado regress veri xrun ibuild irun iprint iwave irun-clean veri_axis veri_smoke qverify regress image start enter kill wave clean
+.PHONY: sim vlog elab run clean sim_clean vivado regress veri xrun ibuild irun iprint iwave irun-clean veri_axis veri_smoke qverify regress image start enter kill wave clean
