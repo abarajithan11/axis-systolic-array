@@ -11,6 +11,7 @@ filesets:
       - rtl/sys/skid_buffer.sv
       - rtl/sa/pe.sv
       - rtl/sa/axis_sa.sv
+      - rtl/sa/counter.sv
       - rtl/sa/mac.sv
       - rtl/sa/n_delay.sv
       - rtl/sa/tri_buffer.sv

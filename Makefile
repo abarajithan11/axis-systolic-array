@@ -152,12 +152,12 @@ veri: $(WORK_DIR) veri_clean_cache $(DATA_DIR)/kxa.bin $(WORK_DIR)/config.svh $(
 	cd run && verilator --top $(TB_MODULE) -F $(SOURCES_FILE) $(C_SOURCE) $(VERI_FLAGS)
 	cd $(WORK_DIR) && ./V$(TB_MODULE)
 
-veri_axis: $(WORK_DIR) veri_clean_cache $(WORK_DIR)/config.svh rtl/sa/axis_sa.sv rtl/sa/pe.sv rtl/sa/mac.sv rtl/sa/n_delay.sv rtl/sa/tri_buffer.sv tb/axis_sa_tb.sv tb/axis_vip/tb/axis_sink.sv tb/axis_vip/tb/axis_source.sv
+veri_axis: $(WORK_DIR) veri_clean_cache $(WORK_DIR)/config.svh rtl/sa/axis_sa.sv rtl/sa/counter.sv rtl/sa/pe.sv rtl/sa/mac.sv rtl/sa/n_delay.sv rtl/sa/tri_buffer.sv tb/axis_sa_tb.sv tb/axis_vip/tb/axis_sink.sv tb/axis_vip/tb/axis_source.sv
 	git submodule update --init tb/axis_vip
 	verilator --binary -j 0 -O3 $(if $(filter 1,$(TRACE)),--trace) --top axis_sa_tb -Mdir $(WORK_DIR)/ $(filter-out veri_clean_cache $(WORK_DIR),$^) --Wno-BLKANDNBLK --Wno-INITIALDLY
 	cd $(WORK_DIR) && ./Vaxis_sa_tb
 
-veri_smoke: $(WORK_DIR) veri_clean_cache rtl/sa/axis_sa.sv rtl/sa/mac.sv rtl/sa/n_delay.sv rtl/sa/tri_buffer.sv tb/smoke_tb.sv
+veri_smoke: $(WORK_DIR) veri_clean_cache rtl/sa/axis_sa.sv rtl/sa/counter.sv rtl/sa/mac.sv rtl/sa/n_delay.sv rtl/sa/tri_buffer.sv tb/smoke_tb.sv
 	verilator --top smoke_tb --binary -j 0 -O3 --trace --Wno-BLKANDNBLK --Wno-INITIALDLY --Mdir $(WORK_DIR) $(filter-out veri_clean_cache $(WORK_DIR),$^)
 	cd $(WORK_DIR) && ./Vsmoke_tb
 

@@ -1,5 +1,6 @@
 config.svh
 ../../rtl/sa/axis_sa.sv
+../../rtl/sa/counter.sv
 ../../rtl/sa/mac.sv
 ../../rtl/sa/pe.sv
 ../../rtl/sa/n_delay.sv

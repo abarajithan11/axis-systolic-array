@@ -1,5 +1,6 @@
 `timescale 1ns/1ps
 `define DIAG(a, b) (a+b)
+`define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 module axis_sa #(
     parameter  R=4, C=8, WX=4, WK=8, WY=16, LM=1, LA=1
@@ -15,7 +16,6 @@ module axis_sa #(
 
   genvar r, c, d;
   localparam D  = `DIAG(R,C)-1; // length of diagonal
-  localparam WM = WX + WK;
 
   localparam MAX_DC = D > C ? D : C;
   localparam WDC    = MAX_DC <= 1 ? 1 : $clog2(MAX_DC);
@@ -26,17 +26,16 @@ module axis_sa #(
   logic [R-1:0][C-1:0][WK-1:0] ko;
   logic [R-1:0][C-1:0][WY-1:0] ro;
 
-  logic [D-1:0] r_copy, r_copy_next, a_valid, a_valid_next, m_first;
+  logic [D-1:0] en_copy, en_copy_next, a_valid, a_valid_next, m_first;
   logic [LM+LA+D-1:0] valid, vlast;
 
-  enum logic { MAC_FILL, MAC_WAIT } mac_state, mac_state_next;
-  enum logic { SHIFT_IDLE, SHIFT_BUSY } shift_state, shift_state_next;
-
-  logic en_mac, en_mac_next;
-  logic en_shift, en_shift_next;
   logic s_ready_next, m_valid_next, m_last_next;
-  logic s_hsk, mac_stall_next;
-  logic [WDC-1:0] shift_count, shift_count_next;
+  logic en_mac, en_mac_next, en_shift, en_shift_next, shifting, shifting_next;
+  logic s_hsk, m_hsk, input_block, input_block_next, copying, copying_next, mac_stall_next;
+  logic copy_last_en, copy_start, shift_start, shift_last;
+  logic [WDC-1:0] c_shift_col, c_shift_col_next;
+  logic [WDC-1:0] c_copy_diag, c_copy_diag_next;
+  logic [WDC-1:0] copy_col_next;
 
   // ---------- DATAPATH ----------
 
@@ -45,8 +44,8 @@ module axis_sa #(
     assign sk_reversed[c] = sk_data[C-1-c];
 
   // Triangular buffer for x and k.
-  tri_buffer #(.W(WX), .N(R)) TRI_X (.clk(clk), .rstn(rstn), .cen(en_mac), .x(sx_data    ), .y(xi_delayed));
-  tri_buffer #(.W(WK), .N(C)) TRI_K (.clk(clk), .rstn(rstn), .cen(en_mac), .x(sk_reversed), .y(ki_delayed));
+  tri_buffer #(.W(WX), .N(R)) TRI_X (.clk(clk), .rstn(rstn), .cen(en_mac), .x(s_hsk ? sx_data     : '0), .y(xi_delayed));
+  tri_buffer #(.W(WK), .N(C)) TRI_K (.clk(clk), .rstn(rstn), .cen(en_mac), .x(s_hsk ? sk_reversed : '0), .y(ki_delayed));
 
   for (r=0; r<R; r=r+1) begin:PER
     for (c=0; c<C; c=c+1) begin:PEC
@@ -58,7 +57,7 @@ module axis_sa #(
         .en_shift(en_shift),
         .m_first (m_first[`DIAG(r,c)]),
         .m_valid (valid[LM+`DIAG(r,c)]),
-        .r_copy  (r_copy[`DIAG(r,c)]),
+        .r_copy  (en_copy[`DIAG(r,c)]),
         .ki      (r == 0 ? ki_delayed[c] : ko[r-1][c]),
         .xi      (c == 0 ? xi_delayed[r] : xo[r][c-1]),
         .ri      (c == 0 ? WY'(0)        : ro[r][c-1]),
@@ -74,111 +73,91 @@ module axis_sa #(
 
   // ---------- CONTROL PATH ----------
 
-  assign s_hsk = s_valid && s_ready;
-
   n_delay #(.N(LM+LA+D), .W(1)) VALID (.c(clk), .e(en_mac), .rng(rstn), .rnl(rstn), .i(s_hsk          ), .o(), .d(valid));
   n_delay #(.N(LM+LA+D), .W(1)) VLAST (.c(clk), .e(en_mac), .rng(rstn), .rnl(rstn), .i(s_hsk && s_last), .o(), .d(vlast));
 
+  counter #(.MAX(D), .W(WDC)) COPY_COUNTER (
+    .clk(clk), .rstn(rstn), .start(copy_start), .en(en_mac), 
+    .cnt(c_copy_diag), .cnt_n(c_copy_diag_next), 
+    .active(copying), .active_n(copying_next), 
+    .last(), .last_n(), .last_en(copy_last_en)
+  );
+
+  counter #(.MAX(C), .W(WDC)) SHIFT_COUNTER (
+    .clk(clk), .rstn(rstn), .start(shift_start), .en(m_hsk), 
+    .cnt(c_shift_col), .cnt_n(c_shift_col_next), 
+    .active(shifting), .active_n(shifting_next), 
+    .last(shift_last), .last_n(), .last_en()
+  );
+
   for (d=0; d<D; d=d+1) begin
-    always_ff @(posedge clk)
+    always_ff @(posedge clk or negedge rstn) begin
       if (!rstn)            m_first[d] <= 1'b1;
       else if (valid[LM+d]) m_first[d] <= vlast[LM+d];
-  end
-
-  always_comb begin
-    a_valid_next = a_valid;
-    if (en_mac)
-      for (int i=0; i<D; i=i+1)
-        a_valid_next[i] = vlast[LM+LA+i-1];
-    mac_stall_next = (shift_state_next == SHIFT_BUSY) && a_valid_next[0];
-  end
-
-  // State machines
-
-  always_comb begin
-    shift_state_next = shift_state;
-    case (shift_state)
-      SHIFT_IDLE: if (r_copy[D-1])
-        shift_state_next = SHIFT_BUSY;
-      SHIFT_BUSY: if (m_valid && m_ready && m_last)
-        shift_state_next = SHIFT_IDLE;
-    endcase
-  end
-
-  always_comb begin
-    mac_state_next = mac_state;
-    case (mac_state)
-      MAC_FILL: if (mac_stall_next)
-        mac_state_next = MAC_WAIT;
-      MAC_WAIT: if (shift_state_next == SHIFT_IDLE)
-        mac_state_next = MAC_FILL;
-    endcase
-  end
-
-  always_ff @(posedge clk or negedge rstn) begin
-    if (!rstn) begin
-      mac_state   <= MAC_FILL;
-      shift_state <= SHIFT_IDLE;
-    end else begin
-      mac_state   <= mac_state_next;
-      shift_state <= shift_state_next;
     end
   end
+  
+  always_comb begin
+    input_block_next = input_block;
+    if (s_hsk && s_last) input_block_next = 1'b1;
+    if (copy_last_en)    input_block_next = 1'b0;
+  end
 
   always_comb begin
-    en_shift_next    = 1'b0;
-    m_valid_next     = m_valid;
-    m_last_next      = m_last;
-    shift_count_next = shift_count;
+    s_hsk          = s_valid && s_ready;
+    m_hsk          = m_valid && m_ready;
+    copy_col_next  = `MIN(c_copy_diag_next, WDC'(C-1));
+    mac_stall_next = shifting_next && copying_next && (copy_col_next >= c_shift_col);
+    s_ready_next   = !mac_stall_next && !input_block_next;
+    en_mac_next    = !mac_stall_next;
+    copy_start     = en_mac && a_valid_next[0];
+    shift_start    = !shifting && en_copy[D-1];
+  end
 
-    if (shift_state == SHIFT_IDLE) begin
-      m_valid_next     = 1'b0;
-      m_last_next      = 1'b0;
-      shift_count_next = '0;
-      if (r_copy[D-1]) begin
-        m_valid_next = 1'b1;
-        m_last_next  = C == 1;
-      end
+  for (d=0; d<D; d=d+1) begin
+    assign a_valid_next[d] = en_mac ? vlast[LM+LA+d-1] : a_valid[d];
+    
+    localparam logic [WDC-1:0] col_idx = WDC'(`MIN(d, C-1));
+    assign en_copy_next[d] = a_valid_next[d] && en_mac_next && (!shifting || (col_idx < c_shift_col));
+  end
+
+  always_comb begin
+    en_shift_next = 1'b0;
+    m_valid_next  = m_valid;
+    m_last_next   = m_last;
+
+    if (!shifting) begin
+      m_valid_next = shift_start;
+      m_last_next  = shift_start && (C == 1);
     end else if (!m_valid) begin
       m_valid_next = 1'b1;
-      m_last_next  = shift_count == WDC'(C-1);
-    end else if (m_ready) begin
-      if (m_last) begin
-        m_valid_next     = 1'b0;
-        m_last_next      = 1'b0;
-        shift_count_next = '0;
-      end else begin
-        en_shift_next    = 1'b1;
-        m_valid_next     = 1'b0;
-        m_last_next      = 1'b0;
-        shift_count_next = shift_count + WDC'(1);
-      end
+      m_last_next  = shift_last;
+    end else if (m_hsk) begin
+      en_shift_next = !m_last;
+      m_valid_next  = 1'b0;
+      m_last_next   = 1'b0;
     end
-
-    en_mac_next = mac_state_next == MAC_FILL;
-    s_ready_next = en_mac_next;
-    r_copy_next = en_mac_next ? a_valid_next : '0;
   end
 
   always_ff @(posedge clk or negedge rstn) begin
     if (!rstn) begin
       en_mac      <= 1'b0;
       en_shift    <= 1'b0;
+      en_copy     <= '0;
       s_ready     <= 1'b0;
       m_valid     <= 1'b0;
       m_last      <= 1'b0;
-      r_copy      <= '0;
       a_valid     <= '0;
-      shift_count <= '0;
+      input_block <= 1'b0;
     end else begin
       en_mac      <= en_mac_next;
       en_shift    <= en_shift_next;
+      en_copy     <= en_copy_next;
       s_ready     <= s_ready_next;
       m_valid     <= m_valid_next;
       m_last      <= m_last_next;
-      r_copy      <= r_copy_next;
       a_valid     <= a_valid_next;
-      shift_count <= shift_count_next;
+      input_block <= input_block_next;
     end
   end
   
