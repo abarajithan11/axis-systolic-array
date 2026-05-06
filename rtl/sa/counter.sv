@@ -1,4 +1,5 @@
 `timescale 1ns/1ps
+`include "config.svh"
 
 module counter #(
     parameter MAX=1,
@@ -34,7 +35,7 @@ module counter #(
     last_n = active_n && (cnt_n == LAST);
   end
 
-  always_ff @(posedge clk or negedge rstn) begin
+  always_ff @(posedge clk `OR_NEGEDGE(rstn)) begin
     if (!rstn) begin
       active <= 1'b0;
       cnt    <= '0;

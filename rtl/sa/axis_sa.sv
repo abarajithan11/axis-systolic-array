@@ -1,4 +1,5 @@
 `timescale 1ns/1ps
+`include "config.svh"
 `define DIAG(a, b) (a+b)
 `define MIN(a, b) ((a) < (b) ? (a) : (b))
 
@@ -91,7 +92,7 @@ module axis_sa #(
   );
 
   for (d=0; d<D; d=d+1) begin
-    always_ff @(posedge clk or negedge rstn) begin
+    always_ff @(posedge clk `OR_NEGEDGE(rstn)) begin
       if (!rstn)            m_first[d] <= 1'b1;
       else if (valid[LM+d]) m_first[d] <= vlast[LM+d];
     end
@@ -139,7 +140,7 @@ module axis_sa #(
     end
   end
 
-  always_ff @(posedge clk or negedge rstn) begin
+  always_ff @(posedge clk `OR_NEGEDGE(rstn)) begin
     if (!rstn) begin
       en_mac      <= 1'b0;
       en_shift    <= 1'b0;

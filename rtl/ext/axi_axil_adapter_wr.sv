@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 `resetall
 `timescale 1ns / 1ps
+`include "config.svh"
 `default_nettype none
 
 /*

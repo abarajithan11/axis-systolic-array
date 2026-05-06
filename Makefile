@@ -200,12 +200,14 @@ OPENROAD_REPORTS_DIR ?= $(OPENROAD_WORK_DIR)/reports/$(OPENROAD_PLATFORM)/$(OPEN
 OPENROAD_EXE ?= $(or $(shell command -v openroad 2>/dev/null),$(ORFS_DIR)/tools/install/OpenROAD/bin/openroad)
 GDS_IMAGE_SCALE ?= 8
 GDS_IMAGE_OUTPUT ?= $(OPENROAD_REPORTS_DIR)/final_all_$(GDS_IMAGE_SCALE)x.webp
+GDS_TARGET ?= $(if $(filter asap7,$(PDK)),asap7,sim)
 
 .PHONY: gds gds_image_hi gds_clean gds_nuke
 
 orfs_submodule:
 	git submodule update --init openroad/OpenROAD-flow-scripts
 
+gds: TARGET = $(GDS_TARGET)
 gds: config orfs_submodule
 	$(MAKE) -C $(ORFS_FLOW_DIR) \
 		DESIGN_CONFIG=$(OPENROAD_DESIGN_CONFIG) \

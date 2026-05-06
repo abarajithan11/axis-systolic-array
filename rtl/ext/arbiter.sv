@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 `resetall
 `timescale 1ns / 1ps
+`include "config.svh"
 `default_nettype none
 
 /*
@@ -140,7 +141,7 @@ always @* begin
     end
 end
 
-always @(posedge clk) begin
+always @(posedge clk `OR_NEGEDGE(rstn)) begin
     if (!rstn) begin
         grant_reg <= 0;
         grant_valid_reg <= 0;

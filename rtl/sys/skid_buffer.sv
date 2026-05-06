@@ -1,4 +1,5 @@
 `timescale 1ns/1ps
+`include "config.svh"
 
 module skid_buffer #(parameter WIDTH = 8)(
   input  logic clk, rstn, s_valid, m_ready,
@@ -16,12 +17,12 @@ module skid_buffer #(parameter WIDTH = 8)(
       FULL   : if      ( m_ready)             state_next = PARTIAL;
     endcase
   end
-  always @(posedge clk)
+  always @(posedge clk `OR_NEGEDGE(rstn))
     if (!rstn) state <= EMPTY;
     else       state <= state_next;
 
   logic [WIDTH-1:0] buffer;
-  always @(posedge clk)
+  always @(posedge clk `OR_NEGEDGE(rstn))
     if (!rstn) {m_valid, s_ready, buffer, m_data} <= 0;
     else begin
       

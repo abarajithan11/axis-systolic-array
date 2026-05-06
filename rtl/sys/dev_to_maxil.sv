@@ -1,4 +1,5 @@
 `timescale 1ns/1ps
+`include "config.svh"
 
 module dev_to_maxil #(
   parameter int ADDR_WIDTH     = 32,
@@ -98,7 +99,7 @@ module dev_to_maxil #(
   // -----------------------
   // Sequential
   // -----------------------
-  always_ff @(posedge clk or negedge rst_n) begin
+  always_ff @(posedge clk `OR_NEGEDGE(rst_n)) begin
     if (!rst_n) begin
       state       <= S_IDLE;
       req_valid   <= 1'b0;

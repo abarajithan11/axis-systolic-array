@@ -1,4 +1,5 @@
 `timescale 1ns/1ps
+`include "config.svh"
 
 module dma_controller #(
   parameter
@@ -155,7 +156,7 @@ module dma_controller #(
 
   wire start_next = reg_wr_en && reg_wr_addr == A_START && reg_wr_data[0];
 
-  always_ff @(posedge clk) // All cfg written in this always block
+  always_ff @(posedge clk `OR_NEGEDGE(rstn)) // All cfg written in this always block
     if (!rstn) cfg <= '0;
     else begin
       if (mm2s_0_done)

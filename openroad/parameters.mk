@@ -28,10 +28,10 @@ design_files_abs := $(foreach f,$(design_files_raw),$(abspath $(REPO_ROOT)/run/w
 export VERILOG_FILES ?= $(filter $(REPO_ROOT)/rtl/%,$(design_files_abs))
 
 ifeq ($(OPENROAD_PLATFORM),asap7)
-  export CORE_UTILIZATION ?= 80
+  export CORE_UTILIZATION ?= 55
   export CORE_ASPECT_RATIO ?= 1
-  export CORE_MARGIN ?= 2
-  export PLACE_DENSITY ?= 0.60
+  export CORE_MARGIN ?= 4
+  export PLACE_DENSITY ?= 0.45
   export SKIP_CTS_REPAIR_TIMING ?= 1
 else
   export CORE_UTILIZATION ?= 80

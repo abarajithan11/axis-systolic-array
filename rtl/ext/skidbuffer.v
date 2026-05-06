@@ -80,6 +80,7 @@
 
 // }}}
 `timescale 1ns/1ps
+`include "config.svh"
 module skidbuffer #(
 		// {{{
 		parameter	[0:0]	OPT_LOWPOWER = 0,

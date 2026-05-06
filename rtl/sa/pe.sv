@@ -1,4 +1,5 @@
 `timescale 1ns/1ps
+`include "config.svh"
 
 module pe #(
   parameter WX=4, WK=8, WY=16, LM=1, LA=1
@@ -15,7 +16,7 @@ module pe #(
 
   logic [WY-1:0] ao;
 
-  always @ (posedge clk)
+  always @(posedge clk `OR_NEGEDGE(rstn))
     if (!rstn) begin
       ko <= '0;
       xo <= '0;
@@ -35,7 +36,7 @@ module pe #(
       .k(ki), 
       .y(ao));
   
-  always_ff @(posedge clk)
+  always_ff @(posedge clk `OR_NEGEDGE(rstn))
     if (!rstn)         ro <= '0;
     else if (r_copy)   ro <= ao;
     else if (en_shift) ro <= ri;

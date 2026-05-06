@@ -27,10 +27,13 @@ if __name__ == "__main__":
         "pynq_z2": ("40000000", "1G"),
         "zcu104":  ("B0000000", "256M"),
         "zcu102":  ("B0000000", "256M"),
+        "asap7":   ("B0000000", "256M"),
         "ibex":    ("B0000000", "256M"),
         "boom":    ("2000",     "256M"),
     }
     config_baseaddr, config_range = TARGET_CONFIG_MAP[args.TARGET]
+    asic_targets = {"asap7", "ibex"}
+    or_negedge = "or negedge rstn" if args.TARGET in asic_targets else ""
 
     addr_map = {
         "A_START       " : "0",
@@ -75,6 +78,7 @@ if __name__ == "__main__":
 `define AXIL_WIDTH     {args.AXIL_WIDTH}
 `define ADDR_WIDTH     {args.ADDR_WIDTH}
 `define DIR            "{args.DATA_DIR}"
+`define OR_NEGEDGE(rstn) {or_negedge}
 
 `define AXIL_BASE_ADDR 32'h{config_baseaddr}
 {addr_map_sv}

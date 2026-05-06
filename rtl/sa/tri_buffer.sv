@@ -1,4 +1,5 @@
 `timescale 1ns/1ps
+`include "config.svh"
 
 //              Columns (c)
 //          +-------+-------+-------+-------+
@@ -27,7 +28,7 @@ module tri_buffer #(
 
   for (r=1; r<N; r=r+1)  // each row is a delay
     for (c=r; c<N; c=c+1)  // each column is (C-r) elements wide
-      always_ff @(posedge clk)
+      always_ff @(posedge clk `OR_NEGEDGE(rstn))
         if (!rstn)    buffer[r][c] <= 0;
         else if (cen) buffer[r][c] <= buffer[r-1][c];
 

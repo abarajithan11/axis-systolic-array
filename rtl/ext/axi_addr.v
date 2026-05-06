@@ -44,6 +44,7 @@
 
 // }}}
 `timescale 1ns/1ps
+`include "config.svh"
 module	axi_addr #(
 		// {{{
 		parameter	AW = 32,

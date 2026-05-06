@@ -1,4 +1,5 @@
 `timescale 1ns/1ps
+`include "config.svh"
 
 module n_delay #(
   parameter N = 1,
@@ -22,7 +23,7 @@ module n_delay #(
     logic [((N+1)*W)-1:0] data;
     assign data[W-1:0] = i;
     for (n=0 ; n < N; n++)
-      always_ff @(posedge c or negedge rng)
+      always_ff @(posedge c `OR_NEGEDGE(rng))
         if (!rng)      data[((n+1)*W) +: W] <= 0;
         else if (!rnl) data[((n+1)*W) +: W] <= 0;
         else if (e)    data[((n+1)*W) +: W] <= data[(n*W) +: W];

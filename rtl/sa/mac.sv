@@ -1,4 +1,5 @@
 `timescale 1ns/1ps
+`include "config.svh"
 
 module mac #(
   parameter  WX=4, WK=8, WY=16, LM=1, LA=1,
@@ -12,13 +13,13 @@ module mac #(
   logic signed [WM-1:0] mul_result, m;
   logic signed [WY-1:0] a_result, a;
 
-  always_ff @(posedge clk)
+  always_ff @(posedge clk `OR_NEGEDGE(rstn))
     if (!rstn)    mul_result <= '0;
     else if (en)  mul_result <= $signed(x) * $signed(k);
 
   n_delay #(.N(LM-1),.W(WM)) mul_delay (.c(clk),.e(en),.rng(rstn),.rnl(rstn),.i(mul_result),.o(m),.d());
 
-  always_ff @(posedge clk)
+  always_ff @(posedge clk `OR_NEGEDGE(rstn))
     if (!rstn)              a_result <= '0;
     else if (en && m_valid) a_result <= WY'($signed(m)) + $signed(m_first ? WY'(0) : a_result);
 

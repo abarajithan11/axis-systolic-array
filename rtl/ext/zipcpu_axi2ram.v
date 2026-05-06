@@ -41,6 +41,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
 `timescale 1ns/1ps
+`include "config.svh"
 // }}}
 module zipcpu_axi2ram #(
 		// {{{
@@ -342,7 +343,7 @@ module zipcpu_axi2ram #(
 	// {{{
 	initial	axi_awready = 1;
 	initial	axi_wready  = 0;
-	always @(posedge S_AXI_ACLK)
+	always @(posedge S_AXI_ACLK `OR_NEGEDGE(S_AXI_ARESETN))
 	if (!S_AXI_ARESETN)
 	begin
 		axi_awready  <= 1;
@@ -368,7 +369,7 @@ module zipcpu_axi2ram #(
 
 	// Exclusive write calculation
 	// {{{
-	always @(posedge S_AXI_ACLK)
+	always @(posedge S_AXI_ACLK `OR_NEGEDGE(S_AXI_ARESETN))
 	if (!S_AXI_ARESETN || !OPT_LOCK)
 	begin
 		exclusive_write <= 0;
@@ -387,7 +388,7 @@ module zipcpu_axi2ram #(
 		block_write     <= 1'b0;
 	end
 
-	always @(posedge S_AXI_ACLK)
+	always @(posedge S_AXI_ACLK `OR_NEGEDGE(S_AXI_ARESETN))
 	if (!S_AXI_ARESETN || !OPT_LOCK)
 		axi_exclusive_write <= 0;
 	else if (!S_AXI_BVALID || S_AXI_BREADY)
@@ -453,7 +454,7 @@ module zipcpu_axi2ram #(
 	// r_bvalid
 	// {{{
 	initial	r_bvalid = 0;
-	always @(posedge S_AXI_ACLK)
+	always @(posedge S_AXI_ACLK `OR_NEGEDGE(S_AXI_ARESETN))
 	if (!S_AXI_ARESETN)
 		r_bvalid <= 1'b0;
 	else if (S_AXI_WVALID && S_AXI_WREADY && S_AXI_WLAST
@@ -486,7 +487,7 @@ module zipcpu_axi2ram #(
 	// axi_bvalid
 	// {{{
 	initial	axi_bvalid = 0;
-	always @(posedge S_AXI_ACLK)
+	always @(posedge S_AXI_ACLK `OR_NEGEDGE(S_AXI_ARESETN))
 	if (!S_AXI_ARESETN)
 		axi_bvalid <= 0;
 	else if (S_AXI_WVALID && S_AXI_WREADY && S_AXI_WLAST)
@@ -535,7 +536,7 @@ module zipcpu_axi2ram #(
 	// axi_arready
 	// {{{
 	initial axi_arready = 1;
-	always @(posedge S_AXI_ACLK)
+	always @(posedge S_AXI_ACLK `OR_NEGEDGE(S_AXI_ARESETN))
 	if (!S_AXI_ARESETN)
 		axi_arready <= 1;
 	else if (S_AXI_ARVALID && S_AXI_ARREADY)
@@ -547,7 +548,7 @@ module zipcpu_axi2ram #(
 	// axi_rlen
 	// {{{
 	initial	axi_rlen = 0;
-	always @(posedge S_AXI_ACLK)
+	always @(posedge S_AXI_ACLK `OR_NEGEDGE(S_AXI_ARESETN))
 	if (!S_AXI_ARESETN)
 		axi_rlen <= 0;
 	else if (S_AXI_ARVALID && S_AXI_ARREADY)
@@ -621,7 +622,7 @@ module zipcpu_axi2ram #(
 	// rskd_valid
 	// {{{
 	initial	rskd_valid = 0;
-	always @(posedge S_AXI_ACLK)
+	always @(posedge S_AXI_ACLK `OR_NEGEDGE(S_AXI_ARESETN))
 	if (!S_AXI_ARESETN)
 		rskd_valid <= 0;
 	else if (o_rd)
@@ -658,7 +659,7 @@ module zipcpu_axi2ram #(
 
 	// rskd_lock
 	// {{{
-	always @(posedge S_AXI_ACLK)
+	always @(posedge S_AXI_ACLK `OR_NEGEDGE(S_AXI_ARESETN))
 	if (!S_AXI_ARESETN || !OPT_LOCK)
 		rskd_lock <= 1'b0;
 	else if (!rskd_valid || rskd_ready)
@@ -756,7 +757,7 @@ module zipcpu_axi2ram #(
 		// returned_lock_valid
 		// {{{
 		initial	returned_lock_valid = 0;
-		always @(posedge S_AXI_ACLK)
+		always @(posedge S_AXI_ACLK `OR_NEGEDGE(S_AXI_ARESETN))
 		if (!S_AXI_ARESETN)
 			returned_lock_valid <= 0;
 		else if (S_AXI_ARVALID && S_AXI_ARREADY
@@ -781,7 +782,7 @@ module zipcpu_axi2ram #(
 		// lock_valid
 		// {{{
 		initial	lock_valid = 0;
-		always @(posedge S_AXI_ACLK)
+		always @(posedge S_AXI_ACLK `OR_NEGEDGE(S_AXI_ARESETN))
 		if (!S_AXI_ARESETN || !OPT_LOCK)
 			lock_valid <= 0;
 		else begin
@@ -871,7 +872,7 @@ module zipcpu_axi2ram #(
 			// returned_lock_valid
 			// {{{
 			initial	returned_lock_valid = 0;
-			always @(posedge S_AXI_ACLK)
+			always @(posedge S_AXI_ACLK `OR_NEGEDGE(S_AXI_ARESETN))
 			if (!S_AXI_ARESETN)
 				returned_lock_valid <= 0;
 			else if (S_AXI_ARVALID && S_AXI_ARREADY
@@ -897,7 +898,7 @@ module zipcpu_axi2ram #(
 			// lock_valid
 			// {{{
 			initial	lock_valid = 0;
-			always @(posedge S_AXI_ACLK)
+			always @(posedge S_AXI_ACLK `OR_NEGEDGE(S_AXI_ARESETN))
 			if (!S_AXI_ARESETN || !OPT_LOCK)
 				lock_valid <= 0;
 			else begin
@@ -1185,7 +1186,7 @@ module zipcpu_axi2ram #(
 	reg	[4:0]	f_dbl_rd_count, f_dbl_wr_count;
 
 	initial	f_wr_cvr_valid = 0;
-	always @(posedge S_AXI_ACLK)
+	always @(posedge S_AXI_ACLK `OR_NEGEDGE(S_AXI_ARESETN))
 	if (!S_AXI_ARESETN)
 		f_wr_cvr_valid <= 0;
 	else if (S_AXI_AWVALID && S_AXI_AWREADY && S_AXI_AWLEN > 4)
@@ -1196,7 +1197,7 @@ module zipcpu_axi2ram #(
 			&& f_wr_cvr_valid /* && ... */));
 
 	initial	f_rd_cvr_valid = 0;
-	always @(posedge S_AXI_ACLK)
+	always @(posedge S_AXI_ACLK `OR_NEGEDGE(S_AXI_ARESETN))
 	if (!S_AXI_ARESETN)
 		f_rd_cvr_valid <= 0;
 	else if (S_AXI_ARVALID && S_AXI_ARREADY && S_AXI_ARLEN > 4)
@@ -1212,7 +1213,7 @@ module zipcpu_axi2ram #(
 	//
 
 	initial	f_dbl_wr_count = 0;
-	always @(posedge S_AXI_ACLK)
+	always @(posedge S_AXI_ACLK `OR_NEGEDGE(S_AXI_ARESETN))
 	if (!S_AXI_ARESETN)
 		f_dbl_wr_count = 0;
 	else if (S_AXI_AWVALID && S_AXI_AWREADY && S_AXI_AWLEN == 3)
@@ -1234,7 +1235,7 @@ module zipcpu_axi2ram #(
 			&& (faxi_wr_pending == 0));
 
 	initial	f_dbl_rd_count = 0;
-	always @(posedge S_AXI_ACLK)
+	always @(posedge S_AXI_ACLK `OR_NEGEDGE(S_AXI_ARESETN))
 	if (!S_AXI_ARESETN)
 		f_dbl_rd_count = 0;
 	else if (S_AXI_ARVALID && S_AXI_ARREADY && S_AXI_ARLEN == 3)

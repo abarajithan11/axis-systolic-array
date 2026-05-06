@@ -1,4 +1,5 @@
 `timescale 1ns/1ps
+`include "config.svh"
 
 module saxi_to_host #(
   parameter int AXI_ID_WIDTH    = 4,
@@ -136,7 +137,7 @@ module saxi_to_host #(
   end
 
   // Latch read/write command when accepted
-  always @(posedge clk or negedge rst_n) begin
+  always @(posedge clk `OR_NEGEDGE(rst_n)) begin
     if (!rst_n) begin
       rd_cmd_valid <= 1'b0;
       rd_busy      <= 1'b0;
@@ -173,7 +174,7 @@ module saxi_to_host #(
     s_axi_wready = want_wbeat;
   end
 
-  always @(posedge clk or negedge rst_n) begin
+  always @(posedge clk `OR_NEGEDGE(rst_n)) begin
     if (!rst_n) begin
       wr_data_q     <= '0;
       wr_strb_q     <= '0;
@@ -192,7 +193,7 @@ module saxi_to_host #(
   end
 
   // ---------------- R/B channels & hold buffer ----------------
-  always_ff @(posedge clk or negedge rst_n) begin
+  always_ff @(posedge clk `OR_NEGEDGE(rst_n)) begin
     if (!rst_n) begin
       s_axi_rvalid  <= 1'b0;
       s_axi_rlast   <= 1'b0;
@@ -253,7 +254,7 @@ module saxi_to_host #(
   reg [31:0] issue_wdata;
 
   // track grant & error accumulation
-  always @(posedge clk or negedge rst_n) begin
+  always @(posedge clk `OR_NEGEDGE(rst_n)) begin
     if (!rst_n) begin
       eng_state   <= IDLE;
       cur_is_write<= 1'b0;
@@ -278,7 +279,7 @@ module saxi_to_host #(
   end
 
   // Beat counters & address update
-  always @(posedge clk or negedge rst_n) begin
+  always @(posedge clk `OR_NEGEDGE(rst_n)) begin
     if (!rst_n) begin
       // no-op
     end else begin
@@ -378,7 +379,7 @@ module saxi_to_host #(
   end
 
   // Set cur_is_write when entering a burst
-  always @(posedge clk or negedge rst_n) begin
+  always @(posedge clk `OR_NEGEDGE(rst_n)) begin
     if (!rst_n) begin
       cur_is_write <= 1'b0;
     end else if (eng_state==IDLE) begin

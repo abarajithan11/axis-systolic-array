@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 `resetall
 `timescale 1ns / 1ps
+`include "config.svh"
 `default_nettype none
 
 /*
@@ -196,7 +197,7 @@ always @* begin
     end
 end
 
-always @(posedge clk) begin
+always @(posedge clk `OR_NEGEDGE(rstn)) begin
     if (!rstn) begin
         s_axi_arready_reg <= 1'b0;
         m_axi_arvalid_reg <= 1'b0;
@@ -303,7 +304,7 @@ always @* begin
     end
 end
 
-always @(posedge clk) begin
+always @(posedge clk `OR_NEGEDGE(rstn)) begin
     if (!rstn) begin
         s_axi_arready_reg <= 1'b0;
         m_axi_arvalid_reg <= 1'b0;
@@ -414,7 +415,7 @@ always @* begin
     end
 end
 
-always @(posedge clk) begin
+always @(posedge clk `OR_NEGEDGE(rstn)) begin
     if (!rstn) begin
         m_axi_rready_reg <= 1'b0;
         s_axi_rvalid_reg <= 1'b0;
@@ -491,7 +492,7 @@ always @* begin
     end
 end
 
-always @(posedge clk) begin
+always @(posedge clk `OR_NEGEDGE(rstn)) begin
     if (!rstn) begin
         m_axi_rready_reg <= 1'b0;
         s_axi_rvalid_reg <= 1'b0;

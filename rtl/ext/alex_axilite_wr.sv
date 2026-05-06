@@ -29,7 +29,7 @@ THE SOFTWARE.
  * AXI lite register interface module (write)
  */
  `timescale 1ns / 1ps
-`define OR_NEGEDGE(rstn) 
+`include "config.svh"
 
 module alex_axilite_wr #
 (

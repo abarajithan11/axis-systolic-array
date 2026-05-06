@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 `resetall
 `timescale 1ns / 1ps
+`include "config.svh"
 `default_nettype none
 
 /*
@@ -326,7 +327,7 @@ generate
             end
         end
 
-        always @(posedge clk) begin
+        always @(posedge clk `OR_NEGEDGE(rstn)) begin
             if (!rstn) begin
                 w_select_valid_reg <= 1'b0;
             end else begin
@@ -362,7 +363,7 @@ generate
             end
         end
 
-        always @(posedge clk) begin
+        always @(posedge clk `OR_NEGEDGE(rstn)) begin
             if (!rstn) begin
                 decerr_m_axi_bvalid_reg <= 1'b0;
             end else begin
@@ -495,7 +496,7 @@ generate
 
         wire trans_limit = 32'(trans_count_reg) >= M_ISSUE[n*32 +: 32] && !trans_complete;
 
-        always @(posedge clk) begin
+        always @(posedge clk `OR_NEGEDGE(rstn)) begin
             if (!rstn) begin
                 trans_count_reg <= 0;
             end else begin
@@ -582,7 +583,7 @@ generate
             end
         end
 
-        always @(posedge clk) begin
+        always @(posedge clk `OR_NEGEDGE(rstn)) begin
             if (!rstn) begin
                 w_select_valid_reg <= 1'b0;
                 w_select_new_reg <= 1'b1;

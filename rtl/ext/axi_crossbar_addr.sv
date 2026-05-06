@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 `resetall
 `timescale 1ns / 1ps
+`include "config.svh"
 `default_nettype none
 
 /*
@@ -306,7 +307,7 @@ generate
         // assign thread_trans_start[n] = (thread_match[n] || (!thread_active[n] && !(thread_match!=0) && !((thread_trans_start & ({S_INT_THREADS{1'b1}} >> (S_INT_THREADS-n)))!=0))) && trans_start;
         assign thread_trans_complete[n] = thread_cpl_match[n] && trans_complete;
 
-        always @(posedge clk) begin
+        always @(posedge clk `OR_NEGEDGE(rstn)) begin
             if (!rstn) begin
                 thread_count_reg[n] <= 0;
             end else begin
@@ -400,7 +401,7 @@ always @* begin
     trans_complete = s_cpl_valid;
 end
 
-always @(posedge clk) begin
+always @(posedge clk `OR_NEGEDGE(rstn)) begin
     if (!rstn) begin
         state_reg <= STATE_IDLE;
         s_axi_aready_reg <= 1'b0;

@@ -24,6 +24,7 @@ THE SOFTWARE.
 
 // Language: Verilog 2001
 `timescale 1ns / 1ps
+`include "config.svh"
 /*
  * AXI lite register interface module
  */

@@ -26,7 +26,7 @@ THE SOFTWARE.
 
 `resetall
 `timescale 1ns / 1ps
-`define OR_NEGEDGE(rstn) 
+`include "config.svh"
 
 /*
  * AXI4 DMA
