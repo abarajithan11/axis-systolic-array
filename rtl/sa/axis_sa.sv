@@ -2,6 +2,7 @@
 `include "config.svh"
 `define DIAG(a, b) (a+b)
 `define MIN(a, b) ((a) < (b) ? (a) : (b))
+`define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 module axis_sa #(
     parameter  R=4, C=8, WX=4, WK=8, WY=16, LM=1, LA=1
@@ -17,9 +18,7 @@ module axis_sa #(
 
   genvar r, c, d;
   localparam D  = `DIAG(R,C)-1; // length of diagonal
-
-  localparam MAX_DC = D > C ? D : C;
-  localparam WDC    = MAX_DC <= 1 ? 1 : $clog2(MAX_DC);
+  localparam WD = `MAX(1, $clog2(D));
 
   logic [R-1:0][WX-1:0] xi_delayed;
   logic [C-1:0][WK-1:0] ki_delayed, sk_reversed;
@@ -33,10 +32,11 @@ module axis_sa #(
   logic s_ready_next, m_valid_next, m_last_next;
   logic en_mac, en_mac_next, en_shift, en_shift_next, shifting, shifting_next;
   logic s_hsk, m_hsk, input_block, input_block_next, copying, copying_next, mac_stall_next;
-  logic copy_last_en, copy_start, shift_start, shift_last;
-  logic [WDC-1:0] c_shift_col, c_shift_col_next;
-  logic [WDC-1:0] c_copy_diag, c_copy_diag_next;
-  logic [WDC-1:0] copy_col_next;
+  logic copy_start, copy_last_en, shift_start, shift_last;
+  logic [C-1:0] copy_ready_col;
+  logic [WD-1:0] c_shift_col, c_shift_col_next;
+  logic [WD-1:0] c_copy_diag, c_copy_diag_next;
+  logic [WD-1:0] copy_col_next;
 
   // ---------- DATAPATH ----------
 
@@ -77,17 +77,19 @@ module axis_sa #(
   n_delay #(.N(LM+LA+D), .W(1)) VALID (.c(clk), .e(en_mac), .rng(rstn), .rnl(rstn), .i(s_hsk          ), .o(), .d(valid));
   n_delay #(.N(LM+LA+D), .W(1)) VLAST (.c(clk), .e(en_mac), .rng(rstn), .rnl(rstn), .i(s_hsk && s_last), .o(), .d(vlast));
 
-  counter #(.MAX(D), .W(WDC)) COPY_COUNTER (
-    .clk(clk), .rstn(rstn), .start(copy_start), .en(en_mac), 
-    .cnt(c_copy_diag), .cnt_n(c_copy_diag_next), 
-    .active(copying), .active_n(copying_next), 
+  counter #(.MAX(D), .W(WD)) COPY_COUNTER (
+    .clk(clk), .rstn(rstn),
+    .start(copy_start), .en_active(en_mac),
+    .cnt(c_copy_diag), .cnt_n(c_copy_diag_next),
+    .active(copying), .active_n(copying_next),
     .last(), .last_n(), .last_en(copy_last_en)
   );
 
-  counter #(.MAX(C), .W(WDC)) SHIFT_COUNTER (
-    .clk(clk), .rstn(rstn), .start(shift_start), .en(m_hsk), 
-    .cnt(c_shift_col), .cnt_n(c_shift_col_next), 
-    .active(shifting), .active_n(shifting_next), 
+  counter #(.MAX(C), .W(WD)) SHIFT_COUNTER (
+    .clk(clk), .rstn(rstn),
+    .start(shift_start), .en_active(m_hsk),
+    .cnt(c_shift_col), .cnt_n(c_shift_col_next),
+    .active(shifting), .active_n(shifting_next),
     .last(shift_last), .last_n(), .last_en()
   );
 
@@ -107,19 +109,18 @@ module axis_sa #(
   always_comb begin
     s_hsk          = s_valid && s_ready;
     m_hsk          = m_valid && m_ready;
-    copy_col_next  = `MIN(c_copy_diag_next, WDC'(C-1));
+    copy_start     = en_mac && a_valid_next[0];
+    shift_start    = !shifting && en_copy[D-1];
+    copy_ready_col = !shifting ? '1 : (C'(1) << c_shift_col) - C'(1);
+    copy_col_next  = `MIN(c_copy_diag_next, WD'(C-1));
     mac_stall_next = shifting_next && copying_next && (copy_col_next >= c_shift_col);
     s_ready_next   = !mac_stall_next && !input_block_next;
     en_mac_next    = !mac_stall_next;
-    copy_start     = en_mac && a_valid_next[0];
-    shift_start    = !shifting && en_copy[D-1];
   end
 
   for (d=0; d<D; d=d+1) begin
-    assign a_valid_next[d] = en_mac ? vlast[LM+LA+d-1] : a_valid[d];
-    
-    localparam logic [WDC-1:0] col_idx = WDC'(`MIN(d, C-1));
-    assign en_copy_next[d] = a_valid_next[d] && en_mac_next && (!shifting || (col_idx < c_shift_col));
+    assign a_valid_next[d] = en_mac ? vlast[LM+LA+d-1] : a_valid[d];  
+    assign en_copy_next[d] = a_valid_next[d] && en_mac_next && copy_ready_col[`MIN(d, C-1)];
   end
 
   always_comb begin
@@ -128,8 +129,8 @@ module axis_sa #(
     m_last_next   = m_last;
 
     if (!shifting) begin
-      m_valid_next = shift_start;
-      m_last_next  = shift_start && (C == 1);
+      m_valid_next = en_copy[D-1];
+      m_last_next  = en_copy[D-1] && (C == 1);
     end else if (!m_valid) begin
       m_valid_next = 1'b1;
       m_last_next  = shift_last;
