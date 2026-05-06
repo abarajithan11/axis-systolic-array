@@ -34,8 +34,7 @@ module axis_sa #(
   logic [RT-1:0][CT-1:0] x_valid_w, x_last_w;
   logic [RT-1:0][CT-1:0] k_valid_n, k_last_n;
   logic [RT-1:0][CT-1:0] x_ready_e, k_ready_s;
-  logic en_mac;
-  logic s_hsk;
+  logic en_mac_nw, s_hsk;
 
   // ---------- DATAPATH ----------
 
@@ -53,18 +52,18 @@ module axis_sa #(
   // elasticity as data moves east/south.
   for (rg=0; rg<R; rg=rg+1) begin: SKEW_X
     n_delay #(.N(rg), .W(WX)) DELAY_X (
-      .c(clk), .e(en_mac), .rng(rstn), .rnl(rstn), .d(),
+      .c(clk), .e(en_mac_nw), .rng(rstn), .rnl(rstn), .d(),
       .i(s_hsk ? sx_data[rg] : '0), .o(xi_delayed[rg]));
   end
 
   for (cg=0; cg<C; cg=cg+1) begin: SKEW_K
     n_delay #(.N(cg), .W(WK)) DELAY_K (
-      .c(clk), .e(en_mac), .rng(rstn), .rnl(rstn), .d(),
+      .c(clk), .e(en_mac_nw), .rng(rstn), .rnl(rstn), .d(),
       .i(s_hsk ? sk_reversed[cg] : '0), .o(ki_delayed[cg]));
   end
 
   always_comb begin
-    en_mac  = t_en_mac[0][0];
+    en_mac_nw  = t_en_mac[0][0];
     s_ready = t_ready[0][0];
     s_hsk   = s_valid && s_ready;
     m_valid = t_m_valid[RT-1][CT-1];
@@ -91,20 +90,17 @@ module axis_sa #(
 
       if (ct == 0) begin
         n_delay #(.N(rt*RE), .W(1)) X_TILE_VALID (
-          .c(clk), .e(en_mac), .rng(rstn), .rnl(rstn), .d(),
+          .c(clk), .e(en_mac_nw), .rng(rstn), .rnl(rstn), .d(),
           .i(s_hsk), .o(x_valid_d[rt]));
 
         n_delay #(.N(rt*RE), .W(1)) X_TILE_LAST (
-          .c(clk), .e(en_mac), .rng(rstn), .rnl(rstn), .d(),
+          .c(clk), .e(en_mac_nw), .rng(rstn), .rnl(rstn), .d(),
           .i(s_hsk && s_last), .o(x_last_d[rt]));
 
         if (rt == 0) begin
           assign x_valid_w[rt][ct] = x_valid_d[rt];
-          assign x_last_w [rt][ct] = x_last_d[rt];
-
-          for (re=0; re<RE; re=re+1) begin:X_WEST_DIRECT
-            assign x_w[rt][ct][re] = x_d[rt][re];
-          end
+          assign x_last_w [rt][ct] = x_last_d [rt];
+          assign x_w      [rt][ct] = x_d      [rt]; // vector to vector
         end else begin
           skid_buffer #(.WIDTH(RE*WX+2)) X_WEST_SKID (
             .clk (clk), .rstn (rstn), .s_ready(), .m_valid(), .s_valid(1'b1),
@@ -117,20 +113,17 @@ module axis_sa #(
 
       if (rt == 0) begin
         n_delay #(.N(ct*CE), .W(1)) K_TILE_VALID (
-          .c(clk), .e(en_mac), .rng(rstn), .rnl(rstn), .d(),
+          .c(clk), .e(en_mac_nw), .rng(rstn), .rnl(rstn), .d(),
           .i(s_hsk), .o(k_valid_d[ct]));
 
         n_delay #(.N(ct*CE), .W(1)) K_TILE_LAST (
-          .c(clk), .e(en_mac), .rng(rstn), .rnl(rstn), .d(), 
+          .c(clk), .e(en_mac_nw), .rng(rstn), .rnl(rstn), .d(), 
           .i(s_hsk && s_last), .o(k_last_d[ct]));
 
         if (ct == 0) begin
           assign k_valid_n[rt][ct] = k_valid_d[ct];
-          assign k_last_n [rt][ct] = k_last_d[ct];
-
-          for (ce=0; ce<CE; ce=ce+1) begin:K_NORTH_DIRECT
-            assign k_n[rt][ct][ce] = k_d[ct][ce];
-          end
+          assign k_last_n [rt][ct] = k_last_d [ct];
+          assign k_n      [rt][ct] = k_d      [ct]; // vector to vector
         end else begin
           skid_buffer #(.WIDTH(CE*WK+2)) K_NORTH_SKID (
             .clk(clk), .rstn(rstn), .s_ready(), .m_valid(), .s_valid(1'b1),
@@ -145,11 +138,13 @@ module axis_sa #(
       assign t_last [rt][ct] = x_last_w [rt][ct] && k_last_n [rt][ct];
 
       if (ct == CT-1) begin
-        assign t_m_ready[rt][ct] = (rt == RT-1) ? m_ready : m_ready && t_m_valid[RT-1][ct];
+        if (rt == RT-1) assign t_m_ready[rt][ct] = m_ready;
+        else            assign t_m_ready[rt][ct] = t_m_valid[RT-1][ct];
       end
 
       sa #(.RE(RE), .CE(CE), .WX(WX), .WK(WK), .WY(WY), 
-           .LM(LM), .LA(LA), .OC((ct+1)*CE)) TILE (
+           .LM(LM), .LA(LA), .OC((ct+1)*CE)
+      ) TILE (
         .clk       (clk),
         .rstn      (rstn),
         .s_valid_0 (t_valid   [rt][ct]),
