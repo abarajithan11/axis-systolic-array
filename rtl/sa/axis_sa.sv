@@ -4,71 +4,6 @@
 `define MIN(a, b) ((a) < (b) ? (a) : (b))
 `define MAX(a, b) ((a) > (b) ? (a) : (b))
 
-module tile_boundary_skid #(
-    parameter N=1, W=8
-  )(
-    input  logic clk, rstn,
-    input  logic s_valid, s_last, m_ready,
-    input  logic [N-1:0][W-1:0] s_data,
-    output logic s_ready, m_valid, m_last,
-    output logic [N-1:0][W-1:0] m_data
-  );
-
-  genvar i;
-  localparam int DW = N*W;
-  logic [DW+1:0] s_flat, m_flat;
-
-  for (i=0; i<N; i=i+1) begin:LANE
-    assign s_flat[i*W +: W] = s_data[i];
-    assign m_data[i] = m_flat[i*W +: W];
-  end
-  assign s_flat[DW]   = s_valid;
-  assign s_flat[DW+1] = s_last;
-  assign m_valid      = m_flat[DW];
-  assign m_last       = m_flat[DW+1];
-
-  skid_buffer #(.WIDTH(DW+2)) SKID (
-    .clk    (clk),
-    .rstn   (rstn),
-    .s_valid(1'b1),
-    .s_ready(s_ready),
-    .s_data (s_flat),
-    .m_ready(m_ready),
-    .m_valid(),
-    .m_data (m_flat)
-  );
-endmodule
-
-module result_boundary_skid #(
-    parameter N=1, W=8
-  )(
-    input  logic clk, rstn,
-    input  logic s_valid, m_ready,
-    input  logic [N-1:0][W-1:0] s_data,
-    output logic s_ready, m_valid,
-    output logic [N-1:0][W-1:0] m_data
-  );
-
-  genvar i;
-  logic [N*W-1:0] s_flat, m_flat;
-
-  for (i=0; i<N; i=i+1) begin:LANE
-    assign s_flat[i*W +: W] = s_data[i];
-    assign m_data[i] = m_flat[i*W +: W];
-  end
-
-  skid_buffer #(.WIDTH(N*W)) SKID (
-    .clk    (clk),
-    .rstn   (rstn),
-    .s_valid(s_valid),
-    .s_ready(s_ready),
-    .s_data (s_flat),
-    .m_ready(m_ready),
-    .m_valid(m_valid),
-    .m_data (m_flat)
-  );
-endmodule
-
 module axis_sa #(
     parameter  R=4, C=8, WX=4, WK=8, WY=16, LM=1, LA=1,
     parameter  RT=1, CT=1,
@@ -186,17 +121,11 @@ module axis_sa #(
             assign x_w[tr][tc][rp] = x_d[tr][rp];
           end
         end else begin
-          tile_boundary_skid #(.N(RE), .W(WX)) X_WEST_SKID (
-            .clk         (clk),
-            .rstn        (rstn),
-            .s_valid     (x_valid_d[tr]),
-            .s_last      (x_last_d[tr]),
-            .s_data      (x_d[tr]),
-            .s_ready     (),
-            .m_ready      (t_en_mac[tr][tc]),
-            .m_valid     (x_valid_w[tr][tc]),
-            .m_last      (x_last_w[tr][tc]),
-            .m_data      (x_w[tr][tc])
+          skid_buffer #(.WIDTH(RE*WX+2)) X_WEST_SKID (
+            .clk (clk), .rstn (rstn), .s_ready(), .m_valid(), .s_valid(1'b1),
+            .m_ready (t_en_mac[tr][tc]),
+            .s_data  ({x_valid_d[tr]    , x_last_d[tr]    , x_d[tr]    }),
+            .m_data  ({x_valid_w[tr][tc], x_last_w[tr][tc], x_w[tr][tc]})
           );
         end
       end
@@ -224,17 +153,11 @@ module axis_sa #(
             assign k_n[tr][tc][cp] = k_d[tc][cp];
           end
         end else begin
-          tile_boundary_skid #(.N(CE), .W(WK)) K_NORTH_SKID (
-            .clk         (clk),
-            .rstn        (rstn),
-            .s_valid     (k_valid_d[tc]),
-            .s_last      (k_last_d[tc]),
-            .s_data      (k_d[tc]),
-            .s_ready     (),
-            .m_ready      (t_en_mac[tr][tc]),
-            .m_valid     (k_valid_n[tr][tc]),
-            .m_last      (k_last_n[tr][tc]),
-            .m_data      (k_n[tr][tc])
+          skid_buffer #(.WIDTH(CE*WK+2)) K_NORTH_SKID (
+            .clk(clk), .rstn(rstn), .s_ready(), .m_valid(), .s_valid(1'b1),
+            .m_ready (t_en_mac[tr][tc]),
+            .s_data  ({k_valid_d[tc]    , k_last_d[tc]    , k_d[tc]    }),
+            .m_data  ({k_valid_n[tr][tc], k_last_n[tr][tc], k_n[tr][tc]})
           );
         end
       end
@@ -275,20 +198,15 @@ module axis_sa #(
       );
 
       if (tc < CT-1) begin:X_EAST_BOUNDARY
-        tile_boundary_skid #(.N(RE), .W(WX)) X_EAST_SKID (
-          .clk         (clk),
-          .rstn        (rstn),
-          .s_valid     (x_valid_e[tr][tc]),
-          .s_last      (x_last_e[tr][tc]),
-          .s_data      (x_e[tr][tc]),
-          .s_ready     (x_ready_e[tr][tc]),
-          .m_ready      (t_en_mac[tr][tc+1]),
-          .m_valid     (x_valid_w[tr][tc+1]),
-          .m_last      (x_last_w[tr][tc+1]),
-          .m_data      (x_w[tr][tc+1])
+        skid_buffer #(.WIDTH(RE*WX+2)) X_EAST_SKID (
+          .clk(clk), .rstn(rstn), .s_valid(1'b1), .m_valid(),
+          .s_ready (x_ready_e[tr][tc]),
+          .m_ready (t_en_mac [tr][tc+1]),
+          .s_data  ({x_valid_e[tr][tc]  , x_last_e[tr][tc]  , x_e[tr][tc]  }),
+          .m_data  ({x_valid_w[tr][tc+1], x_last_w[tr][tc+1], x_w[tr][tc+1]})
         );
 
-        result_boundary_skid #(.N(RE), .W(WY)) R_EAST_SKID (
+        skid_buffer #(.WIDTH(RE*WY)) R_EAST_SKID (
           .clk    (clk),
           .rstn   (rstn),
           .s_valid(t_m_valid[tr][tc]),
@@ -304,17 +222,12 @@ module axis_sa #(
       end
 
       if (tr < RT-1) begin:K_SOUTH_BOUNDARY
-        tile_boundary_skid #(.N(CE), .W(WK)) K_SOUTH_SKID (
-          .clk         (clk),
-          .rstn        (rstn),
-          .s_valid     (k_valid_s[tr][tc]),
-          .s_last      (k_last_s[tr][tc]),
-          .s_data      (k_s[tr][tc]),
-          .s_ready     (k_ready_s[tr][tc]),
-          .m_ready      (t_en_mac[tr+1][tc]),
-          .m_valid     (k_valid_n[tr+1][tc]),
-          .m_last      (k_last_n[tr+1][tc]),
-          .m_data      (k_n[tr+1][tc])
+        skid_buffer #(.WIDTH(CE*WK+2)) K_SOUTH_SKID (
+          .clk(clk), .rstn(rstn), .s_valid(1'b1), .m_valid(),
+          .s_ready (k_ready_s[tr][tc]),
+          .m_ready (t_en_mac[tr+1][tc]),
+          .s_data  ({k_valid_s[tr][tc], k_last_s[tr][tc], k_s[tr][tc]}),
+          .m_data  ({k_valid_n[tr+1][tc], k_last_n[tr+1][tc], k_n[tr+1][tc]})
         );
       end
       else begin:K_NO_SOUTH_BOUNDARY
