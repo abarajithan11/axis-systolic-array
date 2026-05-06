@@ -158,7 +158,7 @@ veri: $(WORK_DIR) veri_clean_cache $(DATA_DIR)/kxa.bin $(WORK_DIR)/config.svh $(
 
 veri_axis: $(WORK_DIR) veri_clean_cache $(WORK_DIR)/config.svh rtl/sa/axis_sa.sv rtl/sa/sa.sv rtl/sa/counter.sv rtl/sa/pe.sv rtl/sa/mac.sv rtl/sa/n_delay.sv rtl/sa/tri_buffer.sv rtl/sys/skid_buffer.sv tb/axis_sa_tb.sv tb/axis_vip/tb/axis_sink.sv tb/axis_vip/tb/axis_source.sv
 	git submodule update --init tb/axis_vip
-	verilator --binary -j 0 -O3 $(if $(filter 1,$(TRACE)),--trace) --top axis_sa_tb -Mdir $(WORK_DIR)/ $(filter-out veri_clean_cache $(WORK_DIR),$^) --Wno-BLKANDNBLK --Wno-INITIALDLY
+	verilator --binary -j 0 -O3 $(if $(filter 1,$(TRACE)),--trace) $(VERI_EXTRA) --top axis_sa_tb -Mdir $(WORK_DIR)/ $(filter-out veri_clean_cache $(WORK_DIR),$^) --Wno-BLKANDNBLK --Wno-INITIALDLY
 	cd $(WORK_DIR) && ./Vaxis_sa_tb
 
 veri_smoke: $(WORK_DIR) veri_clean_cache rtl/sa/axis_sa.sv rtl/sa/sa.sv rtl/sa/counter.sv rtl/sa/pe.sv rtl/sa/mac.sv rtl/sa/n_delay.sv rtl/sa/tri_buffer.sv rtl/sys/skid_buffer.sv tb/smoke_tb.sv

@@ -5,11 +5,12 @@
 `define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 module sa #(
-    parameter RE=4, CE=8, WX=4, WK=8, WY=16, LM=1, LA=1
+    parameter RE=4, CE=8, WX=4, WK=8, WY=16, LM=1, LA=1, OC=CE
     // rows, columns, x_width, k_width, y_width, multiplier latency, accumulator latency
   )(
     input  logic clk, rstn,
     input  logic s_valid_0, s_last_0, m_ready_0,
+    input  logic x_ready_o, k_ready_o,
     output logic s_ready_0, m_valid_0, m_last_0,
     output logic en_mac_o, en_shift_o,
     output logic [`DIAG(RE,CE)-2:0] en_copy_o,
@@ -25,7 +26,8 @@ module sa #(
 
   genvar r, c, d;
   localparam D  = `DIAG(RE,CE)-1; // length of diagonal
-  localparam WD = `MAX(1, $clog2(D));
+  localparam DM = `MAX(D, OC);
+  localparam WD = `MAX(1, $clog2(DM));
 
   logic [RE-1:0][CE-1:0][WX-1:0] xo;
   logic [RE-1:0][CE-1:0][WK-1:0] ko;
@@ -37,7 +39,7 @@ module sa #(
   logic s_ready_next, m_valid_next, m_last_next;
   logic en_mac_next, en_shift_next, shifting, shifting_next;
   logic s_hsk, m_hsk, input_block, input_block_next, copying, copying_next, mac_stall_next;
-  logic copy_start, copy_last_en, shift_start, shift_last;
+  logic copy_start, copy_last_en, shift_start, shift_last, boundary_ready;
   logic [CE-1:0] copy_ready_col;
   logic [WD-1:0] c_shift_col, c_shift_col_next;
   logic [WD-1:0] c_copy_diag, c_copy_diag_next;
@@ -88,7 +90,7 @@ module sa #(
     .last(), .last_n(), .last_en(copy_last_en)
   );
 
-  counter #(.MAX(CE), .W(WD)) SHIFT_COUNTER (
+  counter #(.MAX(OC), .W(WD)) SHIFT_COUNTER (
     .clk(clk), .rstn(rstn),
     .start(shift_start), .en_active(m_hsk),
     .cnt(c_shift_col), .cnt_n(c_shift_col_next),
@@ -114,9 +116,12 @@ module sa #(
     m_hsk          = m_valid_0 && m_ready_0;
     copy_start     = en_mac_o && a_valid_next[0];
     shift_start    = !shifting && en_copy[D-1];
-    copy_ready_col = !shifting ? '1 : (CE'(1) << c_shift_col) - CE'(1);
+    copy_ready_col = !shifting ? '1 :
+                     ((WD+1)'(c_shift_col) >= (WD+1)'(CE)) ? '0 :
+                     (CE'(1) << c_shift_col) - CE'(1);
     copy_col_next  = `MIN(c_copy_diag_next, WD'(CE-1));
-    mac_stall_next = shifting_next && copying_next && (copy_col_next >= c_shift_col);
+    boundary_ready = x_ready_o && k_ready_o;
+    mac_stall_next = (shifting_next && copying_next && (((WD+1)'(c_shift_col) >= (WD+1)'(CE)) || (copy_col_next >= c_shift_col))) || !boundary_ready;
     s_ready_next   = !mac_stall_next && !input_block_next;
     en_mac_next    = !mac_stall_next;
   end
@@ -133,7 +138,7 @@ module sa #(
 
     if (!shifting) begin
       m_valid_next = en_copy[D-1];
-      m_last_next  = en_copy[D-1] && (CE == 1);
+      m_last_next  = en_copy[D-1] && (OC == 1);
     end else if (!m_valid_0) begin
       m_valid_next = 1'b1;
       m_last_next  = shift_last;
