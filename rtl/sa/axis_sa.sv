@@ -18,7 +18,7 @@ module axis_sa #(
     output logic [R-1:0][WY-1:0] m_data
   );
 
-  genvar r, c, tr, tc, rp, cp;
+  genvar rg, cg, rt, ct, re, ce;
   logic [R-1:0][WX-1:0] xi_delayed;
   logic [C-1:0][WK-1:0] ki_delayed, sk_reversed;
   logic [RT-1:0][RE-1:0][WX-1:0] x_d;
@@ -46,192 +46,165 @@ module axis_sa #(
   end
 
   // Reverse the columns of K matrix, so that outputs come out with C=0 first.
-  for (c=0; c<C; c=c+1)
-    assign sk_reversed[c] = sk_data[C-1-c];
+  for (cg=0; cg<C; cg=cg+1)
+    assign sk_reversed[cg] = sk_data[C-1-cg];
 
   // Skew x and k for the global wavefront. Tile-boundary skids add their own
   // elasticity as data moves east/south.
-  for (r=0; r<R; r=r+1) begin: SKEW_X
-    n_delay #(.N(r), .W(WX)) DELAY_X (
-      .c(clk), .e(en_mac), .rng(rstn), .rnl(rstn),
-      .i(s_hsk ? sx_data[r] : '0),
-      .o(xi_delayed[r]),
-      .d()
-    );
+  for (rg=0; rg<R; rg=rg+1) begin: SKEW_X
+    n_delay #(.N(rg), .W(WX)) DELAY_X (
+      .c(clk), .e(en_mac), .rng(rstn), .rnl(rstn), .d(),
+      .i(s_hsk ? sx_data[rg] : '0), .o(xi_delayed[rg]));
   end
 
-  for (c=0; c<C; c=c+1) begin: SKEW_K
-    n_delay #(.N(c), .W(WK)) DELAY_K (
-      .c(clk), .e(en_mac), .rng(rstn), .rnl(rstn),
-      .i(s_hsk ? sk_reversed[c] : '0),
-      .o(ki_delayed[c]),
-      .d()
-    );
+  for (cg=0; cg<C; cg=cg+1) begin: SKEW_K
+    n_delay #(.N(cg), .W(WK)) DELAY_K (
+      .c(clk), .e(en_mac), .rng(rstn), .rnl(rstn), .d(),
+      .i(s_hsk ? sk_reversed[cg] : '0), .o(ki_delayed[cg]));
   end
 
-  assign s_hsk = s_valid && s_ready;
-  assign en_mac = t_en_mac[0][0];
+  always_comb begin
+    en_mac  = t_en_mac[0][0];
+    s_ready = t_ready[0][0];
+    s_hsk   = s_valid && s_ready;
+    m_valid = t_m_valid[RT-1][CT-1];
+    m_last  = t_m_last [RT-1][CT-1];
+  end
 
-  assign s_ready = t_ready[0][0];
+  for (rt=0; rt<RT; rt=rt+1) begin:TR
+    for (ct=0; ct<CT; ct=ct+1) begin:TC
 
-  assign m_valid = t_m_valid[RT-1][CT-1];
-  assign m_last  = t_m_last [RT-1][CT-1];
-
-  for (tr=0; tr<RT; tr=tr+1) begin:TILE_R
-    for (tc=0; tc<CT; tc=tc+1) begin:TILE_C
-      for (r=0; r<RE; r=r+1) begin:TILE_XR
-        localparam int GR = tr*RE + r;
-
-        if (tc == 0) begin
-          assign x_d[tr][r] = xi_delayed[GR];
-          assign r_w[tr][tc][r] = '0;
+      // Connect edge signals
+      for (re=0; re<RE; re=re+1) begin:XTR
+        if (ct == 0) begin
+          assign x_d[rt][re] = xi_delayed[rt*RE + re];
+          assign r_w[rt][ct][re] = '0;
         end
-        if (tc == CT-1) begin
-          assign m_data[GR] = r_e[tr][tc][r];
+        if (ct == CT-1) begin
+          assign m_data[rt*RE + re] = r_e[rt][ct][re];
         end
       end
-
-      for (c=0; c<CE; c=c+1) begin:TILE_KC
-        localparam int GC = tc*CE + c;
-
-        if (tr == 0)
-          assign k_d[tc][c] = ki_delayed[GC];
+      for (ce=0; ce<CE; ce=ce+1) begin:KTC
+        if (rt == 0)
+          assign k_d[ct][ce] = ki_delayed[ct*CE + ce];
       end
 
-      if (tc == 0) begin
-        n_delay #(.N(tr*RE), .W(1)) X_TILE_VALID (
-          .c(clk), .e(en_mac), .rng(rstn), .rnl(rstn),
-          .i(s_hsk),
-          .o(x_valid_d[tr]),
-          .d()
-        );
+      if (ct == 0) begin
+        n_delay #(.N(rt*RE), .W(1)) X_TILE_VALID (
+          .c(clk), .e(en_mac), .rng(rstn), .rnl(rstn), .d(),
+          .i(s_hsk), .o(x_valid_d[rt]));
 
-        n_delay #(.N(tr*RE), .W(1)) X_TILE_LAST (
-          .c(clk), .e(en_mac), .rng(rstn), .rnl(rstn),
-          .i(s_hsk && s_last),
-          .o(x_last_d[tr]),
-          .d()
-        );
+        n_delay #(.N(rt*RE), .W(1)) X_TILE_LAST (
+          .c(clk), .e(en_mac), .rng(rstn), .rnl(rstn), .d(),
+          .i(s_hsk && s_last), .o(x_last_d[rt]));
 
-        if (tr == 0) begin
-          assign x_valid_w[tr][tc] = x_valid_d[tr];
-          assign x_last_w [tr][tc] = x_last_d[tr];
+        if (rt == 0) begin
+          assign x_valid_w[rt][ct] = x_valid_d[rt];
+          assign x_last_w [rt][ct] = x_last_d[rt];
 
-          for (rp=0; rp<RE; rp=rp+1) begin:X_WEST_DIRECT
-            assign x_w[tr][tc][rp] = x_d[tr][rp];
+          for (re=0; re<RE; re=re+1) begin:X_WEST_DIRECT
+            assign x_w[rt][ct][re] = x_d[rt][re];
           end
         end else begin
           skid_buffer #(.WIDTH(RE*WX+2)) X_WEST_SKID (
             .clk (clk), .rstn (rstn), .s_ready(), .m_valid(), .s_valid(1'b1),
-            .m_ready (t_en_mac[tr][tc]),
-            .s_data  ({x_valid_d[tr]    , x_last_d[tr]    , x_d[tr]    }),
-            .m_data  ({x_valid_w[tr][tc], x_last_w[tr][tc], x_w[tr][tc]})
+            .m_ready (t_en_mac[rt][ct]),
+            .s_data  ({x_valid_d[rt]    , x_last_d[rt]    , x_d[rt]    }),
+            .m_data  ({x_valid_w[rt][ct], x_last_w[rt][ct], x_w[rt][ct]})
           );
         end
       end
 
-      if (tr == 0) begin
-        n_delay #(.N(tc*CE), .W(1)) K_TILE_VALID (
-          .c(clk), .e(en_mac), .rng(rstn), .rnl(rstn),
-          .i(s_hsk),
-          .o(k_valid_d[tc]),
-          .d()
-        );
+      if (rt == 0) begin
+        n_delay #(.N(ct*CE), .W(1)) K_TILE_VALID (
+          .c(clk), .e(en_mac), .rng(rstn), .rnl(rstn), .d(),
+          .i(s_hsk), .o(k_valid_d[ct]));
 
-        n_delay #(.N(tc*CE), .W(1)) K_TILE_LAST (
-          .c(clk), .e(en_mac), .rng(rstn), .rnl(rstn),
-          .i(s_hsk && s_last),
-          .o(k_last_d[tc]),
-          .d()
-        );
+        n_delay #(.N(ct*CE), .W(1)) K_TILE_LAST (
+          .c(clk), .e(en_mac), .rng(rstn), .rnl(rstn), .d(), 
+          .i(s_hsk && s_last), .o(k_last_d[ct]));
 
-        if (tc == 0) begin
-          assign k_valid_n[tr][tc] = k_valid_d[tc];
-          assign k_last_n [tr][tc] = k_last_d[tc];
+        if (ct == 0) begin
+          assign k_valid_n[rt][ct] = k_valid_d[ct];
+          assign k_last_n [rt][ct] = k_last_d[ct];
 
-          for (cp=0; cp<CE; cp=cp+1) begin:K_NORTH_DIRECT
-            assign k_n[tr][tc][cp] = k_d[tc][cp];
+          for (ce=0; ce<CE; ce=ce+1) begin:K_NORTH_DIRECT
+            assign k_n[rt][ct][ce] = k_d[ct][ce];
           end
         end else begin
           skid_buffer #(.WIDTH(CE*WK+2)) K_NORTH_SKID (
             .clk(clk), .rstn(rstn), .s_ready(), .m_valid(), .s_valid(1'b1),
-            .m_ready (t_en_mac[tr][tc]),
-            .s_data  ({k_valid_d[tc]    , k_last_d[tc]    , k_d[tc]    }),
-            .m_data  ({k_valid_n[tr][tc], k_last_n[tr][tc], k_n[tr][tc]})
+            .m_ready (t_en_mac[rt][ct]),
+            .s_data  ({k_valid_d[ct]    , k_last_d[ct]    , k_d[ct]    }),
+            .m_data  ({k_valid_n[rt][ct], k_last_n[rt][ct], k_n[rt][ct]})
           );
         end
       end
 
-      assign t_valid[tr][tc] = x_valid_w[tr][tc] && k_valid_n[tr][tc];
-      assign t_last [tr][tc] = x_last_w [tr][tc] && k_last_n [tr][tc];
+      assign t_valid[rt][ct] = x_valid_w[rt][ct] && k_valid_n[rt][ct];
+      assign t_last [rt][ct] = x_last_w [rt][ct] && k_last_n [rt][ct];
 
-      if (tc == CT-1) begin
-        if (tr == RT-1)
-          assign t_m_ready[tr][tc] = m_ready;
-        else
-          assign t_m_ready[tr][tc] = m_ready && t_m_valid[RT-1][tc];
+      if (ct == CT-1) begin
+        assign t_m_ready[rt][ct] = (rt == RT-1) ? m_ready : m_ready && t_m_valid[RT-1][ct];
       end
 
-      sa #(.RE(RE), .CE(CE), .WX(WX), .WK(WK), .WY(WY), .LM(LM), .LA(LA), .OC((tc+1)*CE)) TILE (
+      sa #(.RE(RE), .CE(CE), .WX(WX), .WK(WK), .WY(WY), 
+           .LM(LM), .LA(LA), .OC((ct+1)*CE)) TILE (
         .clk       (clk),
         .rstn      (rstn),
-        .s_valid_0 (t_valid[tr][tc]),
-        .s_last_0  (t_last[tr][tc]),
-        .x_ready   (x_ready_e[tr][tc]),
-        .k_ready   (k_ready_s[tr][tc]),
-        .s_ready_0 (t_ready[tr][tc]),
-        .m_ready_0 (t_m_ready[tr][tc]),
-        .m_valid_0 (t_m_valid[tr][tc]),
-        .m_last_0  (t_m_last[tr][tc]),
-        .en_mac    (t_en_mac[tr][tc]),
-        .en_shift  (t_en_shift[tr][tc]),
-        .x_valid   (x_valid_e[tr][tc]),
-        .x_last    (x_last_e [tr][tc]),
-        .k_valid   (k_valid_s[tr][tc]),
-        .k_last    (k_last_s [tr][tc]),
-        .xi_data   (x_w[tr][tc]),
-        .ki_data   (k_n[tr][tc]),
-        .ri_data   (r_w[tr][tc]),
-        .xo_data   (x_e[tr][tc]),
-        .ko_data   (k_s[tr][tc]),
-        .ro_data   (r_e[tr][tc])
+        .s_valid_0 (t_valid   [rt][ct]),
+        .s_last_0  (t_last    [rt][ct]),
+        .x_ready   (x_ready_e [rt][ct]),
+        .k_ready   (k_ready_s [rt][ct]),
+        .s_ready_0 (t_ready   [rt][ct]),
+        .m_ready_0 (t_m_ready [rt][ct]),
+        .m_valid_0 (t_m_valid [rt][ct]),
+        .m_last_0  (t_m_last  [rt][ct]),
+        .en_mac    (t_en_mac  [rt][ct]),
+        .en_shift  (t_en_shift[rt][ct]),
+        .x_valid   (x_valid_e [rt][ct]),
+        .x_last    (x_last_e  [rt][ct]),
+        .k_valid   (k_valid_s [rt][ct]),
+        .k_last    (k_last_s  [rt][ct]),
+        .xi_data   (x_w       [rt][ct]),
+        .ki_data   (k_n       [rt][ct]),
+        .ri_data   (r_w       [rt][ct]),
+        .xo_data   (x_e       [rt][ct]),
+        .ko_data   (k_s       [rt][ct]),
+        .ro_data   (r_e       [rt][ct])
       );
 
-      if (tc < CT-1) begin:X_EAST_BOUNDARY
+      if (ct < CT-1) begin:X_EAST_BOUNDARY
         skid_buffer #(.WIDTH(RE*WX+2)) X_EAST_SKID (
           .clk(clk), .rstn(rstn), .s_valid(1'b1), .m_valid(),
-          .s_ready (x_ready_e[tr][tc]),
-          .m_ready (t_en_mac [tr][tc+1]),
-          .s_data  ({x_valid_e[tr][tc]  , x_last_e[tr][tc]  , x_e[tr][tc]  }),
-          .m_data  ({x_valid_w[tr][tc+1], x_last_w[tr][tc+1], x_w[tr][tc+1]})
+          .s_ready (x_ready_e [rt][ct]),
+          .m_ready (t_en_mac  [rt][ct+1]),
+          .s_data  ({x_valid_e[rt][ct]  , x_last_e[rt][ct]  , x_e[rt][ct]  }),
+          .m_data  ({x_valid_w[rt][ct+1], x_last_w[rt][ct+1], x_w[rt][ct+1]})
         );
 
         skid_buffer #(.WIDTH(RE*WY)) R_EAST_SKID (
-          .clk    (clk),
-          .rstn   (rstn),
-          .s_valid(t_m_valid[tr][tc]),
-          .s_ready(t_m_ready[tr][tc]),
-          .s_data (r_e[tr][tc]),
-          .m_ready(t_en_shift[tr][tc+1]),
-          .m_valid(),
-          .m_data (r_w[tr][tc+1])
+          .clk(clk), .rstn(rstn), .m_valid(),
+          .s_valid(t_m_valid  [rt][ct]),
+          .s_ready(t_m_ready  [rt][ct]),
+          .s_data (r_e        [rt][ct]),
+          .m_ready(t_en_shift [rt][ct+1]),
+          .m_data (r_w        [rt][ct+1])
         );
-      end
-      else begin:X_NO_EAST_BOUNDARY
-        assign x_ready_e[tr][tc] = 1'b1;
+      end else begin:X_NO_EAST_BOUNDARY
+        assign x_ready_e[rt][ct] = 1'b1;
       end
 
-      if (tr < RT-1) begin:K_SOUTH_BOUNDARY
+      if (rt < RT-1) begin:K_SOUTH_BOUNDARY
         skid_buffer #(.WIDTH(CE*WK+2)) K_SOUTH_SKID (
           .clk(clk), .rstn(rstn), .s_valid(1'b1), .m_valid(),
-          .s_ready (k_ready_s[tr][tc]),
-          .m_ready (t_en_mac[tr+1][tc]),
-          .s_data  ({k_valid_s[tr][tc], k_last_s[tr][tc], k_s[tr][tc]}),
-          .m_data  ({k_valid_n[tr+1][tc], k_last_n[tr+1][tc], k_n[tr+1][tc]})
+          .s_ready (k_ready_s [rt][ct]),
+          .m_ready (t_en_mac  [rt+1][ct]),
+          .s_data  ({k_valid_s[rt][ct]  , k_last_s[rt][ct]  , k_s[rt][ct]}),
+          .m_data  ({k_valid_n[rt+1][ct], k_last_n[rt+1][ct], k_n[rt+1][ct]})
         );
-      end
-      else begin:K_NO_SOUTH_BOUNDARY
-        assign k_ready_s[tr][tc] = 1'b1;
+      end else begin:K_NO_SOUTH_BOUNDARY
+        assign k_ready_s[rt][ct] = 1'b1;
       end
     end
   end

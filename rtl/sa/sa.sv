@@ -70,12 +70,13 @@ module sa #(
   for (c=0; c<CE; c=c+1)
     assign ko_data[c] = ko[RE-1][c];
 
-  n_delay #(.N(LM+LA+D), .W(1)) VALID (.c(clk), .e(en_mac), .rng(rstn), .rnl(rstn), .i(s_hsk           ), .o(), .d(valid));
+  n_delay #(.N(LM+LA+D), .W(1)) VALID (.c(clk), .e(en_mac), .rng(rstn), .rnl(rstn), .i(s_hsk            ), .o(), .d(valid));
   n_delay #(.N(LM+LA+D), .W(1)) VLAST (.c(clk), .e(en_mac), .rng(rstn), .rnl(rstn), .i(s_hsk && s_last_0), .o(), .d(vlast));
-  n_delay #(.N(CE), .W(1)) X_VALID (.c(clk), .e(en_mac), .rng(rstn), .rnl(rstn), .i(s_hsk           ), .o(x_valid), .d());
-  n_delay #(.N(CE), .W(1)) X_LAST  (.c(clk), .e(en_mac), .rng(rstn), .rnl(rstn), .i(s_hsk && s_last_0), .o(x_last ), .d());
-  n_delay #(.N(RE), .W(1)) K_VALID (.c(clk), .e(en_mac), .rng(rstn), .rnl(rstn), .i(s_hsk           ), .o(k_valid), .d());
-  n_delay #(.N(RE), .W(1)) K_LAST  (.c(clk), .e(en_mac), .rng(rstn), .rnl(rstn), .i(s_hsk && s_last_0), .o(k_last ), .d());
+
+  assign x_valid = valid[CE];
+  assign k_valid = valid[RE];
+  assign x_last  = vlast[CE];
+  assign k_last  = vlast[RE];
 
   counter #(.MAX(D), .W(WD)) COPY_COUNTER (
     .clk(clk), .rstn(rstn),
@@ -109,14 +110,12 @@ module sa #(
   always_comb begin
     s_hsk          = s_valid_0 && s_ready_0;
     m_hsk          = m_valid_0 && m_ready_0;
+    boundary_ready = x_ready && k_ready;
     copy_start     = en_mac && a_valid_next[0];
     shift_start    = !shifting && en_copy[D-1];
-    copy_ready_col = !shifting ? '1 :
-                     ((WD+1)'(c_shift_col) >= (WD+1)'(CE)) ? '0 :
-                     (CE'(1) << c_shift_col) - CE'(1);
+    copy_ready_col = !shifting ? '1 : c_shift_col >= WD'(CE) ? '0 : (CE'(1) << c_shift_col) - CE'(1);
     copy_col_next  = `MIN(c_copy_diag_next, WD'(CE-1));
-    boundary_ready = x_ready && k_ready;
-    mac_stall_next = (shifting_next && copying_next && (((WD+1)'(c_shift_col) >= (WD+1)'(CE)) || (copy_col_next >= c_shift_col))) || !boundary_ready;
+    mac_stall_next = (shifting_next && copying_next && ((c_shift_col >= WD'(CE)) || (copy_col_next >= c_shift_col))) || !boundary_ready;
     s_ready_next   = !mac_stall_next && !input_block_next;
     en_mac_next    = !mac_stall_next;
   end
