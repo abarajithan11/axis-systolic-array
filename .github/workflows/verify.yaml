@@ -142,7 +142,7 @@ jobs:
         run: |
           git submodule update --init tb/axis_vip
           docker run --rm -v "$PWD":/repo -w /repo "${GHCR_IMAGE}:${IMAGE_TAG}" \
-            make regress CMD=veri_axis CLEAN_REGRESS=1 TRACE=0
+            make regress CMD="sim_clean veri_axis" TRACE=0
 
   regress-axi-int:
     runs-on: ubuntu-22.04
@@ -174,7 +174,7 @@ jobs:
       - name: Full Regression -- 2 AXI Ports
         run: |
           docker run --rm -v "$PWD":/repo -w /repo "${GHCR_IMAGE}:${IMAGE_TAG}" \
-            make regress SYS=axi_int CLEAN_REGRESS=1 TRACE=0
+            make regress SYS=axi_int CMD="sim_clean veri" TRACE=0
 
   regress-axi:
     runs-on: ubuntu-22.04
@@ -209,7 +209,7 @@ jobs:
             -v "$PWD":/repo \
             -w /repo \
             "${GHCR_IMAGE}:${IMAGE_TAG}" \
-            make regress SYS=axi CLEAN_REGRESS=1 TRACE=0
+            make regress SYS=axi CMD="sim_clean veri" TRACE=0
 
   smoke-test-ibex-soc:
     runs-on: ubuntu-22.04
@@ -337,7 +337,7 @@ jobs:
             "${GHCR_IMAGE}:${IMAGE_TAG}" \
             bash -lc '
               fusesoc library add sa_ip "$(pwd -P)" || true
-              make regress CLEAN_REGRESS=1
+              make regress
             '
 
   
