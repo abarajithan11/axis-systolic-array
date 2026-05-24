@@ -2,7 +2,11 @@
 #include <iostream>
 #include <verilated.h>
 #if VM_TRACE
-#include <verilated_vcd_c.h>
+  #if VM_TRACE_FST
+  #include <verilated_fst_c.h>
+  #else
+  #include <verilated_vcd_c.h>
+  #endif
 #endif
 
 // TB_MODULE and FB_MODULE are defined from outside via -D option
@@ -21,11 +25,19 @@
 
 using namespace std;
 
+#ifndef CLK_HALF_TS
+#define CLK_HALF_TS 5
+#endif
+
 vluint64_t sim_time = 0;
 VCLASS *top;
 VerilatedContext *contextp;
 #if VM_TRACE
-VerilatedVcdC *tfp;
+  #if VM_TRACE_FST
+  VerilatedFstC *tfp;
+  #else
+  VerilatedVcdC *tfp;
+  #endif
 #endif
 
 #ifdef __cplusplus
@@ -44,17 +56,14 @@ extern "C" void step_time_veri() {
 #if VM_TRACE
     tfp->dump(contextp->time());
 #endif
-    contextp->timeInc(1);
+    contextp->timeInc(CLK_HALF_TS);
 }
 
 extern "C" void at_posedge_clk(){
     vluint8_t prev_clk = get_clk();
     while(true){
         step_time_veri();
-        if(prev_clk == 0 && get_clk() == 1){
-            for (int i = 0; i < 10; i++) step_time_veri();
-            break;
-        }
+        if(prev_clk == 0 && get_clk() == 1) break;
         prev_clk = get_clk();
     }
 }
@@ -68,9 +77,15 @@ int main(int argc, char** argv){
     contextp->traceEverOn(true);
     top = new VCLASS(contextp);
 #if VM_TRACE
+  #if VM_TRACE_FST
+    tfp = new VerilatedFstC();
+    top->trace(tfp, 99);
+    tfp->open("trace.fst");
+  #else
     tfp = new VerilatedVcdC();
     top->trace(tfp, 99);
     tfp->open("trace.vcd");
+  #endif
 #endif
 
     while(!contextp->gotFinish()) step_time_veri();

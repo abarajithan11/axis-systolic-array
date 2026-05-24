@@ -263,8 +263,10 @@ module fb_axi_vip #(
   
 
   // Handle M Masters
-  import "DPI-C" context function byte fb_c_read_ddr8_addr32  (input int unsigned addr, chandle p_mem);
-  import "DPI-C" context function void fb_c_write_ddr8_addr32 (input int unsigned addr, input byte data, chandle p_mem);
+  import "DPI-C" context function byte         fb_c_read_ddr8_addr32   (input int unsigned addr, chandle p_mem);
+  import "DPI-C" context function void         fb_c_write_ddr8_addr32  (input int unsigned addr, input byte data, chandle p_mem);
+  import "DPI-C" context function int unsigned fb_c_read_ddr32_addr32  (input int unsigned addr, chandle p_mem);
+  import "DPI-C" context function void         fb_c_write_ddr32_addr32 (input int unsigned addr, input int unsigned data, input byte unsigned strb, chandle p_mem);
 
   for (m=0; m< M_COUNT; m++) begin
 
@@ -354,15 +356,14 @@ module fb_axi_vip #(
         rdata <= '0;
       end else begin
         if (ren[m]) begin
-          for (int i = 0; i < M_AXI_DATA_WIDTH/8; i++) begin
-            tmp_data[i*8 +: 8] = fb_c_read_ddr8_addr32((32'(raddr[m]) << LSB) + i, p_mem);
+          for (int i = 0; i < M_AXI_DATA_WIDTH/32; i++) begin
+            tmp_data[i*32 +: 32] = fb_c_read_ddr32_addr32((32'(raddr[m]) << LSB) + 4*i, p_mem);
           end
           rdata[m] <= tmp_data;
         end
-        if (wen[m]) 
-          for (int i = 0; i < M_AXI_DATA_WIDTH/8; i++) 
-            if (wstrb[m][i]) 
-              fb_c_write_ddr8_addr32((32'(waddr[m]) << LSB) + i, wdata[m][i*8 +: 8], p_mem);
+        if (wen[m])
+          for (int i = 0; i < M_AXI_DATA_WIDTH/32; i++)
+            fb_c_write_ddr32_addr32((32'(waddr[m]) << LSB) + 4*i, wdata[m][i*32 +: 32], 8'(wstrb[m][i*4 +: 4]), p_mem);
       end
       end
   end

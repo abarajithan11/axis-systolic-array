@@ -198,7 +198,7 @@ module top_axi_int_tb;
   );
 
   initial begin
-    $dumpfile("trace.vcd");
+    $dumpfile("trace.fst");
     $dumpvars();
     #1000000us;
     $fatal(1, "\n\nERROR: Timeout.\n\n");
