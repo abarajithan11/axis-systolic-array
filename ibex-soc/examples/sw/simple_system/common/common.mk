@@ -63,10 +63,17 @@ endif
 	$(OBJCOPY) -O binary $^ $@
 
 %.o: %.c
-	$(CC) $(CFLAGS) -MMD -c $(INCS) -o $@ $<
+	$(CC) $(CFLAGS) -MMD -MP -c $(INCS) -o $@ $<
 
 %.o: %.S
-	$(CC) $(CFLAGS) -MMD -c $(INCS) -o $@ $<
+	$(CC) $(CFLAGS) -MMD -MP -c $(INCS) -o $@ $<
+
+# Pull in the header dependencies -MMD wrote alongside each object, so that
+# edits to generated headers (run/work/config.h) force a rebuild. -MP adds a
+# phony target per header, so a stale .d naming a header that has since moved
+# (e.g. built under /repo in docker, then rebuilt on the host) forces a rebuild
+# instead of failing with "No rule to make target".
+-include $(DEPS)
 
 clean:
 	$(RM) -f $(OBJS) $(DEPS)

@@ -1,4 +1,5 @@
 IBEX_CONFIG ?= small
+TRACE ?= 1
 
 FUSESOC_CONFIG_OPTS = $(shell ./util/ibex_config.py $(IBEX_CONFIG) fusesoc_opts)
 SYSTEM_DIR = examples/sw/simple_system/hello_test
@@ -19,7 +20,7 @@ wave:
 	gtkwave sim.fst &
 
 run: sw-simple-hello | $(Vibex_simple_system)
-	build/lowrisc_ibex_ibex_simple_system_0/sim-verilator/Vibex_simple_system -t \
+	build/lowrisc_ibex_ibex_simple_system_0/sim-verilator/Vibex_simple_system $(if $(filter 1,$(TRACE)),-t) \
 		--raminit=$(simple-system-program)
 	cat ibex_simple_system.log
 

@@ -5,8 +5,8 @@ K = 16
 WK = 8
 WX = 8
 WY = 32
-VALID_PROB = 1
-READY_PROB = 50
+VALID_PROB = 100
+READY_PROB = 200
 FREQ_MHZ = 100
 AXI_WIDTH = 32
 ADDR_WIDTH = 32
@@ -248,12 +248,12 @@ gds_nuke: orfs_submodule
 #----------------- Ibex System ------------------
 
 ibex_test:
-	make ibuild irun iprint TARGET=ibex 
+	$(MAKE) ibuild irun iprint TARGET=ibex TRACE=$(TRACE)
 
-iprint: 
+iprint:
 	$(MAKE) -C ibex-soc print
-irun: 
-	$(MAKE) -C ibex-soc run
+irun:
+	$(MAKE) -C ibex-soc run TRACE=$(TRACE)
 irun-clean:
 	$(MAKE) -C ibex-soc run-clean
 ibuild: $(WORK_DIR)/config.svh
