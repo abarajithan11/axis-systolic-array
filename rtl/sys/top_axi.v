@@ -6,6 +6,8 @@ module top #(
     parameter
         R          = `R ,
         C          = `C ,
+        RT         = `RT,
+        CT         = `CT,
         WK         = `WK,
         WX         = `WX,
         WY         = `WY,
@@ -180,6 +182,8 @@ assign s_last     = s_k_tlast  & s_x_tlast;
 axis_sa #(
     .R (R ), 
     .C (C ), 
+    .RT(RT), 
+    .CT(CT), 
     .WX(WX), 
     .WK(WK), 
     .WY(WY), 

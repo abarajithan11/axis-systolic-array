@@ -138,8 +138,13 @@ module axis_sa #(
       assign t_last [rt][ct] = x_last_w [rt][ct] && k_last_n [rt][ct];
 
       if (ct == CT-1) begin
+        // Every row tile in the output column must shift on the same cycle,
+        // since m_data concatenates r_e from all of them into one beat. Gating
+        // the non-last tiles on t_m_valid[RT-1] alone let them advance while
+        // the sink was stalled (m_ready low), so they ran a column ahead of
+        // tile RT-1 and emitted column c+1's data in column c's slot.
         if (rt == RT-1) assign t_m_ready[rt][ct] = m_ready;
-        else            assign t_m_ready[rt][ct] = t_m_valid[RT-1][ct];
+        else            assign t_m_ready[rt][ct] = t_m_valid[RT-1][ct] && m_ready;
       end
 
       sa #(.RE(RE), .CE(CE), .WX(WX), .WK(WK), .WY(WY), 
