@@ -26,13 +26,13 @@ module axis_sa #(
   logic [R-1:0][C-1:0][WK-1:0] ko;
   logic [R-1:0][C-1:0][WY-1:0] ro;
 
-  logic [D-1:0] en_copy, en_copy_next, a_valid, a_valid_next, m_first;
+  logic [D-1:0] en_copy, en_copy_next, a_valid, a_valid_next, m_first, copy_req;
   logic [LM+LA+D-1:0] valid, vlast;
 
   logic s_ready_next, m_valid_next, m_last_next;
   logic en_mac, en_mac_next, en_shift, en_shift_next, shifting, shifting_next;
   logic s_hsk, m_hsk, input_block, input_block_next, copying, copying_next, mac_stall_next;
-  logic copy_start, copy_last_en, shift_start, shift_last;
+  logic copy_start, copy_last_en, shift_start, shift_last, shift_draining;
   logic [C-1:0] copy_ready_col;
   logic [WD-1:0] c_shift_col, c_shift_col_next;
   logic [WD-1:0] c_copy_diag, c_copy_diag_next;
@@ -96,31 +96,34 @@ module axis_sa #(
   for (d=0; d<D; d=d+1) begin
     always_ff @(posedge clk `OR_NEGEDGE(rstn)) begin
       if (!rstn)            m_first[d] <= 1'b1;
-      else if (valid[LM+d]) m_first[d] <= vlast[LM+d];
+      else if (en_mac && valid[LM+d]) m_first[d] <= vlast[LM+d];
     end
   end
   
   always_comb begin
     input_block_next = input_block;
     if (s_hsk && s_last) input_block_next = 1'b1;
-    if (copy_last_en)    input_block_next = 1'b0;
+    if (en_copy_next[D-1]) input_block_next = 1'b0;
   end
 
   always_comb begin
     s_hsk          = s_valid && s_ready;
     m_hsk          = m_valid && m_ready;
-    copy_start     = en_mac && a_valid_next[0];
+    shift_draining = shifting && !(m_hsk && m_last);
+    copy_start     = en_mac && copy_req[0] && !shift_draining;
     shift_start    = !shifting && en_copy[D-1];
     copy_ready_col = !shifting ? '1 : (C'(1) << c_shift_col) - C'(1);
     copy_col_next  = `MIN(c_copy_diag_next, WD'(C-1));
-    mac_stall_next = shifting_next && copying_next && (copy_col_next >= c_shift_col);
+    mac_stall_next = (shifting_next && copying_next && (copy_col_next >= c_shift_col))
+                   || (copy_req[0] && shift_draining);
     s_ready_next   = !mac_stall_next && !input_block_next;
     en_mac_next    = !mac_stall_next;
   end
 
   for (d=0; d<D; d=d+1) begin
-    assign a_valid_next[d] = en_mac ? vlast[LM+LA+d-1] : a_valid[d];  
-    assign en_copy_next[d] = a_valid_next[d] && en_mac_next && copy_ready_col[`MIN(d, C-1)];
+    assign copy_req[d]     = a_valid[d] | (en_mac & vlast[LM+LA+d-1]);
+    assign en_copy_next[d] = copy_req[d] && en_mac_next && copy_ready_col[`MIN(d, C-1)];
+    assign a_valid_next[d] = copy_req[d] & ~en_copy_next[d];
   end
 
   always_comb begin
